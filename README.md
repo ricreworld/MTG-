@@ -1,43 +1,67 @@
-# Planeswalker Quest
+# Mana Steps
 
-An interactive, ADHD-friendly way to learn to play **Magic: The Gathering**: by playing it, with a coach beside you.
+A calm, step-by-step, game-like tutorial that teaches complete beginners to play Magic: The Gathering.
+Designed for neurodivergent learners (ADHD, autism, dyslexia).
 
-Open `index.html` in any browser. It's one self-contained page, so there's nothing to install. Progress saves in your browser.
+**Stack:** Vite + React + TypeScript (strict) + Tailwind CSS. No backend. Progress is saved in localStorage.
 
-## The Practice Table (the main event)
+## Run it
 
-Real games of Magic against the computer:
+```bash
+npm install      # .npmrc sets legacy-peer-deps (works around an npm resolver crash)
+npm run dev      # local dev server
+npm test         # unit tests (Vitest)
+npm run build    # type-check + production build into dist/
+```
 
-- **Guided first game.** The cards are set up so your first turns teach lands, mana, casting, attacking and blocking. The coach's move is always showing.
-- **Free play with every major playing style.** Pick your deck and your opponent's:
-  Red Aggro, Green Ramp, Blue Control (with counterspells and the stack), White Tokens (go wide), Black Midrange (removal and reanimation), plus two starter decks.
-- **Puzzles: win this turn.** Five short challenges, each built around one rule (Haste, Trample, removal, anthems, Flying).
+## Structure
 
-The coach:
+```
+index.html                 HTML entry. Loads Atkinson Hyperlegible + Lexend from Google Fonts
+tailwind.config.ts         Tailwind theme: every value points at a CSS variable
+vite.config.ts             Vite + Vitest config (relative base path)
+src/
+  main.tsx                 Applies saved settings before first paint, then mounts <App>
+  App.tsx                  Phase 1: token preview page (replaced by the app shell in Phase 3)
+  index.css                Tailwind layers + global rules (no italics, focus ring, motion off)
+  styles/tokens.css        DESIGN TOKENS: colors, type, spacing, radius, motion
+  theme/
+    settings.ts            Settings types, defaults, reducer, sanitizer, DOM mapping (pure)
+    settings.test.ts       Unit tests for the settings logic
+    SettingsContext.tsx    React context: load, autosave, apply settings
+  lib/storage.ts           Safe localStorage helpers (never throw)
+  components/
+    ManaSymbol.tsx         The 5 MTG colors + colorless, each with its own symbol
+    SettingsControls.tsx   Settings form (moves into the settings panel in Phase 3)
+  content/                 Phase 2: schema.ts (Zod) + modules/*.json
+  features/                Phase 3–7: shell, progress, practice, tts
+  game/                    Phase 6: engine.ts (pure reducer) + tests
+legacy/                    The earlier single-file prototype (Planeswalker Quest), kept for reference
+```
 
-- **What should I do?** shows the best next move and *why*.
-- **Coach checks my moves.** Before a weak move happens (a bad attack, a pointless block, a wasted turn, a spell on the wrong target, a bad mulligan), the coach explains the problem. You choose *Change my move* or *Do it anyway*. Good moves get a note too.
-- **Not allowed** messages explain the rule when you try something illegal (summoning sickness, one land per turn, Flying blockers, timing for instants and sorceries).
-- Tap any card to see what it does.
+## How theming works
 
-The rules follow the real game: turn phases, mana and colours, the mana pool emptying, the stack and counterspells, combat with first strike, trample, deathtouch and lifelink, summoning sickness, tokens, and discarding to 7. A few simplifications (one blocker per attacker, fewer moments to cast instants) are listed on the Practice Table page.
+- `src/styles/tokens.css` defines every color as RGB channels on `:root` (dark is the default),
+  and overrides them under `[data-theme="light"]`.
+- Settings write data attributes (`data-theme`, `data-font`, `data-motion`, `data-focus-mode`)
+  and CSS variables (`--root-size`, `--leading`, `--tracking`, `--word-spacing`) onto `<html>`.
+- All sizes are in rem, so the 4 text-size steps scale the whole UI.
+- Animations are off by default. Turning them on still respects `prefers-reduced-motion`.
 
-## Rules levels
+## Accessibility rules baked into the tokens
 
-Fifteen short levels (1–5 minutes each) split into **Rules you need to play** and **Good to know, later**. They cover reading a card, card types, mana, the turn, combat, keywords, playing styles, colours, formats, deck building, slang and where to play. Most screens have something to try: card anatomy, a mana-payment puzzle, a combat simulator, land-count odds, mulligan practice and more.
+- No pure black on pure white. Every text pair meets WCAG 2.2 AA (ratios are noted in `tokens.css`).
+- Color is never the only signal: MTG colors always show a symbol and a name, and feedback uses icons and words.
+- Minimum target size 44×44px (`min-h-tap`), and one visible focus ring everywhere.
+- Left-aligned text, max line length about 65 characters, line height 1.5 to 2.0.
 
-## Designed for ADHD brains
+## Phase plan
 
-- One idea per screen, with the **key idea first**
-- No timers and no penalties. Wrong answers explain why, and you try again.
-- XP, ranks and badges with no leaderboards
-- **Calm mode** (no animation, pop-ups or confetti), plus text size, extra spacing and light/dark theme
-- **Park a thought**: a notepad for stray thoughts
-- Optional break timer after each level, **Read aloud** on every screen, and full keyboard support
-
-## Files
-
-- `mtg-quest.html`: the page source (published as a claude.ai artifact)
-- `index.html`: the same page wrapped as a standalone document. Rebuild it with `./build.sh` after editing the source.
-
-Content is adapted from The Gamers Lodge's *A Beginner's Guide to Magic: The Gathering*, with rules updated to the current game. Card names in the practice decks are made up.
+1. ✅ Scaffold, file structure, design tokens, Tailwind config, settings context
+2. Content schema (TypeScript + Zod) and a sample module
+3. App shell: wizard layout, navigation bar, settings panel, Focus Mode
+4. Progress engine: save/resume, checklist, progress bar
+5. Full MTG curriculum
+6. Practice Table mini-game (pure reducer + Vitest)
+7. Text-to-speech (Web Speech API)
+8. Accessibility audit (axe-core + keyboard walkthrough)

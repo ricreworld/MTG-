@@ -1,0 +1,115 @@
+/*
+ * Mana Steps design tokens.
+ * Colors are stored as space-separated RGB channels so Tailwind can add opacity:
+ *   bg-surface/80 -> rgb(var(--color-surface) / 0.8)
+ * Contrast ratios (WCAG 2.2) were checked for every text/background pair; the
+ * numbers are noted next to each value. Body text targets AA (4.5:1), UI
+ * borders and the focus ring target 3:1.
+ */
+
+:root {
+  /* ---------- Color: dark theme is the default ---------- */
+  --color-bg: 23 25 31;            /* #17191F soft off-black, never #000 */
+  --color-surface: 32 35 43;       /* #20232B cards */
+  --color-surface-2: 42 46 56;     /* #2A2E38 inset areas, inactive chips */
+  --color-border: 58 63 76;        /* #3A3F4C decorative dividers only */
+  --color-border-strong: 104 110 128; /* #686E80 control outlines: 3.46:1 on bg */
+  --color-text: 232 228 220;       /* #E8E4DC off-white: 13.86:1 on bg */
+  --color-text-muted: 172 176 188; /* #ACB0BC: 8.11:1 on bg, 6.27:1 on surface-2 */
+  --color-accent: 143 180 230;     /* #8FB4E6 primary actions and links: 8.23:1 on bg */
+  --color-accent-ink: 18 22 30;    /* #12161E text on accent: 8.49:1 */
+  --color-accent-soft: 38 50 70;   /* #263246 tinted panels */
+  --color-focus: 242 193 78;       /* #F2C14E focus ring: 10.47:1 on bg */
+  --color-success: 120 196 150;    /* #78C496 always paired with a check icon: 8.48:1 */
+  --color-success-soft: 30 52 42;  /* #1E342A */
+  --color-hint: 157 183 217;       /* #9DB7D9 calm hints (never red): paired with an info icon */
+  --color-hint-soft: 34 44 60;     /* #222C3C */
+
+  /* ---------- The five MTG colors (same in both themes) ----------
+   * Based on the Okabe-Ito colorblind-safe palette. Each color always ships
+   * with a symbol AND its name, so color is never the only signal.
+   * fill = background, ink = text/symbol drawn on it (contrast noted). */
+  --mtg-white: 237 230 210;  --mtg-white-ink: 43 38 24;   /* sun symbol, 12.10:1 */
+  --mtg-blue: 0 114 178;     --mtg-blue-ink: 255 255 255;  /* droplet symbol, 5.19:1 */
+  --mtg-black: 75 68 83;     --mtg-black-ink: 243 240 234; /* skull symbol, 8.20:1 */
+  --mtg-red: 213 94 0;       --mtg-red-ink: 26 18 6;       /* flame symbol, 4.79:1 */
+  --mtg-green: 0 158 115;    --mtg-green-ink: 6 20 15;     /* tree symbol, 5.51:1 */
+  --mtg-colorless: 189 184 174; --mtg-colorless-ink: 38 35 30; /* diamond symbol */
+
+  /* ---------- Typography ---------- */
+  --font-atkinson: "Atkinson Hyperlegible", "Atkinson Hyperlegible Next", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-lexend: "Lexend", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* OpenDyslexic is not on Google Fonts; it needs a self-hosted font file (pending approval). */
+  --font-opendyslexic: "OpenDyslexic", "Atkinson Hyperlegible", system-ui, sans-serif;
+  --font-body: var(--font-atkinson);           /* swapped by Settings via [data-font] */
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  /* Root size steps (Settings: 4 steps). Everything else is in rem, so it all scales. */
+  --root-size: 100%;               /* 16px */
+
+  /* Type scale (rem, ratio ~1.2) */
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.2rem;
+  --text-xl: 1.44rem;
+  --text-2xl: 1.728rem;
+
+  /* Readability controls (Settings) */
+  --leading: 1.5;                  /* 1.5 minimum, adjustable to 2.0 */
+  --tracking: 0em;                 /* letter spacing */
+  --word-spacing: 0em;
+  --measure: 65ch;                 /* max line length */
+
+  /* ---------- Spacing (4px grid, in rem) ---------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* ---------- Radius ---------- */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 1rem;
+  --radius-full: 9999px;
+
+  /* ---------- Interaction ---------- */
+  --tap-min: 2.75rem;              /* 44px minimum target size */
+  --focus-width: 3px;
+  --motion-duration: 0ms;          /* animations OFF by default */
+
+  color-scheme: dark;
+}
+
+/* ---------- Light theme (toggle in Settings) ---------- */
+:root[data-theme="light"] {
+  --color-bg: 244 242 237;          /* #F4F2ED soft off-white, never #FFF */
+  --color-surface: 252 251 248;     /* #FCFBF8 */
+  --color-surface-2: 233 230 223;   /* #E9E6DF */
+  --color-border: 214 210 201;      /* #D6D2C9 decorative */
+  --color-border-strong: 138 135 127; /* #8A877F: 3.21:1 on bg, 3.47:1 on surface */
+  --color-text: 33 35 41;           /* #212329: 14.04:1 on bg */
+  --color-text-muted: 84 88 99;     /* #545863: 6.36:1 on bg, 5.71:1 on surface-2 */
+  --color-accent: 44 90 160;        /* #2C5AA0: 6.10:1 on bg */
+  --color-accent-ink: 252 251 248;  /* 6.59:1 on accent */
+  --color-accent-soft: 220 229 242; /* #DCE5F2 */
+  --color-focus: 154 77 0;          /* #9A4D00: 5.46:1 on bg */
+  --color-success: 39 107 67;       /* #276B43: 5.74:1 on bg */
+  --color-success-soft: 221 238 227;/* #DDEEE3 */
+  --color-hint: 44 90 160;          /* #2C5AA0 */
+  --color-hint-soft: 226 233 243;   /* #E2E9F3 */
+  color-scheme: light;
+}
+
+/* ---------- Font choice ---------- */
+:root[data-font="lexend"] { --font-body: var(--font-lexend); }
+:root[data-font="opendyslexic"] { --font-body: var(--font-opendyslexic); }
+
+/* ---------- Motion: only when the learner turns it on AND the OS allows it ---------- */
+:root[data-motion="on"] { --motion-duration: 200ms; }
+@media (prefers-reduced-motion: reduce) {
+  :root[data-motion="on"] { --motion-duration: 0ms; }
+}

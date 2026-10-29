@@ -1,0 +1,43 @@
+@import "./styles/tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-size: var(--root-size); /* the 4 font-size steps scale every rem */
+  }
+  body {
+    margin: 0;
+    background: rgb(var(--color-bg));
+    color: rgb(var(--color-text));
+    font-family: var(--font-body);
+    line-height: var(--leading);
+    letter-spacing: var(--tracking);
+    word-spacing: var(--word-spacing);
+    text-align: left; /* left-aligned text only */
+    -webkit-font-smoothing: antialiased;
+  }
+  /* No italics in body text: emphasis is shown with weight instead. */
+  em, i, cite { font-style: normal; font-weight: 700; }
+  p, li { max-width: var(--measure); }
+
+  /* One clear, high-contrast focus ring everywhere. */
+  :focus-visible {
+    outline: var(--focus-width) solid rgb(var(--color-focus));
+    outline-offset: 2px;
+  }
+}
+
+/* Motion is opt-in: when off, nothing animates or transitions. */
+:root[data-motion="off"] *,
+:root[data-motion="off"] *::before,
+:root[data-motion="off"] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* Focus Mode (Phase 3): anything marked data-focus-hide disappears. */
+:root[data-focus-mode="on"] [data-focus-hide] { display: none !important; }
