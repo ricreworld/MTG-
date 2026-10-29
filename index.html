@@ -415,6 +415,34 @@ canvas#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
 .coachline.ok{background:var(--good-soft);border-color:var(--good)}
 .coachline b{font-weight:700}
 @media (min-width:881px){.coachline{display:none}}
+.mpath{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;padding-bottom:16px}
+.mtile{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;transition:transform .15s ease,border-color .15s}
+.mtile:hover{transform:translateY(-2px);border-color:var(--ink-2)}
+.mtile.next{border:2px solid var(--accent);padding:13px}
+.mtile .flag{position:absolute;top:-10px;right:12px;background:var(--accent);color:var(--accent-ink);font:700 .68rem/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;padding:5px 8px;border-radius:6px}
+.mnum{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font:700 1rem/1 var(--f-mono);background:var(--surface-2);color:var(--ink-2);border:2px solid var(--line)}
+.mtile.done .mnum{background:var(--good);color:var(--surface);border-color:transparent}
+.mtile.chal .mnum{border-style:dashed}
+.mtile.grad .mnum{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.mtext{display:grid;gap:2px;min-width:0}
+.mtext b{font-size:1rem;line-height:1.3}
+.mtext small{color:var(--ink-2);font-size:.85rem;line-height:1.4}
+.mstars{display:flex;gap:1px;font-style:normal}
+.mstars i{font-style:normal;color:var(--line);font-size:.95rem}
+.mstars i.on{color:var(--accent)}
+.mission{border:2px solid var(--accent);border-radius:14px;padding:14px;display:grid;gap:10px;background:var(--surface)}
+.mdots{display:flex;gap:5px}
+.mdots i{flex:1;height:6px;border-radius:99px;background:var(--surface-2)}
+.mdots i.done{background:var(--good)}
+.mdots i.now{background:var(--accent)}
+.objective{background:var(--accent-soft);border-radius:10px;padding:12px 14px;display:grid;gap:4px}
+.objective p{font-size:1.05rem;line-height:1.5}
+.pc.hl{box-shadow:0 0 0 4px var(--accent);animation:pulse 1.2s ease-in-out infinite}
+.stars{display:flex;gap:6px;font-size:2.4rem;line-height:1}
+.stars span{color:var(--line)}
+.stars span.on{color:var(--accent)}
+.learned{text-align:left;width:100%;background:var(--surface-2);border-radius:12px;padding:12px 14px}
+.learned ul{margin:8px 0 0;padding-left:1.2em;display:grid;gap:6px;font-size:.92rem;color:var(--ink)}
 /* calm mode + reduced motion */
 :root[data-calm="on"] *,:root[data-calm="on"] *::before,:root[data-calm="on"] *::after{animation:none!important;transition:none!important}
 :root[data-calm="on"] .toast{display:none}
@@ -435,7 +463,7 @@ footer.foot a{color:inherit}
       <span class="xpnum" id="xpnum">0 XP</span>
     </div>
     <div class="tools">
-      <button class="tbtn" id="playBtn" aria-label="Practice table"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="8" height="12" rx="1.5"/><rect x="13" y="7" width="8" height="12" rx="1.5" transform="rotate(8 17 13)"/></svg><span>Play</span></button>
+      <button class="tbtn" id="playBtn" aria-label="Mission path"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="8" height="12" rx="1.5"/><rect x="13" y="7" width="8" height="12" rx="1.5" transform="rotate(8 17 13)"/></svg><span>Missions</span></button>
       <button class="tbtn" id="parkBtn" aria-label="Park a thought"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/></svg><span>Park a thought</span></button>
       <button class="tbtn" id="setBtn" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>Settings</span></button>
     </div>
@@ -452,10 +480,10 @@ footer.foot a{color:inherit}
 
 /* ================= storage ================= */
 const KEY = "pwq-v1";
-const DEFAULT = {xp:0, seen:{}, quiz:{}, widgets:{}, done:{}, last:null, notes:"", reflect:{}, gloss:{}, practice:{tutorial:false, wins:0, pz:{}}, settings:{calm:false, size:1, spacing:false, theme:"system"}};
+const DEFAULT = {xp:0, seen:{}, quiz:{}, widgets:{}, done:{}, last:null, notes:"", reflect:{}, gloss:{}, practice:{tutorial:false, wins:0, pz:{}, missions:{}}, settings:{calm:false, size:1, spacing:false, theme:"system"}};
 function load(){ try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s && typeof s==="object") return Object.assign({}, DEFAULT, s, {settings:Object.assign({}, DEFAULT.settings, s.settings||{})}); }catch(e){} return JSON.parse(JSON.stringify(DEFAULT)); }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
-let S = load();
+let S = load(); S.practice=Object.assign({tutorial:false,wins:0,pz:{},missions:{}},S.practice||{});
 
 /* ================= helpers ================= */
 const $ = (sel, root=document) => root.querySelector(sel);
@@ -792,50 +820,38 @@ function tileHTML(L, target){
   </button>`;
 }
 function renderMap(){
-  const resume = S.last && LEVELS[S.last.L] && !S.done[LEVELS[S.last.L].id] ? S.last : null;
-  const nextCore = LEVELS.find(L=>L.core && !S.done[L.id]);
-  const nextAny = LEVELS.find(L=>!S.done[L.id]);
-  const target = resume ? resume.L : nextCore ? nextCore.n : nextAny ? nextAny.n : null;
-  const core = LEVELS.filter(L=>L.core), extra = LEVELS.filter(L=>!L.core);
-  const coreDone = core.filter(L=>S.done[L.id]).length;
-  const coreMin = core.reduce((a,L)=>a+L.m,0);
-  const learnBtn = target===null ? `<button class="btn btn-ghost" data-go="0">Review the levels</button>`
-    : resume ? `<button class="btn btn-ghost" data-resume>Continue: ${esc(LEVELS[target].t)}</button>`
-    : `<button class="btn btn-ghost" data-go="${target}">${coreDone?"Next level":"Learn the rules first"}: ${esc(LEVELS[target].t)}</button>`;
-  const badges = LEVELS.filter(L=>S.done[L.id]).map(L=>`<span class="badge" style="--sig:${L.c};--sig-ink:${L.ci||"#fff"}"><span class="sigil" aria-hidden="true">${L.sig}</span>${esc(L.t)}</span>`).join("")
-    + (S.practice.tutorial?`<span class="badge" style="--sig:var(--accent);--sig-ink:var(--accent-ink)"><span class="sigil" aria-hidden="true">★</span>First game played</span>`:"")
-    + PUZZLES.filter((_,i)=>S.practice.pz[i]).map(p=>`<span class="badge" style="--sig:var(--good);--sig-ink:var(--surface)"><span class="sigil" aria-hidden="true">✓</span>Puzzle: ${esc(p.t)}</span>`).join("");
-
+  const nm_=nextMission(), done=MISSIONS.filter(m=>S.practice.missions[m.id]).length;
+  const starsOf=m=>S.practice.missions[m.id]||0;
+  const tiles=MISSIONS.map((m,i)=>{ const st=starsOf(m), up=i===nm_;
+    return `<button class="mtile ${st?"done":""} ${up?"next":""} ${m.type==="puzzle"?"chal":""} ${m.type==="grad"?"grad":""}" data-mission="${i}" aria-label="Mission ${m.n}: ${esc(m.t)}. ${st?st+" stars":"Not done yet"}.">
+      ${up?`<span class="flag">Up next</span>`:""}
+      <span class="mnum" aria-hidden="true">${m.type==="grad"?"★":m.n}</span>
+      <span class="mtext"><b>${esc(m.t)}</b><small>${esc(m.teach)}</small></span>
+      <span class="mstars" aria-hidden="true">${[1,2,3].map(k=>`<i class="${k<=st?"on":""}">★</i>`).join("")}</span>
+    </button>`; }).join("");
+  const book=(list)=>list.map(L=>tileHTML(L,-1)).join("");
+  const badges = LEVELS.filter(L=>S.done[L.id]).map(L=>`<span class="badge" style="--sig:${L.c};--sig-ink:${L.ci||"#fff"}"><span class="sigil" aria-hidden="true">${L.sig}</span>${esc(L.t)}</span>`).join("");
   $("#view").innerHTML = `
   <div class="wrap">
     <section class="hero">
       <div>
-        <h1>Learn to play Magic: The Gathering by playing it.</h1>
-        <p>Sit down at the Practice Table and play a real game against the computer. A coach tells you what you can do at every step and explains why when something isn't allowed. Short rules levels are here whenever you want to go deeper. Your progress saves on this device.</p>
-        <div class="hero-actions"><button class="btn btn-primary" data-open-table="${S.practice.tutorial?"free":"tutorial"}">${S.practice.tutorial?"Play a free game":"Play your first guided game"} ${ICON.next}</button>${learnBtn}</div>
-        <p class="progress-note" style="margin-top:14px">Prefer less movement? <button class="mini" data-open="settings">Calm mode and settings</button></p>
+        <h1>Learn to play Magic: The Gathering, one mission at a time.</h1>
+        <p>Each mission puts real cards on a real table and teaches one thing by doing it. The coach tells you what to do and why. If you do something else, it tells you why that doesn't work. ${MISSIONS.length} missions, 2–4 minutes each.</p>
+        <div class="hero-actions">${nm_!==null?`<button class="btn btn-primary" data-mission="${nm_}">${done?"Continue":"Start"}: Mission ${nm_+1}, ${esc(MISSIONS[nm_].t)} ${ICON.next}</button>`:`<button class="btn btn-primary" data-act="free-menu">Free play ${ICON.next}</button>`}<button class="btn btn-ghost" data-open="settings">Calm mode and settings</button></div>
       </div>
       <svg class="hero-art" viewBox="0 0 200 200" aria-hidden="true">
         ${["W","U","B","R","G"].map((c,i)=>{const a=-Math.PI/2+i*2*Math.PI/5, x=100+70*Math.cos(a), y=100+70*Math.sin(a); return `<circle cx="${x}" cy="${y}" r="24" fill="var(--m${c})" stroke="var(--surface)" stroke-width="4"/><text x="${x}" y="${y+6}" text-anchor="middle" font-family="var(--f-display)" font-weight="700" font-size="18" fill="${c==="W"?"var(--mWi)":"#fff"}">${c}</text>`}).join("")}
         <path d="M100 72 L106 94 L128 100 L106 106 L100 128 L94 106 L72 100 L94 94 Z" fill="var(--accent)"/>
       </svg>
     </section>
-
-    <div class="section-label">Play</div>
-    <div class="pmenu">
-      <div class="pcard feature"><span class="chip warm" style="justify-self:start">Start here</span><h3>Guided first game</h3><p>A real game with a coach at your side. Hints are always on.</p>${S.practice.tutorial?`<span class="chip good" style="justify-self:start">Played</span>`:""}<button class="btn btn-primary" data-open-table="tutorial">Play the guided game</button></div>
-      <div class="pcard"><h3>Free play</h3><p>Shuffled decks, a coin flip, a mulligan decision. Hints when you ask.</p><button class="btn btn-ghost" data-open-table="free">Start a game</button></div>
-      <div class="pcard"><h3>Puzzles</h3><p>"Win this turn" challenges, one rule each. ${Object.keys(S.practice.pz).length} of ${PUZZLES.length} solved.</p><button class="btn btn-ghost" data-open-table="menu">See the puzzles</button></div>
-    </div>
-
-    <div class="section-label">Rules you need to play · ${coreDone} of ${core.length} done · about ${coreMin} min</div>
-    <div class="path">${core.map(L=>tileHTML(L,target)).join("")}</div>
-
-    <div class="section-label">Good to know, later</div>
-    <div class="path">${extra.map(L=>tileHTML(L,-1)).join("")}</div>
-
-    <div class="section-label">Badges</div>
-    <div class="badges">${badges || `<p class="empty-note">Finish a level or a game to earn a badge.</p>`}</div>
+    <div class="section-label">Mission path · ${done} of ${MISSIONS.length} done</div>
+    <div class="mpath">${tiles}</div>
+    <div class="section-label">After graduation</div>
+    <div class="pmenu"><div class="pcard ${graduated()?"feature":""}"><h3>Free play</h3><p>${graduated()?"Play full games with any deck style: Aggro, Ramp, Control, Tokens or Midrange. The coach is still there when you want it.":"Unlocks after Mission "+MISSIONS.length+", Graduation. Missions come first so every game makes sense."}</p>${graduated()?`<button class="btn btn-primary" data-act="free-menu">Choose a deck</button>`:""}</div></div>
+    <div class="section-label">Rulebook · optional short reads, any order</div>
+    <p class="empty-note" style="margin-bottom:12px">Want the "why" in more detail? Each mission links to the matching page here.</p>
+    <div class="path">${book(LEVELS)}</div>
+    ${badges?`<div class="section-label">Rulebook badges</div><div class="badges">${badges}</div>`:""}
     <footer class="foot">Based on <a href="https://thegamerslodge.com/" target="_blank" rel="noopener">The Gamers Lodge</a> beginner's guide, with a few rules updated to match the current game. Card names here are made up for practice.</footer>
   </div>`;
 }
@@ -897,7 +913,7 @@ function finishLevel(L){
     <p>A short break helps new things stick. Want one?</p>
     <div class="actions">
       ${nx?`<button class="btn btn-primary" data-go="${nx.n}">Next: ${esc(nx.t)}</button>`:""}
-      ${L.core&&L.n>=3?`<button class="btn btn-ghost" data-open-table="${S.practice.tutorial?"free":"tutorial"}">Try it at the Practice Table</button>`:""}
+      ${(()=>{ const mi=MISSIONS.findIndex(m=>m.read===L.id); return mi>=0?`<button class="btn btn-ghost" data-mission="${mi}">Practise it: Mission ${mi+1}</button>`:""; })()}
       <button class="btn btn-ghost" data-break>Take a 2-minute break</button>
       <button class="btn btn-ghost" data-map>Back to the map</button>
     </div>`);
@@ -1522,6 +1538,15 @@ function newGame(mode, opt={}){
      pending:null, discard:false, mull:null, over:null, busy:false, paused:false, respond:false, stack:null, warn:null, praise:null, log:[], cues:{}, cueNow:null, why:null,
      tips:true, checks:true, autotap:false, inspect:null, showHint:mode==="tutorial", stats:{good:0,warned:0,over:0}};
   const Y=G.pl.you, B=G.pl.bot;
+  if(mode==="mission"){
+    const def=opt.def, st=def.setup||{you:{},bot:{}}, ml=(keys,o)=>(keys||[]).map(k=>mk(k,o));
+    if(def.type==="mull"){ Y.hand=ml(def.hand1,"you"); Y.lib=deckList("starter_rg","you"); B.lib=deckList("starter_wb","bot"); for(let i=0;i<7;i++) B.hand.push(B.lib.shift()); G.first="you"; G.mull={n:0,stage:"decide",sel:new Set()}; log(`Mission: ${def.t}`); tableOpen=true; return; }
+    Y.hand=ml(st.you.hand,"you"); Y.bf=ml(st.you.bf,"you"); Y.lib=ml(st.you.lib,"you").concat(ml(Array(20).fill("forest"),"you"));
+    B.hand=ml(st.bot.hand,"bot"); B.bf=ml(st.bot.bf,"bot"); B.lib=ml(Array(20).fill("plains"),"bot");
+    if(st.bot.life) B.life=st.bot.life;
+    G.turn=st.turn||5; G.active=st.active||"you"; G.step="main1"; B.land=true; G.showHint=false;
+    log(`Mission: ${def.t}`); tableOpen=true; return;
+  }
   if(mode==="puzzle"){
     const P_=PUZZLES[opt.pz]; G.pl.you.deck="starter_rg";
     P_.you.bf.forEach(k=>Y.bf.push(mk(k,"you"))); P_.you.hand.forEach(k=>Y.hand.push(mk(k,"you")));
@@ -1653,6 +1678,7 @@ function castYou(c,target){
   }
   resolveSpell(c,"you",target);
   if(isCre(c)&&!G.cues.cast) cue("cast");
+  emit("cast",{c,t:target});
   paint();
 }
 function botChoose(){
@@ -1700,6 +1726,7 @@ function botAttack(){
   if(!blockers.length) att=cands;
   if(cands.reduce((s,c)=>s+pw(c),0)>=Y.life+blockers.reduce((s,c)=>s+pw(c),0)) att=cands;
   if(styleOf("bot")==="control") att=att.filter(c=>kw(c,"Flying")||!blockers.length);
+  if(G.mission&&G.mission.def.botAttack) att=B.bf.filter(c=>G.mission.def.botAttack.includes(c.k)&&ableAtk(c));
   G.atk=att.map(c=>c.id); att.forEach(c=>{ if(!kw(c,"Vigilance")) c.tapped=true; });
   if(!att.length){ log("Opponent doesn't attack."); setStep("main2"); return; }
   log(`Opponent attacks with <b>${names(att)}</b>.`); nextStep();
@@ -1713,6 +1740,7 @@ function botBlock(){
     if(pick){ G.blocks[a.id]=pick.id; used.add(pick.id); } });
   const through=()=>atks.filter(a=>G.blocks[a.id]==null).reduce((s,a)=>s+pw(a),0);
   if(through()>=B.life) atks.filter(a=>G.blocks[a.id]==null&&!kw(a,"Trample")).forEach(a=>{ if(through()<B.life) return; const b=free().filter(x=>canBlock(x,a)).sort((x,y)=>val(x)-val(y))[0]; if(b){ G.blocks[a.id]=b.id; used.add(b.id); } });
+  if(G.mission&&G.mission.def.botBlocks){ G.blocks={}; for(const [ak,bk] of Object.entries(G.mission.def.botBlocks)){ const a=atks.find(x=>x.k===ak), b=B.bf.find(x=>x.k===bk&&!x.tapped); if(a&&b&&canBlock(b,a)) G.blocks[a.id]=b.id; } }
   const bl=Object.entries(G.blocks);
   log(bl.length?bl.map(([a,b])=>`${nm(find(+b))} blocks ${nm(find(+a))}`).join(". ")+".":"Opponent doesn't block.");
 }
@@ -1738,7 +1766,12 @@ function combatDamage(){
   pass(false);
 }
 function gameOver(winner,reason){
-  if(G.over) return; G.over={winner,reason}; G.busy=false; G.respond=false;
+  if(G.over) return;
+  if(G.mission&&!G.mission.done){ G.busy=false; G.respond=false;
+    if(G.mission.def.type==="grad"){ G.over={winner,reason}; emit("gameover"); return; }
+    if(winner==="you"){ emit("win"); if(!G.mission.done){ G.over={winner,reason}; paint(); } return; }
+    missionFail(reason+" Your opponent won this time.", G.mission.def.type==="puzzle"?PUZZLES[G.mission.def.pz].hint:null); return; }
+  G.over={winner,reason}; G.busy=false; G.respond=false;
   const win=winner==="you"; let extra="";
   if(win){
     if(G.mode==="tutorial"&&!S.practice.tutorial){ S.practice.tutorial=true; save(); award(100,"guided game won"); extra="+100 XP for finishing the guided game."; }
@@ -1755,7 +1788,7 @@ function gameOver(winner,reason){
     <button class="btn ${nextPz?"btn-ghost":"btn-primary"}" data-act="again">Play again</button>
     <button class="btn btn-ghost" data-act="menu">Choose another deck or mode</button></div>`);
 }
-function puzzleFail(){ G.over={winner:"bot",reason:"Turn ended."}; paint();
+function puzzleFail(){ if(G.mission){ missionFail(`Your opponent survived on ${G.pl.bot.life} life. Missions reset, so you can try a different line.`,PUZZLES[G.pz].hint); return; } G.over={winner:"bot",reason:"Turn ended."}; paint();
   modal(`<h2>Not this time</h2><p>Your opponent survived on ${G.pl.bot.life} life. Puzzles reset, so you can try a different line.</p><p class="note" style="text-align:left">Hint: ${PUZZLES[G.pz].hint}</p><div class="actions"><button class="btn btn-primary" data-act="again">Try again</button><button class="btn btn-ghost" data-act="menu">Practice menu</button></div>`); }
 
 /* --- the coach: best move, and checking your moves --- */
@@ -1796,6 +1829,7 @@ function bestMove(){
     if(my&&jolt){ const un=G.atk.map(find).filter(a=>a&&G.blocks[a.id]==null).reduce((s,a)=>s+pw(a),0); if(un<B.life&&un+3>=B.life) return {d:"Cast Spark Jolt at your opponent.",w:"Unblocked damage plus 3 from Spark Jolt is exactly lethal."}; }
     return {d:"Press Deal damage.",w:"No instant would change this fight in your favour."}; }
   if(!my) return {d:"Watch your opponent's turn.",w:"You'll be asked if you need to decide something, like blocking."};
+  if(G.busy||!["main1","main2","attack"].includes(G.step)) return {d:"Wait a moment.",w:"The game is moving through the automatic part of the turn (untap, draw or cleanup)."};
   if(G.step==="attack"){
     const can=Y.bf.filter(canAttack).filter(c=>pw(c)>0); if(!can.length) return {d:"Press Don't attack.",w:"None of your creatures can attack. New ones have summoning sickness."};
     if(lethalAttack(can.map(c=>c.id))) return {d:`Attack with everything: ${names(can)}.`,w:"Even if they block their best, enough damage gets through to win."};
@@ -1909,8 +1943,9 @@ function clickHand(id){
   if(G.respond) return why("Your opponent's spell is waiting. Choose to counter it or let it resolve first.");
   if(G.paused) return why("Press Continue first.");
   if(G.pending) return why("Choose a target for your spell first, or press Cancel.");
-  const t=castTiming(c); if(t!==true) return why(t);
-  if(isLand(c)){ Y.hand.splice(Y.hand.indexOf(c),1); Y.bf.push(c); Y.land=true; log(`You play <b>${nm(c)}</b>.`); if(G.stats.good<3) praise("good. A land every turn keeps you on track."); cue("land"); paint(); return; }
+  const gm=gate(isLand(c)?"land":"cast",{c}); if(gm) return why(gm);
+  const t=castTiming(c); if(t!==true){ if(isLand(c)&&Y.land&&G.active==="you") emit("deny-land",{c}); return why(t); }
+  if(isLand(c)){ Y.hand.splice(Y.hand.indexOf(c),1); Y.bf.push(c); Y.land=true; log(`You play <b>${nm(c)}</b>.`); if(G.stats.good<3&&!G.mission) praise("good. A land every turn keeps you on track."); cue("land"); emit("land",{c}); paint(); return; }
   if(!canPay(Y.pool,c.k)){
     if(G.autotap&&canAfford("you",c.k)){ const t2=autoTap("you",c.k); log(`Tapped ${names(t2)} for mana.`); }
     else if(canAfford("you",c.k)) return why(`${nm(c)} costs ${pips(D(c).cost)}. Your pool has ${poolStr(Y.pool)?pips(poolStr(Y.pool)):"nothing yet"}. Tap more lands on the battlefield (they glow) to add mana.`);
@@ -1921,6 +1956,7 @@ function clickHand(id){
 }
 function chooseTarget(t){ const sp=G.pl.you.hand.find(x=>x.id===G.pending.id); const spec=TGT[D(sp).fx];
   if(t.player&&spec!=="any") return why(`${nm(sp)} needs a creature target.`);
+  const gm=gate("cast",{c:sp,t}); if(gm) return why(gm);
   commit("cast",{c:sp,t},()=>castYou(sp,t)); }
 function clickPerm(id){
   const c=find(id); if(!c||G.over) return; G.why=null; G.praise=null;
@@ -1932,6 +1968,7 @@ function clickPerm(id){
     if(c.tapped) return why(`${nm(c)} is tapped, and tapped creatures can't attack.`);
     if(kw(c,"Defender")) return why(`${nm(c)} has Defender, so it can never attack. It's a blocker.`);
     if(c.sick&&!kw(c,"Haste")) return why(`${nm(c)} arrived this turn, so it has summoning sickness. It can attack on your next turn. (Haste would let it attack now.)`);
+    const gs=gate("select",{c}); if(gs) return why(gs);
     G.atkSel.add(id); paint(); return; }
   if(c.o==="you"&&isCre(c)&&G.step==="block"&&G.active==="bot"&&!G.blocksDone){
     const cur_=Object.keys(G.blocks).find(a=>G.blocks[a]===id); if(cur_!=null){ delete G.blocks[cur_]; G.selBlocker=null; paint(); return; }
@@ -1939,11 +1976,13 @@ function clickPerm(id){
     G.selBlocker=G.selBlocker===id?null:id; paint(); return; }
   if(c.o==="bot"&&G.step==="block"&&G.active==="bot"&&!G.blocksDone&&G.selBlocker&&G.atk.includes(id)){
     const b=find(G.selBlocker); if(!canBlock(b,c)) return why(`${nm(c)} has Flying. Only creatures with Flying or Reach can block it.`);
-    G.blocks[id]=b.id; G.selBlocker=null; paint(); return; }
+    const ga=gate("assign",{a:c,b}); if(ga){ G.selBlocker=null; return why(ga); }
+    G.blocks[id]=b.id; G.selBlocker=null; emit("assign",{a:c,b}); paint(); return; }
   if(c.o==="you"&&(isLand(c)||d.mana)){
     if(c.tapped) return why(`${nm(c)} is already tapped. It untaps at the start of your next turn.`);
     if(d.mana&&c.sick) return why(`${nm(c)} has summoning sickness, so it can't tap for mana until your next turn. Creatures follow this rule even for mana.`);
-    c.tapped=true; G.pl.you.pool[srcCol(c)]++; log(`You tap ${nm(c)} for ${pips(srcCol(c))}.`); cue("mana"); paint(); return; }
+    const gt=gate("tap",{c}); if(gt) return why(gt);
+    c.tapped=true; G.pl.you.pool[srcCol(c)]++; log(`You tap ${nm(c)} for ${pips(srcCol(c))}.`); cue("mana"); emit("tap",{c}); paint(); return; }
   G.inspect=id; paint();
 }
 function clickPlayer(w){ if(!G.pending) return; chooseTarget({player:w}); }
@@ -1966,10 +2005,13 @@ function act(a,el){
   if(a==="pick-opp"){ S.practice.opp=el.dataset.deck; save(); paint(); return; }
   if(a==="pz"){ closeLayer(); newGame("puzzle",{pz:+el.dataset.pz}); return; }
   if(a==="again"){ closeLayer(); newGame(G.mode,{pz:G.pz,you:G.pl.you.deck,bot:S.practice.opp||"random"}); return; }
-  if(a==="menu"){ closeLayer(); tableOpen=false; paint(); return; }
+  if(a==="menu"){ closeLayer(); tableOpen=false; if(G&&G.mission){ go("map"); return; } paint(); return; }
+  if(a==="free-menu"){ closeLayer(); tableOpen=false; go("practice"); return; }
   if(a==="resume"){ tableOpen=true; paint(); return; }
   if(!G) return;
   const Y=G.pl.you;
+  const GK={mull:"mull",keep:"keep","bottom-ok":"bottom",combat:"combat",endturn:"endturn",attack:"attack","confirm-blocks":"blocks",damage:"damage",continue:"continue",counter:"counter",pass:"pass"};
+  if(GK[a]&&!G.over){ const data=a==="attack"?{ids:[...G.atkSel].filter(id=>{const c=find(id); return c&&canAttack(c);})}:{}; const gm=gate(GK[a],data); if(gm) return why(gm); }
   switch(a){
     case "cue-ok": G.cueNow=null; break;
     case "hint": G.showHint=!G.showHint; break;
@@ -1979,18 +2021,18 @@ function act(a,el){
     case "close-inspect": G.inspect=null; break;
     case "warn-go": { const f=G.warn.go; G.warn=null; G.stats.over++; log("You went ahead anyway."); f(); return; }
     case "warn-back": G.warn=null; G.pending=null; log("You changed your move."); break;
-    case "mull": commit("mull",null,()=>{ Y.lib=shuffle(Y.lib.concat(Y.hand)); Y.hand=Y.lib.splice(0,7); G.mull.n++; log(`You mulligan (${G.mull.n}). New 7 cards.`); paint(); }); return;
-    case "keep": commit("keep",null,()=>{ if(G.mull.n>0){ G.mull.stage="bottom"; paint(); } else { log("You keep your hand."); startGame(); } }); return;
-    case "bottom-ok": if(G.mull.sel.size!==G.mull.n) break; [...G.mull.sel].forEach(id=>{ const c=Y.hand.find(x=>x.id===id); Y.hand.splice(Y.hand.indexOf(c),1); Y.lib.push(c); }); log(`You keep, putting ${G.mull.n} card${G.mull.n>1?"s":""} on the bottom.`); startGame(); return;
-    case "combat": setStep("attack"); return;
-    case "endturn": commit("endturn",null,()=>setStep("end")); return;
-    case "attack": { const ids=[...G.atkSel].filter(id=>{const c=find(id); return c&&canAttack(c);}); commit("attack",ids,()=>doAttack(ids)); return; }
-    case "confirm-blocks": commit("blocks",null,doBlocks); return;
-    case "damage": nextStep(); return;
-    case "continue": G.paused=false; nextStep(); return;
+    case "mull": commit("mull",null,()=>{ if(G.mission&&G.mission.def.hand2){ Y.lib=Y.lib.concat(Y.hand); Y.hand=G.mission.def.hand2.map(k=>mk(k,"you")); } else { Y.lib=shuffle(Y.lib.concat(Y.hand)); Y.hand=Y.lib.splice(0,7); } G.mull.n++; log(`You mulligan (${G.mull.n}). New 7 cards.`); emit("mull"); paint(); }); return;
+    case "keep": commit("keep",null,()=>{ emit("keep"); if(G.over) return; if(G.mull.n>0){ G.mull.stage="bottom"; paint(); } else { log("You keep your hand."); startGame(); } }); return;
+    case "bottom-ok": if(G.mull.sel.size!==G.mull.n) break; [...G.mull.sel].forEach(id=>{ const c=Y.hand.find(x=>x.id===id); Y.hand.splice(Y.hand.indexOf(c),1); Y.lib.push(c); }); log(`You keep, putting ${G.mull.n} card${G.mull.n>1?"s":""} on the bottom.`); emit("bottom"); if(G.over) return; startGame(); return;
+    case "combat": emit("combat"); if(G.over) return; setStep("attack"); return;
+    case "endturn": commit("endturn",null,()=>{ emit("endturn"); if(G.over){ paint(); return; } setStep("end"); }); return;
+    case "attack": { const ids=[...G.atkSel].filter(id=>{const c=find(id); return c&&canAttack(c);}); commit("attack",ids,()=>{ emit("attack",{ids}); doAttack(ids); }); return; }
+    case "confirm-blocks": commit("blocks",null,()=>{ doBlocks(); emit("blocks"); paint(); }); return;
+    case "damage": nextStep(); emit("damage"); paint(); return;
+    case "continue": G.paused=false; emit("continue"); if(G.over){ paint(); return; } nextStep(); return;
     case "cancel": G.pending=null; break;
-    case "counter": commit("counter",null,respondCounter); return;
-    case "pass": commit("pass",null,respondPass); return;
+    case "counter": commit("counter",null,()=>{ respondCounter(); emit("counter"); paint(); }); return;
+    case "pass": commit("pass",null,()=>{ respondPass(); emit("pass"); paint(); }); return;
   }
   paint();
 }
@@ -2039,6 +2081,140 @@ function actions(){
   return [{t:"Waiting…",a:"",p:1,dis:1}];
 }
 
+/* --- missions: guided play-along lessons on the table --- */
+const has=(d,k)=>!!d.ids&&d.ids.some(id=>{ const c=find(id); return c&&c.k===k; });
+const MISSIONS=[
+  {id:"lands",t:"Lands and mana",teach:"Play a land, tap it for mana, cast your first creature.",read:"mana",
+   setup:{turn:1,you:{hand:["forest","viper","mountain"]},bot:{bf:["plains"]}},
+   obj:[
+    {do:"Play a land: tap the <b>Forest</b> in your hand.",ev:"land",test:d=>d.c.k==="forest",hl:["hand","forest"],why:"Lands are free to play, and they pay for everything else.",wrong:{land:"Play the Forest this time. Duskfang Viper needs green mana, and Forests make green."}},
+    {do:"Tap the <b>Forest</b> on the battlefield to make mana.",ev:"tap",hl:["you","forest"],why:"Tapping (turning a card sideways) means you've used it this turn. Its mana goes into your mana pool."},
+    {do:`Cast <b>Duskfang Viper</b> from your hand. It costs ${P("G")}.`,ev:"cast",test:d=>d.c.k==="viper",hl:["hand","viper"],why:"You spent the green mana. The Viper is on the battlefield with summoning sickness, so it can attack from next turn."},
+    {do:"Now try to play the <b>Mountain</b> too.",ev:"deny-land",allow:["land"],hl:["hand","mountain"],why:"Exactly: only one land per turn. Keep the Mountain for next turn."},
+    {do:"Press <b>End turn</b>.",ev:"endturn",why:"That's a whole turn: land, mana, spell, done."}
+   ]},
+  {id:"costs",t:"Paying mana costs",teach:"Coloured symbols must match. Numbers can be any colour.",read:"mana",
+   setup:{you:{hand:["mountain","pup","boar"],bf:["mountain","forest","forest"]},bot:{bf:["plains","plains"]}},
+   obj:[
+    {do:"Play the <b>Mountain</b> from your hand.",ev:"land",hl:["hand","mountain"],why:"Four lands means four mana to spend this turn."},
+    {do:`Cast <b>Emberclaw Pup</b> (${P("1R")}). Tap a Mountain for the red, and any other land for the 1.`,ev:"cast",test:d=>d.c.k==="pup",hl:["hand","pup"],why:`The ${P("R")} had to be red. The ${P("1")} could be any colour.`,wrong:{cast:"Cast Emberclaw Pup first for this step."}},
+    {do:`Cast <b>Mossback Boar</b> (${P("1G")}) with the lands you have left.`,ev:"cast",test:d=>d.c.k==="boar",hl:["hand","boar"],why:"Pay the coloured symbols with the right colour first, then use any colour for the number."},
+    {do:"Press <b>End turn</b>.",ev:"endturn",why:"You used all four mana. Wasting no mana is a great habit."}
+   ]},
+  {id:"attack",t:"Attack!",teach:"Summoning sickness, Haste, and dealing damage.",read:"combat",
+   setup:{you:{hand:["spider","pup"],bf:["forest","forest","mountain","mountain","boar"]},bot:{bf:["plains","plains"]}},
+   obj:[
+    {do:"Cast <b>Canopy Spider</b>.",ev:"cast",test:d=>d.c.k==="spider",hl:["hand","spider"],why:"The Spider just arrived, so it has summoning sickness (the New tag)."},
+    {do:"Cast <b>Emberclaw Pup</b>.",ev:"cast",test:d=>d.c.k==="pup",hl:["hand","pup"],why:"The Pup has Haste, so summoning sickness doesn't apply to it."},
+    {do:"Press <b>Go to combat</b>.",ev:"combat",why:"Combat is the third phase of your turn."},
+    {do:"Tap <b>Mossback Boar</b> and <b>Emberclaw Pup</b> to choose them as attackers, then press <b>Attack</b>. (Try the Spider too, and see what happens.)",ev:"attack",test:d=>has(d,"boar")&&has(d,"pup"),hl:["you","boar"],why:"The Boar has been yours since your turn started, and the Pup has Haste. The Spider has summoning sickness, so it stays home.",wrong:{attack:"Attack with both the Boar and the Pup: tap both so they're outlined red, then press Attack."}},
+    {do:"Nobody can block. Press <b>Deal damage</b>.",ev:"damage",why:"Unblocked attackers hit the player: 2 + 2 = 4 damage. Your opponent is down to 16."}
+   ]},
+  {id:"block",t:"Block!",teach:"Choosing good blocks, and blocking flyers with Reach.",read:"combat",
+   setup:{active:"bot",turn:6,you:{bf:["forest","forest","forest","forest","rhino","spider"]},bot:{bf:["swamp","swamp","swamp","ghoul","bat"]}},botAttack:["ghoul","bat"],
+   obj:[
+    {do:"Your opponent attacks with Crypt Ghoul and Night Bat. Block the <b>Ghoul</b> with your <b>Thornback Rhino</b>: tap the Rhino, then tap the Ghoul.",ev:"assign",test:d=>d.a.k==="ghoul"&&d.b.k==="rhino",hl:["you","rhino"],why:"The Rhino (4/4) deals 4 damage to the 3/2 Ghoul and destroys it. The Ghoul only deals 3, so the Rhino survives.",wrong:{assign:"Try the Rhino on the Ghoul. Your Spider would die to the Ghoul's 3 power."}},
+    {do:"Now block the <b>Night Bat</b> with your <b>Canopy Spider</b>.",ev:"assign",test:d=>d.a.k==="bat"&&d.b.k==="spider",hl:["you","spider"],why:"The Bat has Flying. Only creatures with Flying or Reach can block it, and the Spider has Reach."},
+    {do:"Press <b>Confirm 2 blocks</b>.",ev:"blocks",why:"Blocks are locked in once you confirm."},
+    {do:"Press <b>Deal damage</b>.",ev:"damage",why:"Both attackers died, and you took no damage. Great blocking!"}
+   ]},
+  {id:"tricks",t:"Combat tricks",teach:"Instants after blocks can win a fight.",read:"types",
+   setup:{you:{hand:["surge"],bf:["forest","forest","boar"]},bot:{bf:["plains","plains","guard"]}},botBlocks:{boar:"guard"},
+   obj:[
+    {do:"Press <b>Go to combat</b>. Hold on to Wild Surge for now.",ev:"combat",wrong:{cast:"Not yet! Wild Surge is a trick. Cast it after they block, when it can win a fight."}},
+    {do:"Attack with <b>Mossback Boar</b>.",ev:"attack",test:d=>has(d,"boar"),hl:["you","boar"],why:"Your opponent sees a 2/2 attacking and blocks with their 2/2 Guard, expecting a trade."},
+    {do:"They blocked with Village Guard. Now cast <b>Wild Surge</b> on your Boar.",ev:"cast",test:d=>d.c.k==="surge"&&(!d.t||(d.t.card&&d.t.card.k==="boar")),hl:["hand","surge"],why:"Your Boar is now 5/5 until end of turn. Instants can surprise your opponent after they've committed.",wrong:{cast:"Target your own Boar, not their Guard!",damage:"Wait! Cast Wild Surge first, or your Boar just trades with the Guard."}},
+    {do:"Press <b>Deal damage</b>.",ev:"damage",why:"The Guard is destroyed and your Boar survives. That's a combat trick."}
+   ]},
+  {id:"fly",t:"Flying and Trample",teach:"Evasion: getting damage past blockers.",read:"keywords",
+   setup:{you:{bf:["island","forest","rhino","drake"]},bot:{life:10,bf:["plains","plains","guard"]}},botBlocks:{rhino:"guard"},
+   obj:[
+    {do:"Press <b>Go to combat</b>.",ev:"combat"},
+    {do:"Attack with <b>Thornback Rhino</b> and <b>Cloud Drake</b>.",ev:"attack",test:d=>has(d,"rhino")&&has(d,"drake"),hl:["you","drake"],why:"The Guard can't block the Drake, because the Drake has Flying. So it blocks the Rhino.",wrong:{attack:"Attack with both creatures."}},
+    {do:"Press <b>Deal damage</b>. Watch the log.",ev:"damage",why:"The Rhino needed only 2 damage to destroy the 2/2 Guard. Trample sent the other 2 through, plus 2 from the Drake in the air: 4 damage."}
+   ]},
+  {id:"deathtouch",t:"Deathtouch and First strike",teach:"Small creatures with big keywords.",read:"keywords",
+   setup:{active:"bot",turn:6,you:{bf:["forest","forest","viper","boar"]},bot:{bf:["plains","plains","swamp","ghoul","knight"]}},botAttack:["ghoul","knight"],
+   obj:[
+    {do:"They attack with Crypt Ghoul and Sunlit Knight. Block the <b>Ghoul</b> with your <b>Duskfang Viper</b>.",ev:"assign",test:d=>d.a.k==="ghoul"&&d.b.k==="viper",hl:["you","viper"],why:"The Viper has Deathtouch: any damage it deals destroys a creature, even a bigger one.",wrong:{assign:"Use the Viper on the Ghoul. Deathtouch destroys anything it damages."}},
+    {do:"Don't block the <b>Sunlit Knight</b>. Press <b>Confirm 1 block</b>.",ev:"blocks",test:()=>Object.keys(G.blocks).length===1,why:"The Knight has First strike. It would kill your 2/2 Boar before the Boar could hit back. Taking 2 damage is better than losing a creature for nothing.",wrong:{assign:"Careful: Sunlit Knight has First strike. It deals its damage first, so your 2/2 Boar would die without hurting it.",blocks:"Take the Boar's block off first (tap the Boar to undo). First strike would kill it for free."}},
+    {do:"Press <b>Deal damage</b>.",ev:"damage",why:"Your 1-mana Viper traded with their 3-mana Ghoul. The Knight hit you for 2, and Lifelink gained your opponent 2."}
+   ]},
+  {id:"stack",t:"The stack",teach:"Respond to spells with a counterspell, then use removal.",read:"types",
+   setup:{active:"bot",turn:6,you:{hand:["denial","jolt"],bf:["island","island","mountain","rhino"],lib:["forest"]},bot:{hand:["verdict"],bf:["swamp","swamp","swamp","bat"]}},
+   obj:[
+    {do:"Your opponent cast <b>Grim Verdict</b> to destroy your Rhino. It's on the stack, waiting to happen. Press <b>Counter it</b> to respond with Quick Denial.",ev:"counter",why:"Spells wait on the stack so players can respond. Your counterspell happened first and cancelled Grim Verdict.",wrong:{pass:"If you let it resolve, you lose your Rhino. Counter it!"}},
+    {do:"The Night Bat attacks. It has Flying, and your Rhino can't block flyers. Press <b>No blocks</b>.",ev:"blocks",why:"Without Flying or Reach, you can't block a flyer. You'll take 1."},
+    {do:"Press <b>Deal damage</b>, then <b>Continue</b>.",ev:"continue",allow:["damage"],why:"Their turn is nearly over. Yours is next."},
+    {do:"Your turn! Cast <b>Spark Jolt</b> on their <b>Night Bat</b>.",ev:"cast",test:d=>d.c.k==="jolt"&&(!d.t||(d.t.card&&d.t.card.k==="bat")),allow:["land"],hl:["hand","jolt"],why:"3 damage destroys the 1/1 Bat. Removal deals with threats you can't block.",wrong:{cast:"Target the Night Bat: it's the creature you can't block."}}
+   ]},
+  {id:"pz0",type:"puzzle",pz:0,t:"Challenge: Fast and furious",teach:"Win this turn using Haste.",read:"keywords"},
+  {id:"pz1",type:"puzzle",pz:1,t:"Challenge: Trample through",teach:"Win this turn with Trample and instants.",read:"keywords"},
+  {id:"pz2",type:"puzzle",pz:2,t:"Challenge: Clear the way",teach:"Win this turn by removing a blocker first.",read:"combat"},
+  {id:"pz3",type:"puzzle",pz:3,t:"Challenge: Go wide",teach:"Win this turn with tokens and Banner of Unity.",read:"styles"},
+  {id:"pz4",type:"puzzle",pz:4,t:"Challenge: Up in the air",teach:"Win this turn with Flying.",read:"keywords"},
+  {id:"mull",type:"mull",t:"Opening hands",teach:"Keep or mulligan, and the London mulligan.",read:"turn",
+   hand1:["mountain","ogre","brute","jolt","titan","rhino","ogre"],hand2:["forest","mountain","forest","boar","pup","ogre","rhino"],
+   obj:[
+    {do:"Here's your opening hand. Count the lands. Keep it, or <b>Mulligan</b>?",ev:"mull",why:"Only 1 land: you'd be stuck for turns. A mulligan gives you a fresh 7.",wrong:{keep:"Look again: just 1 land. You couldn't cast most of these spells for several turns. Mulligan!"}},
+    {do:"Your new hand. Keep it, or mulligan again?",ev:"keep",why:"3 lands and 4 spells is a great hand.",wrong:{mull:"This hand has 3 lands and cheap spells. That's a keeper, and each mulligan costs you a card."}},
+    {do:"You took 1 mulligan, so put <b>1 card</b> on the bottom of your library. Pick the one you're least likely to use soon (Thornback Rhino is a good choice), then press the button.",ev:"bottom",why:"This is the London mulligan: draw 7, then put one card back for each mulligan. Your most expensive spells are the best ones to put back."}
+   ]},
+  {id:"grad",type:"grad",t:"Graduation: a full game",teach:"Play a real game from start to finish, with the coach watching.",read:"win",
+   obj:[{do:"Play a full game. Press <b>What should I do?</b> whenever you're unsure. The coach will check your moves.",ev:"gameover",allow:"*",why:"You played a complete game of Magic: The Gathering."}]}
+];
+MISSIONS.forEach((m,i)=>{ m.n=i+1; if(m.type==="puzzle") m.obj=[{do:PUZZLES[m.pz].goal,ev:"win",allow:"*",why:`Solved, using ${PUZZLES[m.pz].rule}.`}]; });
+const nextMission=()=>{ const m=MISSIONS.find(x=>!S.practice.missions[x.id]); return m?m.n-1:null; };
+const graduated=()=>!!S.practice.missions.grad;
+const DEF_ALLOW=["tap","select","continue"];
+function gate(kind,data){ const M=G&&G.mission; if(!M||M.done) return null; const o=M.def.obj[M.i]; if(!o||o.allow==="*") return null;
+  if(o.ev===kind){ if(!o.test||o.test(data||{})) return null; M.wrongs++; return (o.wrong&&o.wrong[kind])||`Not quite. This step is: ${o.do}`; }
+  if(DEF_ALLOW.includes(kind)||(o.allow||[]).includes(kind)) return null;
+  M.wrongs++;
+  const R={endturn:"Not yet: ending your turn now would skip this step.",combat:"Not yet: there's something to do before combat.",land:"Not a land right now.",cast:"Not that spell right now.",attack:"Not quite.",blocks:"Not yet.",damage:"Not yet.",assign:"Not that block.",counter:"Not this time.",pass:"Not this time.",keep:"Not this hand.",mull:"Not this time.",bottom:"Not yet."};
+  return `${(o.wrong&&o.wrong[kind])||R[kind]||"Not quite."} This step is: ${o.do}`; }
+function emit(type,data){ const M=G&&G.mission; if(!M||M.done) return; const o=M.def.obj[M.i]; if(!o||o.ev!==type||(o.test&&!o.test(data||{}))) return;
+  if(o.why) M.learned.push(o.why); M.lastWhy=o.why; M.i++; G.why=null;
+  log(`<span style="color:var(--good)">✓ Step done: ${o.do.replace(/<[^>]+>/g,"")}</span>`);
+  if(M.i>=M.def.obj.length) completeMission(); }
+function startMission(idx){
+  const def=MISSIONS[idx]; if(!def) return; closeLayer(); go("practice");
+  if(def.type==="puzzle") newGame("puzzle",{pz:def.pz});
+  else if(def.type==="grad") newGame("tutorial");
+  else newGame("mission",{def});
+  G.mission={def,idx,i:0,wrongs:0,learned:[],lastWhy:null,done:false};
+  if(def.type!=="grad"){ G.checks=false; G.tips=false; G.cueNow=null; G.showHint=false; } else { G.checks=true; G.showHint=false; }
+  paint();
+  if(!def.type&&def.setup.active==="bot"){ enter(); paint(); }
+}
+function completeMission(){
+  const M=G.mission; M.done=true; G.over={winner:"mission"}; G.busy=false; G.respond=false;
+  const stars=M.wrongs===0?3:M.wrongs<=2?2:1, prev=S.practice.missions[M.def.id]||0;
+  if(!prev) award(M.def.type==="grad"?120:30,"mission complete");
+  if(stars>prev){ S.practice.missions[M.def.id]=stars; save(); }
+  if(!calm()) confetti();
+  paint();
+  const nx=MISSIONS[M.idx+1];
+  modal(`<h2>${M.def.type==="grad"?"You graduated!":"Mission complete!"}</h2>
+    <div class="stars" aria-label="${stars} of 3 stars">${[1,2,3].map(i=>`<span class="${i<=stars?"on":""}">★</span>`).join("")}</div>
+    <p>${stars===3?"No wrong moves. Perfect!":`${M.wrongs} wrong move${M.wrongs===1?"":"s"} along the way. That's how you learn. Replay for 3 stars.`}</p>
+    ${M.def.type==="grad"?`<p>${G.pl.bot.life<=0?"And you won!":"Win or lose, you can now play a real game of Magic."} Free play with every deck style is unlocked.</p>`:`<div class="learned"><div class="zl">What you learned</div><ul>${M.learned.map(x=>`<li>${x}</li>`).join("")}</ul></div>`}
+    <div class="actions">${nx?`<button class="btn btn-primary" data-mission="${M.idx+1}">Next: ${esc(nx.t)}</button>`:`<button class="btn btn-primary" data-act="free-menu">Go to free play</button>`}
+    <button class="btn btn-ghost" data-mission="${M.idx}">Replay this mission</button>
+    <button class="btn btn-ghost" data-map>Back to the mission path</button></div>`);
+}
+function missionFail(msg,hint){
+  const M=G.mission; G.over={winner:"bot"}; paint();
+  modal(`<h2>Not this time</h2><p>${msg}</p>${hint?`<p class="note" style="text-align:left">Hint: ${hint}</p>`:""}<div class="actions"><button class="btn btn-primary" data-mission="${M.idx}">Try again</button><button class="btn btn-ghost" data-map>Back to the mission path</button></div>`);
+}
+function missionPanel(){
+  const M=G.mission; if(!M) return ""; const objs=M.def.obj, o=objs[M.i];
+  return `<div class="mission"><div class="zl">Mission ${M.def.n} · ${esc(M.def.t)}${objs.length>1?` · step ${Math.min(M.i+1,objs.length)} of ${objs.length}`:""}</div>
+    ${objs.length>1?`<div class="mdots" aria-hidden="true">${objs.map((_,j)=>`<i class="${j<M.i?"done":j===M.i?"now":""}"></i>`).join("")}</div>`:""}
+    ${M.lastWhy&&!M.done?`<div class="feedback ok">✓ Nice<span>${M.lastWhy}</span></div>`:""}
+    ${o&&!M.done?`<div class="objective"><span class="zl">Your step</span><p>${o.do}</p></div>`:""}</div>`;
+}
+
 /* --- rendering --- */
 function pcard(c,zone){
   const d=D(c), hand=zone==="hand", land=d.t==="land";
@@ -2054,6 +2230,7 @@ function pcard(c,zone){
     if(c.o==="you"&&(land||(d.mana&&!c.sick))&&!c.tapped&&idle()&&!G.pending&&!(G.step==="attack"&&G.active==="you")) cls.push("tapme");
     if(G.inspect===c.id) cls.push("sel");
   }
+  if(G.mission&&!G.mission.done){ const o=G.mission.def.obj[G.mission.i]; if(o&&o.hl){ const [z,k]=o.hl; if(c.k===k&&((z==="hand"&&hand)||(z==="you"&&!hand&&c.o==="you")||(z==="bot"&&!hand&&c.o==="bot"))) cls.push("hl"); } }
   const label=`${d.n}${d.token?" token":""}${d.cost?", costs "+mv(c.k):""}${isCre(c)?`, ${pw(c)}/${tg(c)}`:""}${(d.kw||[]).length?", "+d.kw.join(", "):""}${c.tapped&&!hand?", tapped":""}`;
   const attr=hand?`data-hand="${c.id}"`:`data-perm="${c.id}"`;
   if(land&&!hand) return `<button class="${cls.join(" ")}" style="--frame:${FR.L}" ${attr} aria-label="${label}"><span class="ar lnd" style="background:${ART[d.c]}">${pips(d.c)}</span></button>`;
@@ -2084,14 +2261,15 @@ function paint(){
   if(!G||!tableOpen){ renderPracticeMenu(); return; }
   const Y=G.pl.you, B=G.pl.bot, my=G.active==="you", ph=TPHASES.findIndex(p=>p[1].includes(G.step));
   const sit=situation(), acts=actions(), yst=STYLE[styleOf("you")];
-  const title=G.mode==="tutorial"?"Guided game":G.mode==="puzzle"?`Puzzle: ${PUZZLES[G.pz].t}`:`${DECKS[Y.deck].n} vs ${DECKS[B.deck].n}`;
+  const scripted=G.mission&&!G.mission.def.type||(G.mission&&G.mission.def.type==="mull");
+  const title=G.mission?`Mission ${G.mission.def.n}: ${G.mission.def.t}`:G.mode==="tutorial"?"Guided game":G.mode==="puzzle"?`Puzzle: ${PUZZLES[G.pz].t}`:`${DECKS[Y.deck].n} vs ${DECKS[B.deck].n}`;
   const strip=TPHASES.map((p,i)=>`<span class="sp ${i===ph&&!G.mull?"on":""}">${p[0]}</span>`).join("");
   const sw=(id,lbl,on)=>`<div class="switch"><span id="${id}L">${lbl}</span><button role="switch" aria-labelledby="${id}L" aria-checked="${on}" data-act="${id}"></button></div>`;
-  const bm=!G.over&&!G.warn?bestMove():null;
+  const bm=!G.over&&!G.warn&&!scripted?bestMove():null;
   const ench=w=>G.pl[w].bf.filter(c=>D(c).t==="enchantment");
   $("#view").innerHTML=`<div class="wrap">
     <div class="lvl-head"><button class="tbtn" data-act="menu">${ICON.back}<span>Practice menu</span></button><h1>${esc(title)}</h1><span class="count">${G.mull?"Before the game":`Round ${Math.ceil(G.turn/2)}`}</span></div>
-    ${G.goal?`<div class="key" style="margin-bottom:12px">${ICON.key}<span>${G.goal}</span></div>`:""}
+    ${G.goal&&!G.mission?`<div class="key" style="margin-bottom:12px">${ICON.key}<span>${G.goal}</span></div>`:""}
     <div class="strip" aria-label="Turn structure">${strip}<span class="who">${G.mull?"Mulligan decision":(my?"Your turn":"Opponent's turn")+" · "+STEP_NAME[G.step]}</span></div>
     <div class="tgrid">
       <div class="board">
@@ -2112,53 +2290,49 @@ function paint(){
       </div>
       <aside class="coach" aria-label="Coach">
         ${G.warn?`<div class="warnbox" role="alert"><b>Coach check: are you sure?</b><ul>${G.warn.msgs.map(m=>`<li>${m}</li>`).join("")}</ul><div class="choice-row"><button class="btn btn-primary" data-act="warn-back">Change my move</button><button class="btn btn-ghost" data-act="warn-go">Do it anyway</button></div></div>`:""}
+        ${missionPanel()}
         ${G.cueNow&&!G.warn?`<div class="cue" role="status"><span>${G.cueNow}</span><button class="mini" data-act="cue-ok">Got it</button></div>`:""}
         <div><h2>${sit.h}</h2>${sit.b?`<p style="margin-top:6px">${sit.b}</p>`:""}</div>
-        ${sit.can?`<div><div class="zl" style="margin-bottom:6px">You can now</div><ul class="cando">${sit.can.map(x=>`<li>${x}</li>`).join("")}</ul></div>`:""}
+        ${sit.can&&!scripted?`<div><div class="zl" style="margin-bottom:6px">You can now</div><ul class="cando">${sit.can.map(x=>`<li>${x}</li>`).join("")}</ul></div>`:""}
         ${G.why?`<div class="feedback no" role="alert">Not allowed<span>${G.why}</span></div>`:""}
         ${G.praise?`<div class="feedback ok">Good move<span>${G.praise[0].toUpperCase()+G.praise.slice(1)}</span></div>`:""}
         ${bm?`<div><button class="btn ${G.showHint?"btn-ghost":"btn-primary"}" style="width:100%" data-act="hint" aria-expanded="${G.showHint}">${G.showHint?"Hide the coach's move":"What should I do?"}</button>${G.showHint?`<div class="movebox"><p><span class="zl">Do this</span><br><b>${bm.d}</b></p><p><span class="zl">Why</span><br>${bm.w}</p></div>`:""}</div>`:""}
-        ${G.mode!=="puzzle"&&yst?`<details class="planbox"><summary>Your plan: ${esc(yst.t)}</summary><p>${yst.plan}</p><ul>${yst.how.map(x=>`<li>${x}</li>`).join("")}</ul></details>`:""}
+        ${G.mode!=="puzzle"&&!G.mission&&yst?`<details class="planbox"><summary>Your plan: ${esc(yst.t)}</summary><p>${yst.plan}</p><ul>${yst.how.map(x=>`<li>${x}</li>`).join("")}</ul></details>`:""}
         ${inspectHTML()}
         <div><div class="zl" style="margin-bottom:6px">What happened</div><ul class="loglist">${G.log.slice(0,12).map(l=>`<li>${l}</li>`).join("")}</ul></div>
         <div class="toggles">${sw("checks","Coach checks my moves",G.checks)}${sw("tips","Teaching tips",G.tips)}${sw("autotap","Tap lands for me",G.autotap)}<p class="progress-note" style="line-height:1.4">Tap any card on the table to see what it does.</p></div>
       </aside>
     </div>
   </div>
-  <div class="navbar">${G.warn?`<div class="coachline no" role="status"><b>Coach check:</b> ${G.warn.msgs[0]}${G.warn.msgs.length>1?` (+${G.warn.msgs.length-1} more below)`:""}</div>`:G.why?`<div class="coachline no" role="status"><b>Not allowed:</b> ${G.why}</div>`:G.praise?`<div class="coachline ok" role="status"><b>Good move:</b> ${G.praise}</div>`:bm&&G.showHint?`<div class="coachline"><b>Coach:</b> ${bm.d}</div>`:bm&&!G.busy?`<div class="coachline">${sit.h}. <b>Unsure?</b> Tap “What should I do?” in the coach panel below.</div>`:""}<div class="inner">${acts.map(x=>`<button class="btn ${x.p?"btn-primary":"btn-ghost"}" ${x.a?`data-act="${x.a}"`:""} ${x.dis?"disabled":""}>${x.t}</button>`).join("")}</div></div>`;
+  <div class="navbar">${G.warn?`<div class="coachline no" role="status"><b>Coach check:</b> ${G.warn.msgs[0]}${G.warn.msgs.length>1?` (+${G.warn.msgs.length-1} more below)`:""}</div>`:G.why?`<div class="coachline no" role="status"><b>Not allowed:</b> ${G.why}</div>`:G.mission&&!G.mission.done&&G.mission.def.obj[G.mission.i]&&scripted?`<div class="coachline ok"><b>Your step:</b> ${G.mission.def.obj[G.mission.i].do}</div>`:G.praise?`<div class="coachline ok" role="status"><b>Good move:</b> ${G.praise}</div>`:bm&&G.showHint?`<div class="coachline"><b>Coach:</b> ${bm.d}</div>`:bm&&!G.busy?`<div class="coachline">${sit.h}. <b>Unsure?</b> Tap “What should I do?” in the coach panel below.</div>`:""}<div class="inner">${acts.map(x=>`<button class="btn ${x.p?"btn-primary":"btn-ghost"}" ${x.a?`data-act="${x.a}"`:""} ${x.dis?"disabled":""}>${x.t}</button>`).join("")}</div></div>`;
 }
 function deckCard(k,sel,act_){ const d=DECKS[k], st=STYLE[d.st]; return `<button class="deckpick ${sel?"on":""}" data-act="${act_}" data-deck="${k}" aria-pressed="${sel}"><span class="dp-top"><span>${pips(d.cols)}</span><b>${esc(d.n)}</b></span><span class="chip ${sel?"warm":""}">${esc(st.t)}</span><span class="dp-plan">${st.plan}</span><span class="dp-weak"><b>Weak to:</b> ${st.weak}</span>${S.practice.styles&&S.practice.styles[d.st]?`<span class="chip good">Won with</span>`:""}</button>`; }
 function renderPracticeMenu(){
-  const coreL=LEVELS.filter(L=>L.core&&!["start","what"].includes(L.id));
   const me=S.practice.deck||"starter_rg", opp=S.practice.opp||"random";
+  if(!graduated()){ const nm_=nextMission(); $("#view").innerHTML=`<div class="wrap"><section class="hero" style="grid-template-columns:1fr"><div><h1>Free play</h1><p>Free play unlocks after the Graduation mission. Missions teach each rule by doing it, so a full game makes sense when you get here.</p><div class="hero-actions">${nm_!==null?`<button class="btn btn-primary" data-mission="${nm_}">Next: Mission ${nm_+1}, ${esc(MISSIONS[nm_].t)}</button>`:""}<button class="btn btn-ghost" data-map>Mission path</button></div></div></section></div>`; return; }
   $("#view").innerHTML=`<div class="wrap">
     <section class="hero" style="grid-template-columns:1fr"><div>
-      <h1>The Practice Table</h1>
-      <p>Play real games of Magic against the computer. Press <b>What should I do?</b> any time for the best move and the reason. If you make a mistake, the coach stops you and explains why, and you decide whether to change it.</p>
+      <h1>Free play</h1>
+      <p>Full games against the computer with any playing style. Press <b>What should I do?</b> any time for the best move and the reason. The coach still checks your moves. You can switch that off in the coach panel.</p>
     </div></section>
-    ${G&&!G.over&&!tableOpen?`<div class="pcard feature" style="margin-bottom:14px"><h3>Game in progress</h3><p>Round ${Math.ceil(G.turn/2)}.</p><button class="btn btn-primary" data-act="resume">Resume game</button></div>`:""}
-    <div class="pmenu">
-      <div class="pcard feature"><span class="chip warm" style="justify-self:start">Start here</span><h3>Guided first game</h3><p>The cards are arranged so the first turns teach the basics: lands, mana, casting, attacking and blocking. The coach's move is always showing.</p>${S.practice.tutorial?`<span class="chip good" style="justify-self:start">Played</span>`:""}<button class="btn btn-primary" data-act="new-tutorial">Play the guided game</button></div>
-      <div class="pcard"><h3>Puzzles: win this turn</h3><p>Short challenges. Each one is built around one rule.</p><div class="pz-list">${PUZZLES.map((p,i)=>`<button class="pick" data-act="pz" data-pz="${i}"><span>${i+1}. ${p.t} <small>· ${p.rule}</small></span>${S.practice.pz[i]?`<span class="chip good">Solved</span>`:""}</button>`).join("")}</div></div>
-    </div>
-    <div class="section-label">Free play · 1. Choose your deck (your playing style)</div>
+    ${G&&!G.over&&!G.mission&&!tableOpen?`<div class="pcard feature" style="margin-bottom:14px"><h3>Game in progress</h3><p>Round ${Math.ceil(G.turn/2)}.</p><button class="btn btn-primary" data-act="resume">Resume game</button></div>`:""}
+    <div class="section-label">1. Choose your deck (your playing style)</div>
     <div class="decks">${Object.keys(DECKS).map(k=>deckCard(k,k===me,"pick-deck")).join("")}</div>
     <div class="section-label">2. Choose your opponent</div>
     <div class="choice-row" style="padding-bottom:6px"><button class="pick ${opp==="random"?"on":""}" data-act="pick-opp" data-deck="random" aria-pressed="${opp==="random"}">Surprise me</button>${Object.keys(DECKS).filter(k=>k!==me).map(k=>`<button class="pick ${opp===k?"on":""}" data-act="pick-opp" data-deck="${k}" aria-pressed="${opp===k}">${pips(DECKS[k].cols)} ${esc(DECKS[k].n)}</button>`).join("")}</div>
-    <div style="padding-block:14px 4px"><button class="btn btn-primary" data-act="new-free">Play ${esc(DECKS[me].n)} ${ICON.next}</button></div>
+    <div style="padding-block:14px 4px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary" data-act="new-free">Play ${esc(DECKS[me].n)} ${ICON.next}</button><button class="btn btn-ghost" data-map>Mission path</button></div>
     <details class="pcard" style="margin-top:18px"><summary style="cursor:pointer;font-weight:700">How this table is simpler than full Magic</summary>
       <ul style="margin:10px 0 0;padding-left:1.2em;display:grid;gap:6px;color:var(--ink-2)">
         <li>One blocker per attacker. In full Magic, several creatures can team up to block one attacker.</li>
         <li>You can cast instants in your main phases, in combat after blocks, and Quick Denial when your opponent casts a spell. Full Magic gives you a few more moments.</li>
-        <li>Spells and targets are chosen for you in a few places (Grave Return picks your best creature, Root Seeker picks a land).</li>
+        <li>A few choices are made for you (Grave Return picks your best creature, Root Seeker picks a land).</li>
         <li>Everything else works like the real game: phases, mana, the stack, combat damage, first strike, trample, summoning sickness, one land per turn, discarding to 7, tokens.</li>
       </ul></details>
-    <div class="section-label">Rules that help most at the table</div>
-    <div class="path">${coreL.map(L=>`<button class="tile ${S.done[L.id]?"done":""}" data-go="${L.n}" style="--sig:${L.c};--sig-ink:${L.ci||"#fff"}"><span class="sigil" aria-hidden="true">${L.sig}</span><span><h3>${esc(L.t)}</h3><p>${esc(L.s)}</p></span><span class="tile-meta"><span>${L.m} min</span>${S.done[L.id]?`<span class="chip good">Done</span>`:""}</span></button>`).join("")}</div>
   </div>`;
 }
 document.addEventListener("click", e=>{
   const ot=e.target.closest("[data-open-table]"); if(ot){ closeLayer(); const m=ot.dataset.openTable; if(m==="menu") tableOpen=false; go("practice"); if(m==="tutorial") newGame("tutorial"); if(m==="free") newGame("free",{you:S.practice.deck||"starter_rg",bot:S.practice.opp||"random"}); return; }
+  const ms=e.target.closest("[data-mission]"); if(ms){ startMission(+ms.dataset.mission); return; }
   const od=e.target.closest("[data-open-deck]"); if(od){ closeLayer(); S.practice.deck=od.dataset.openDeck; save(); go("practice"); newGame("free",{you:od.dataset.openDeck,bot:"random"}); return; }
   const a=e.target.closest("[data-act]"); if(a){ act(a.dataset.act,a); return; }
   if(cur.view!=="practice"||!G||!tableOpen) return;
@@ -2174,7 +2348,7 @@ W.styles = (el, st) => {
   el.innerHTML=`<div class="widget"><div class="choice-row" role="tablist">${keys.map(k=>`<button class="pick" role="tab" data-k="${k}">${STYLE[k].t}</button>`).join("")}<button class="pick" role="tab" data-k="combo">Combo</button></div><div class="panel" id="sp" aria-live="polite"></div><p class="progress-note" id="sc"></p></div>`;
   const show=k=>{ seen.add(k); const s=k==="combo"?combo:STYLE[k];
     $$("[role=tab]",el).forEach(b=>{const on=b.dataset.k===k; b.classList.toggle("on",on); b.setAttribute("aria-selected",on); if(seen.has(b.dataset.k)) b.classList.add("found");});
-    $("#sp",el).innerHTML=`<h3>${s.t}${deckFor[k]?` ${pips(DECKS[deckFor[k]].cols)}`:""}</h3><p>${s.plan}</p><ul style="margin:0;padding-left:1.2em;display:grid;gap:6px">${s.how.map(x=>`<li>${x}</li>`).join("")}</ul><p class="note"><b>Weak to:</b> ${s.weak}</p>${deckFor[k]?`<button class="btn btn-primary" style="justify-self:start" data-open-deck="${deckFor[k]}">Play ${DECKS[deckFor[k]].n} now</button>`:""}`;
+    $("#sp",el).innerHTML=`<h3>${s.t}${deckFor[k]?` ${pips(DECKS[deckFor[k]].cols)}`:""}</h3><p>${s.plan}</p><ul style="margin:0;padding-left:1.2em;display:grid;gap:6px">${s.how.map(x=>`<li>${x}</li>`).join("")}</ul><p class="note"><b>Weak to:</b> ${s.weak}</p>${deckFor[k]?(graduated()?`<button class="btn btn-primary" style="justify-self:start" data-open-deck="${deckFor[k]}">Play ${DECKS[deckFor[k]].n} now</button>`:`<p class="progress-note">You can play this deck in free play after Graduation.</p>`):""}`;
     $("#sc",el).textContent=seen.size===6?"You've seen every style.":`${seen.size} of 6 styles viewed`; if(seen.size===6) markWidget(st.id); };
   $$("[role=tab]",el).forEach(b=>b.onclick=()=>show(b.dataset.k)); show("aggro");
 };
@@ -2249,7 +2423,7 @@ document.addEventListener("keydown", e=>{
 });
 $("#brand").onclick=()=>{ closeLayer(); go("map"); };
 $("#setBtn").onclick=()=>drawer("settings");
-$("#playBtn").onclick=()=>{ closeLayer(); tableOpen=!!(G&&!G.over&&tableOpen); go("practice"); };
+$("#playBtn").onclick=()=>{ closeLayer(); go("map"); };
 $("#parkBtn").onclick=()=>drawer("park");
 
 function render(){ if(cur.view==="level") renderLevel(); else if(cur.view==="practice") paint(); else renderMap(); renderMeter(); }
