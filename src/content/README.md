@@ -63,3 +63,20 @@ Unknown fields are rejected, so a typo like `"tittle"` fails loudly instead of s
 | CR 112.1 | A spell is a card on the stack | high |
 | CR 119.1 | Starting life total is 20 | high |
 | CR 401.1 | The library is where a player's deck goes when the game starts | high |
+
+## Card design rules for example cards
+
+All example cards are original and fictional. Each one is checked against these rules, adapted from
+Mark Rosewater's "Design 101" (Making Magic, 2003), before it goes into a lesson or the Practice Table:
+
+1. **One idea per card.** One keyword or one effect, and short rules text. A beginner should
+   understand the card from the card alone, with no extra explanation.
+2. **Abilities work together.** If a card has two abilities, they support each other
+   (e.g. First strike + Lifelink are both about combat). No unrelated "add-ons".
+3. **Respect the colour wheel and card-type rules.** Each colour only does what that colour does
+   (green: Reach, big creatures, mana; blue: Flying, counterspells, card draw; black: removal, Deathtouch,
+   draining life; red: Haste, burn; white: tokens, life gain, First strike). Artifacts have generic
+   mana costs, lands make mana, enchantments don't tap.
+4. **Works under the Comprehensive Rules.** Rules text uses official wording patterns and is checked
+   like any other rules claim (see "Rules accuracy" above).
+5. **Realistic cost and power.** Close to real cards, so what the learner sees carries over to real games.
