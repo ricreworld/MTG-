@@ -1,0 +1,71 @@
+{
+  "id": "what-is-magic",
+  "order": 1,
+  "title": "What is Magic?",
+  "summary": "Two players, 20 life each. Bring your opponent to 0 to win.",
+  "estimatedMinutes": 4,
+  "checklist": [
+    { "id": "two-players", "label": "I know a normal game is one player against one other player" },
+    { "id": "twenty-life", "label": "I know each player starts with 20 life" },
+    { "id": "main-win", "label": "I know the main way to win" },
+    { "id": "other-losses", "label": "I know two other ways a player can lose" }
+  ],
+  "steps": [
+    {
+      "id": "welcome",
+      "title": "Welcome to Magic",
+      "body": "Magic: The Gathering is a card game. In this course you'll learn the most common way to play: **one player against one other player**.\n\nEach player brings their own [[deck]] of cards.\n\nYou play as a [[planeswalker]]: a powerful wizard. The cards in your deck are your magic. You'll cast them as [[spell|spells]] to summon creatures and make things happen.",
+      "visual": {
+        "type": "placeholder",
+        "src": "Two players sit across a table from each other. Each has a face-down deck in front of them.",
+        "altText": "Two players facing each other across a table, each with their own deck."
+      },
+      "glossaryTerms": ["deck", "planeswalker", "spell"],
+      "ruleRefs": ["CR 100.1"]
+    },
+    {
+      "id": "life-total",
+      "title": "Your life total",
+      "body": "Each player starts the game with **20 life**. Your [[life-total]] works like health points.\n\nWhen something deals damage to you, you lose that much life. Some cards let you gain life, too. There's no maximum.\n\n**How to win:** bring your [[opponent|opponent's]] life to **0 or less**. That's how most games end.",
+      "visual": {
+        "type": "placeholder",
+        "src": "Two life counters, one per player, both showing 20.",
+        "altText": "Two life counters, each showing 20."
+      },
+      "glossaryTerms": ["life-total", "opponent"],
+      "ruleRefs": ["CR 119.1", "CR 104.3b"],
+      "check": {
+        "question": "In a one-against-one game, how much life does each player start with?",
+        "options": [
+          { "id": "seven", "text": "7" },
+          { "id": "twenty", "text": "20" },
+          { "id": "forty", "text": "40" }
+        ],
+        "correctOptionId": "twenty",
+        "hint": "Look at the first sentence of this step. The number is in bold."
+      }
+    },
+    {
+      "id": "other-ways-to-lose",
+      "title": "Good to know: other ways to lose",
+      "body": "Running out of life isn't the only way to lose. There are two others:\n\n- **Empty library.** During a game, your deck is called your [[library]]. If you have to draw a card and your library is empty, you lose.\n- **Poison.** Some cards give [[poison-counter|poison counters]]. A player with **10 or more** loses.\n\nYou won't see these often as a beginner. It's enough to know they exist.",
+      "visual": {
+        "type": "placeholder",
+        "src": "An empty card space where the library used to be, next to a small pile of 10 poison counters.",
+        "altText": "An empty library space, and ten poison counters."
+      },
+      "glossaryTerms": ["library", "poison-counter"],
+      "ruleRefs": ["CR 104.3c", "CR 104.3d"],
+      "check": {
+        "question": "Your library is empty. When do you lose?",
+        "options": [
+          { "id": "right-away", "text": "Right away" },
+          { "id": "next-draw", "text": "The next time you have to draw a card" },
+          { "id": "never", "text": "Never" }
+        ],
+        "correctOptionId": "next-draw",
+        "hint": "An empty library on its own is fine. Think about what happens when you need to take a card from it."
+      }
+    }
+  ]
+}

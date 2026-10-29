@@ -1,0 +1,42 @@
+[
+  {
+    "id": "deck",
+    "term": "Deck",
+    "definition": "The cards you bring to play with. In Standard, a deck has at least 60 cards.",
+    "ruleRef": "CR 100.2a"
+  },
+  {
+    "id": "planeswalker",
+    "term": "Planeswalker",
+    "definition": "In Magic's story, you, the player, are a planeswalker: a powerful wizard. There's also a card type with the same name, which you'll meet later."
+  },
+  {
+    "id": "spell",
+    "term": "Spell",
+    "definition": "A card you're casting. It becomes a spell while it waits to take effect. Lands are never spells: you play them, you don't cast them.",
+    "ruleRef": "CR 112.1"
+  },
+  {
+    "id": "life-total",
+    "term": "Life total",
+    "definition": "How much life a player has. Each player starts with 20 in a normal game. Damage lowers it. At 0 or less, that player loses.",
+    "ruleRef": "CR 119.1"
+  },
+  {
+    "id": "opponent",
+    "term": "Opponent",
+    "definition": "The player you're playing against."
+  },
+  {
+    "id": "library",
+    "term": "Library",
+    "definition": "Your deck, once the game has started. It sits face down, and you draw cards from the top of it.",
+    "ruleRef": "CR 401.1"
+  },
+  {
+    "id": "poison-counter",
+    "term": "Poison counter",
+    "definition": "A marker some cards give to a player. A player with 10 or more poison counters loses the game.",
+    "ruleRef": "CR 104.3d"
+  }
+]
