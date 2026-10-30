@@ -12,6 +12,8 @@ import { StepCard } from "../lesson/StepCard";
 import { PracticeTable } from "../practice/PracticeTable";
 import { ScenarioPicker } from "../practice/ScenarioPicker";
 import { DeckPicker } from "../practice/DeckPicker";
+import { lazy, Suspense } from "react";
+const CardLibrary = lazy(() => import("../library/CardLibrary").then((m) => ({ default: m.CardLibrary })));
 import { makeMatch, type MatchSetup } from "../../game/match";
 import { SCENARIOS, scenarioById } from "../../game/scenarios";
 import { ModuleChecklist } from "../progress/ModuleChecklist";
@@ -24,9 +26,9 @@ import { SettingsPanel } from "./SettingsPanel";
 import { detectSwipe, type TouchPoint } from "./swipe";
 import { useShortcuts } from "./useShortcuts";
 
-type View = "lesson" | "outline" | "settings" | "paused" | "welcome" | "finished" | "practice";
+type View = "lesson" | "outline" | "settings" | "paused" | "welcome" | "finished" | "practice" | "library";
 
-const topButton = "inline-flex min-h-tap items-center gap-s2 rounded-md border-2 px-s3 font-bold";
+const topButton = "inline-flex min-h-tap flex-1 items-center justify-center gap-s2 rounded-md border-2 px-s2 font-bold sm:flex-none sm:px-s3";
 
 export function AppShell() {
   const { modules, glossary, errors } = content;
@@ -89,6 +91,7 @@ export function AppShell() {
       welcome: "Welcome back",
       finished: "You reached the end of the lessons so far",
       practice: scenario ? `Practice: ${scenario.title}` : "Practice Table",
+      library: "Card library",
     };
     setAnnouncement(text[view]);
     headingRef.current?.focus({ preventScroll: true });
@@ -126,8 +129,8 @@ export function AppShell() {
       </a>
 
       <header data-focus-hide className="border-b border-border pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex max-w-[64rem] items-center gap-s2 py-s2 [@media(max-height:500px)]:py-s1 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
-          <h1 className="mr-auto text-lg font-bold">Mana Steps</h1>
+        <div className="mx-auto flex max-w-[64rem] flex-wrap items-center gap-s2 py-s2 [@media(max-height:500px)]:py-s1 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
+          <h1 className="basis-full text-lg font-bold sm:mr-auto sm:basis-auto">Mana Steps</h1>
           <button type="button" onClick={() => toggleView("outline")} aria-pressed={view === "outline"}
             className={`${topButton} lg:hidden ${view === "outline" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
             <Icon name="list" /> Outline
@@ -207,7 +210,12 @@ export function AppShell() {
           {view === "settings" && <SettingsPanel ref={headingRef} onClose={() => setView("lesson")} />}
 
           {view === "practice" && !scenario && !pickingDeck && (
-            <ScenarioPicker ref={headingRef} completed={progress.scenarios} onPick={(id) => setScenarioId(id)} onPlayGame={() => setPickingDeck(true)} onBack={() => setView("lesson")} />
+            <ScenarioPicker ref={headingRef} completed={progress.scenarios} onPick={(id) => setScenarioId(id)} onPlayGame={() => setPickingDeck(true)} onLibrary={() => setView("library")} onBack={() => setView("lesson")} />
+          )}
+          {view === "library" && (
+            <Suspense fallback={<p className="p-s4">Loading the card library…</p>}>
+              <CardLibrary ref={headingRef} onBack={() => setView("practice")} />
+            </Suspense>
           )}
           {view === "practice" && !scenario && pickingDeck && (
             <DeckPicker ref={headingRef} onStart={(yourDeck, oppDeck) => { setPickingDeck(false); setMatchSetup({ yourDeck, oppDeck, seed: Math.floor(Math.random() * 1e9) }); }} onBack={() => setPickingDeck(false)} />
@@ -277,7 +285,7 @@ export function AppShell() {
         </p>
       </footer>
 
-      {view !== "practice" && <BottomBar
+      {view !== "practice" && view !== "library" && <BottomBar
         canBack={view === "lesson" && !isFirst(position)}
         canNext={view === "lesson"}
         nextLabel={atEnd ? "Finish" : "Next"}

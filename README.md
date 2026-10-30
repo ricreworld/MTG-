@@ -99,7 +99,7 @@ legacy/                    The earlier single-file prototype (Planeswalker Quest
 9. ✅ Card frames: every practice card has a name bar, art box with mana cost, type line, text box and power/toughness box
 9b. ✅ Real cards: the 25 practice cards are real Foundations cards with official art and exact Oracle text, under the Wizards Fan Content Policy (`public/art/`, `src/game/cards.ts`)
 10. ✅ Decks and free play: five ready-made 30-card decks, a full game against a simple computer opponent (`src/game/ai.ts`), and a coach that suggests each move with a reason and flags weaker moves (`src/game/coach.ts`). Undo everything; losing shows a calm summary
-11. Foundations card library: browse every card in the set (next)
+11. ✅ Foundations card library: every card in the set (517) with official text, search and colour/type filters; pictures load from Scryfall when online (`src/features/library/`, `src/content/foundations.json`)
 
 ## Licensing of card content
 
