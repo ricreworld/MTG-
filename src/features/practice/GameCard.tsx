@@ -1,10 +1,14 @@
-// A card on the Practice Table. All art is simple original SVG; no official card frames or symbols.
-// The whole card is a button so it's tappable and keyboard-focusable, with a full text label.
+// A card on the Practice Table, laid out like a real card: name bar with cost, art box, type line,
+// text box, and a power/toughness box. The frame colour matches the card's colour.
+// Everything is original (own frame design and own art). The whole card is a button, so it's
+// tappable and keyboard-focusable; its accessible name is the visible text plus hidden detail.
 import { ManaSymbol, type ManaColor } from "../../components/ManaSymbol";
 import { COLOR_NAME, parseCost, type CardDef } from "../../game/cards";
 import type { Permanent } from "../../game/engine";
 import { power, toughness } from "../../game/engine";
+import { CardArt } from "./CardArt";
 
+/** Frame fill + ink per colour (contrast of ink on fill is checked in tokens.css). */
 const FRAME: Record<CardDef["color"], string> = {
   W: "bg-mtg-white text-mtg-white-ink",
   U: "bg-mtg-blue text-mtg-blue-ink",
@@ -13,46 +17,28 @@ const FRAME: Record<CardDef["color"], string> = {
   G: "bg-mtg-green text-mtg-green-ink",
 };
 
-function CostSymbols({ cost }: { cost: string | undefined }) {
+function CostSymbols({ cost, size }: { cost: string | undefined; size: number }) {
   if (!cost) return null;
-  const parts = (cost.match(/\d+|[WUBRG]/g) ?? []);
+  const parts = cost.match(/\d+|[WUBRG]/g) ?? [];
   return (
-    <span className="inline-flex gap-[2px]">
+    <span className="inline-flex shrink-0 gap-[1px]">
       {parts.map((p, i) =>
         /\d/.test(p) ? (
-          <span key={i} role="img" aria-label={`${p} generic mana`} className="inline-grid h-[1.1rem] w-[1.1rem] place-items-center rounded-full bg-mtg-colorless font-mono text-[0.7rem] font-bold text-mtg-colorless-ink">{p}</span>
+          <span key={i} role="img" aria-label={`${p} generic mana`} style={{ width: `${size}rem`, height: `${size}rem` }} className="inline-grid place-items-center rounded-full bg-mtg-colorless font-mono text-[0.7em] font-bold text-mtg-colorless-ink">{p}</span>
         ) : (
-          <ManaSymbol key={i} color={p as ManaColor} size={1.1} />
+          <ManaSymbol key={i} color={p as ManaColor} size={size} />
         ),
       )}
     </span>
   );
 }
 
-/** Simple original art per card kind: a hill for lands, a silhouette for creatures, a spark for instants. */
-function Art({ card }: { card: CardDef }) {
-  if (card.kind === "land") {
-    return (
-      <svg viewBox="0 0 60 30" className="h-8 w-full" aria-hidden="true">
-        <path d="M0 30 Q15 8 30 20 T60 30 Z" fill="currentColor" opacity="0.5" />
-        <circle cx="46" cy="9" r="4" fill="currentColor" opacity="0.7" />
-      </svg>
-    );
-  }
-  if (card.kind === "creature") {
-    return (
-      <svg viewBox="0 0 60 30" className="h-8 w-full" aria-hidden="true">
-        <ellipse cx="30" cy="20" rx="14" ry="8" fill="currentColor" opacity="0.55" />
-        <circle cx="42" cy="12" r="6" fill="currentColor" opacity="0.7" />
-        <path d="M18 28 l-3 -8 M26 28 l-2 -8 M34 28 l2 -8 M42 28 l3 -8" stroke="currentColor" strokeWidth="2" opacity="0.6" />
-      </svg>
-    );
-  }
-  return (
-    <svg viewBox="0 0 60 30" className="h-8 w-full" aria-hidden="true">
-      <path d="M30 3 l4 10 l10 2 l-10 2 l-4 10 l-4 -10 l-10 -2 l10 -2 Z" fill="currentColor" opacity="0.7" />
-    </svg>
-  );
+export function describeCost(cost: string): string {
+  const c = parseCost(cost);
+  const bits: string[] = [];
+  if (c.generic) bits.push(`${c.generic} generic`);
+  for (const k of ["W", "U", "B", "R", "G"] as const) if (c[k]) bits.push(`${c[k]} ${COLOR_NAME[k]}`);
+  return bits.join(" and ");
 }
 
 export function describeCard(card: CardDef, perm?: Permanent): string {
@@ -69,18 +55,16 @@ export function describeCard(card: CardDef, perm?: Permanent): string {
   return parts.join(", ");
 }
 
-export function describeCost(cost: string): string {
-  const c = parseCost(cost);
-  const bits: string[] = [];
-  if (c.generic) bits.push(`${c.generic} generic`);
-  for (const k of ["W", "U", "B", "R", "G"] as const) if (c[k]) bits.push(`${c[k]} ${COLOR_NAME[k]}`);
-  return bits.join(" and ");
-}
+const typeLine = (card: CardDef): string => {
+  if (card.kind === "land") return "Basic Land";
+  if (card.kind === "creature") return "Creature";
+  return "Instant";
+};
 
 interface Props {
   card: CardDef;
   perm?: Permanent;
-  /** What tapping the card does right now, read by screen readers ("Play this land"). Empty = not tappable now. */
+  /** What tapping the card does right now, read by screen readers ("Play this land"). */
   action?: string | undefined;
   selected?: boolean | undefined;
   /** A visible word for state, e.g. "Attacking" or "Blocks Ghoul". */
@@ -91,31 +75,44 @@ interface Props {
 
 export function GameCard({ card, perm, action, selected, badge, onClick, size = "md" }: Props) {
   const tapped = perm?.tapped ?? false;
-  const w = size === "sm" ? "w-[4.6rem]" : "w-[5.6rem]";
-  // Screen readers get the visible card text plus this hidden detail; the name always contains the visible text.
+  const sm = size === "sm";
   const detail = describeCard(card, perm).replace(`${card.name}, `, "");
   const srDetail = `, ${detail}${action ? `. ${action}` : ""}`;
+  const pt = card.kind === "creature" ? `${perm ? power(perm) : card.power}/${perm ? toughness(perm) : card.toughness}` : null;
+  const rules = card.kind === "creature" ? (card.keywords?.join(", ") ?? "") : card.text;
+
   const body = (
     <span
-      className={`relative grid ${w} aspect-[5/7] content-start gap-[2px] rounded-md border-2 p-[3px] text-left text-[0.62rem] leading-tight ${FRAME[card.color]} ${
+      className={`relative grid ${sm ? "w-[4.8rem] text-[0.55rem]" : "w-[6.6rem] text-[0.62rem]"} aspect-[5/7] grid-cols-[minmax(0,1fr)] grid-rows-[auto_1fr_auto_auto] gap-[2px] rounded-[0.45rem] border-[3px] p-[3px] text-left leading-tight ${FRAME[card.color]} ${
         selected ? "border-focus ring-[3px] ring-focus" : "border-border-strong"
       } ${tapped ? "rotate-6" : ""}`}
     >
-      <span className="flex items-start justify-between gap-1 font-bold">
-        <span className="truncate">{card.name}</span>
-        <CostSymbols cost={card.cost} />
+      {/* Name bar */}
+      <span className="min-w-0 rounded-[3px] bg-surface px-1 py-[2px] font-bold leading-[1.1] text-text">{card.name}</span>
+      {/* Art box, with the mana cost pinned in its top-right corner */}
+      <span className="relative min-h-0 overflow-hidden rounded-[3px] border border-border-strong bg-bg/20 p-[2px]">
+        <CardArt cardId={card.id} />
+        {card.cost && (
+          <span className="absolute right-[1px] top-[1px] rounded-full bg-surface p-[1px]">
+            <CostSymbols cost={card.cost} size={sm ? 0.75 : 0.85} />
+          </span>
+        )}
       </span>
-      <span className="rounded-sm bg-bg/15 px-1"><Art card={card} /></span>
-      <span className="truncate text-[0.56rem] font-bold uppercase tracking-wide opacity-90">{card.kind}{card.keywords?.length ? ` · ${card.keywords.join(", ")}` : ""}</span>
-      {card.kind === "instant" && <span className="line-clamp-3 opacity-90">{card.text}</span>}
-      {card.kind === "creature" && (
-        <span className="absolute bottom-[3px] right-[3px] rounded-sm bg-surface px-1 font-mono text-[0.7rem] font-bold text-text">
-          {perm ? power(perm) : card.power}/{perm ? toughness(perm) : card.toughness}
-        </span>
+      {/* Type line */}
+      <span className="truncate rounded-[3px] bg-surface px-1 py-[1px] text-[0.9em] font-bold text-text">{typeLine(card)}</span>
+      {/* Text box */}
+      <span className={`${sm ? "min-h-[1.4em]" : "min-h-[2.6em]"} rounded-[3px] bg-surface px-1 py-[2px] text-text`}>
+        <span className={`${card.kind === "instant" ? "line-clamp-3" : "line-clamp-2"} ${card.kind === "creature" ? "font-bold" : ""}`}>{rules || " "}</span>
+      </span>
+      {pt && (
+        <span className="absolute bottom-[-3px] right-[-3px] rounded-[4px] border-[2px] border-border-strong bg-surface px-1 font-mono text-[0.95em] font-bold text-text">{pt}</span>
       )}
-      {perm && perm.damage > 0 && <span className="absolute bottom-[3px] left-[3px] rounded-sm bg-surface px-1 font-mono text-[0.6rem] font-bold text-text">-{perm.damage}</span>}
+      {perm && perm.damage > 0 && (
+        <span className="absolute bottom-[-3px] left-[-3px] rounded-[4px] border-[2px] border-border-strong bg-surface px-1 font-mono text-[0.85em] font-bold text-text">−{perm.damage}</span>
+      )}
     </span>
   );
+
   return (
     <span className="grid justify-items-center gap-1">
       {onClick ? (
@@ -127,7 +124,7 @@ export function GameCard({ card, perm, action, selected, badge, onClick, size = 
         <span>{body}<span className="sr-only">{srDetail}</span></span>
       )}
       {(badge || tapped) && (
-        <span className="max-w-[6rem] rounded-sm bg-surface-2 px-1 text-center text-[0.65rem] font-bold leading-tight">{[tapped ? "Tapped" : null, badge].filter(Boolean).join(" · ")}</span>
+        <span className="max-w-[7rem] rounded-sm bg-surface-2 px-1 text-center text-[0.65rem] font-bold leading-tight">{[tapped ? "Tapped" : null, badge].filter(Boolean).join(" · ")}</span>
       )}
     </span>
   );
