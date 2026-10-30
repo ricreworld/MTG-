@@ -55,7 +55,7 @@ src/
   content/                 Phase 2: schema.ts (Zod) + modules/*.json
   features/                Phase 3–7: shell, progress, practice, tts
   game/
-    cards.ts               17 original, fictional practice cards
+    cards.ts               25 real Foundations cards (exact Oracle text; Fan Content Policy)
     engine.ts              Pure rules reducer: (state, action) -> state. No React, no randomness
     scenarios.ts           5 guided scenarios: setup, goal, hints, coach notes
     *.test.ts              Engine and scenario tests
@@ -96,5 +96,14 @@ legacy/                    The earlier single-file prototype (Planeswalker Quest
 6. ✅ Practice Table mini-game (pure reducer + Vitest, 5 guided scenarios with hints and Undo)
 7. Text-to-speech: skipped on purpose (no voice, keep it simple)
 8. ✅ Accessibility audit: axe-core (WCAG 2.2 AA + best practice) reports 0 violations on every screen in both themes; keyboard and screen-reader walkthrough done
-9. ✅ Card frames: every practice card has a name bar, art box with mana cost, type line, text box and power/toughness box, with original SVG art per card (`src/features/practice/CardArt.tsx`)
+9. ✅ Card frames: every practice card has a name bar, art box with mana cost, type line, text box and power/toughness box
+9b. ✅ Real cards: the 25 practice cards are real Foundations cards with official art and exact Oracle text, under the Wizards Fan Content Policy (`public/art/`, `src/game/cards.ts`)
 10. Decks and free play: pick a ready-made deck, play a full practice game against the computer with the coach (next)
+
+## Licensing of card content
+
+Mana Steps is unofficial Fan Content permitted under the Wizards of the Coast Fan Content Policy
+(https://company.wizards.com/en/legal/fancontentpolicy). It is free and must stay free, with no ads or
+paid features. Card names, rules text and art are © Wizards of the Coast LLC. Card data and art crops come
+from Scryfall (https://scryfall.com), which is not affiliated with this project. Everything else in the app
+(lessons, code, frame design, icons) is original.

@@ -264,7 +264,7 @@ export function AppShell() {
 
       <footer data-focus-hide className="border-t border-border">
         <p className="mx-auto max-w-[64rem] px-s4 py-s4 text-sm text-text-muted">
-          Mana Steps is an unofficial fan-made learning tool. It isn't produced or endorsed by Wizards of the Coast. Example cards are made up.
+          Mana Steps is unofficial Fan Content permitted under the Fan Content Policy. Not approved/endorsed by Wizards. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC. Card data and images via Scryfall. This app is free and always will be.
         </p>
       </footer>
 

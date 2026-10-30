@@ -45,22 +45,22 @@ export const SCENARIOS: Scenario[] = [
     goal: "Play the Forest from your hand.",
     hints: ["Lands don't cost anything. You play them instead of casting them.", "Tap the Forest card in your hand, then choose Play this land."],
     readMore: "mana-and-lands",
-    setup: () => makeState({ you: { hand: ["forest", "boar"] } }),
+    setup: () => makeState({ you: { hand: ["forest", "cub"] } }),
     isComplete: (s) => !!bf(s, "forest"),
   },
   {
     id: "cast-a-creature",
     title: "Tap mana and cast a creature",
     teaches: "Tap lands for mana, then pay a creature's cost.",
-    goal: "Cast Mossback Boar. It costs {1}{G}: one green mana and one of any colour.",
+    goal: "Cast Bear Cub. It costs {1}{G}: one green mana and one of any colour.",
     hints: [
       "Mana comes from tapping lands. Tap a land on the battlefield to add its mana to your pool.",
-      "You need two mana in your pool, and at least one must be green. Tap both lands, then cast the Boar.",
-      "Tap Forest, tap Mountain, then tap Mossback Boar in your hand and choose Cast. Then pass priority so it resolves.",
+      "You need two mana in your pool, and at least one must be green. Tap both lands, then cast the Cub.",
+      "Tap Forest, tap Mountain, then tap Bear Cub in your hand and choose Cast. Then pass priority so it resolves.",
     ],
     readMore: "mana-and-lands",
-    setup: () => makeState({ you: { hand: ["boar"], battlefield: ["forest", "mountain"] } }),
-    isComplete: (s) => !!bf(s, "boar"),
+    setup: () => makeState({ you: { hand: ["cub"], battlefield: ["forest", "mountain"] } }),
+    isComplete: (s) => !!bf(s, "cub"),
   },
   {
     id: "attack",
@@ -68,15 +68,15 @@ export const SCENARIOS: Scenario[] = [
     teaches: "Only creatures you've controlled since your turn began can attack (unless they have Haste).",
     goal: "Attack your opponent with every creature that's allowed to attack.",
     hints: [
-      "Canopy Spider arrived this turn, so it has summoning sickness. Emberclaw Pup has Haste, so it doesn't care.",
-      "Go to combat, then tap Mossback Boar and Emberclaw Pup to choose them. Then choose Attack.",
+      "Thornweald Archer arrived this turn, so it has summoning sickness. Brazen Scourge has Haste, so it doesn't care.",
+      "Go to combat, then tap Bear Cub and Brazen Scourge to choose them. Then choose Attack.",
     ],
     readMore: "combat",
-    setup: () => makeState({ you: { battlefield: ["boar", "pup", { card: "spider", sick: true }] }, opp: { life: 20 } }),
-    isComplete: (s) => s.opp.life <= 16,
+    setup: () => makeState({ you: { battlefield: ["cub", { card: "scourge", sick: true }, { card: "archer", sick: true }] }, opp: { life: 20 } }),
+    isComplete: (s) => s.opp.life <= 15,
     coach: (before, after, action) => {
       if (action.type === "declareAttackers" && before.selectedAttackers.length === 1) {
-        return "That works, but you could attack with Emberclaw Pup too. Haste means it can attack the turn it arrives. Undo if you'd like to send both.";
+        return "That works, but you could attack with Brazen Scourge too. Haste means it can attack the turn it arrives. Undo if you'd like to send both.";
       }
       if (action.type === "declareAttackers" && before.selectedAttackers.length === 0) return "You chose not to attack. Your opponent has no creatures, so attacking is safe. Undo and try sending some attackers.";
       void after;
@@ -87,16 +87,17 @@ export const SCENARIOS: Scenario[] = [
     id: "block",
     title: "Block",
     teaches: "Choose blocks where your creature survives, or trades well. Flying needs Flying or Reach.",
-    goal: "Your opponent attacks with Crypt Ghoul (3/2) and Night Bat (1/1, Flying). Block both so you take no damage.",
+    goal: "Your opponent attacks with Highborn Vampire (4/3) and Leonin Skyhunter (2/2, Flying). Block both so you take no damage.",
     hints: [
-      "Compare power and toughness: your Rhino (4/4) survives the Ghoul (3/2) and destroys it.",
-      "Night Bat has Flying. Only your Canopy Spider (Reach) can block it.",
-      "Tap Thornback Rhino, then tap Crypt Ghoul. Tap Canopy Spider, then tap Night Bat. Then choose Confirm blocks.",
+      "Compare power and toughness: your Magnigoth Sentry (4/4) survives the Skyhunter (2/2) and destroys it. Bear Cub (2/2) would die to the Vampire for nothing.",
+      "Leonin Skyhunter has Flying. Only creatures with Flying or Reach can block it: your Sentry and your Archer both have Reach.",
+      "Thornweald Archer has Deathtouch: any damage it deals destroys the Vampire, even though the Archer dies too. That's a fair trade.",
+      "Tap Magnigoth Sentry, then tap Leonin Skyhunter. Tap Thornweald Archer, then tap Highborn Vampire. Then choose Confirm blocks.",
     ],
     readMore: "combat",
     setup: () => {
-      let s = makeState({ turn: "opp", you: { battlefield: ["rhino", "spider", "boar"] }, opp: { battlefield: ["ghoul", "bat"] } });
-      s = opponentAttacks(s, [bf(s, "ghoul", "opp")!.uid, bf(s, "bat", "opp")!.uid]);
+      let s = makeState({ turn: "opp", you: { battlefield: ["sentry", "archer", "cub"] }, opp: { battlefield: ["vampire", "skyhunter"] } });
+      s = opponentAttacks(s, [bf(s, "vampire", "opp")!.uid, bf(s, "skyhunter", "opp")!.uid]);
       return s;
     },
     isComplete: (s) => s.step === "main2" && s.you.life === 20,
@@ -121,22 +122,22 @@ export const SCENARIOS: Scenario[] = [
     id: "respond",
     title: "Respond with an instant",
     teaches: "Spells wait on the stack. You can respond before they resolve.",
-    goal: "Your opponent cast Spark Jolt at your Thornback Rhino. Counter it with Quick Denial before it resolves.",
+    goal: "Your opponent cast Stab at your Bear Cub. Counter it with Negate before it resolves.",
     hints: [
-      "Spark Jolt is on the stack, waiting. If you pass, it resolves and your Rhino takes 3 damage.",
-      "Quick Denial costs {U}{U}. Tap both Islands first.",
-      "Tap Island, tap Island, then tap Quick Denial and choose Cast. It goes on top of the stack and resolves first. Then pass.",
+      "Stab is on the stack, waiting. If you pass, it resolves: the Cub gets -2/-2 and is destroyed.",
+      "Negate costs {1}{U}. Tap both Islands first.",
+      "Tap Island, tap Island, then tap Negate and choose Cast. It goes on top of the stack and resolves first. Then pass.",
     ],
     readMore: "the-stack",
     setup: () => {
-      let s = makeState({ you: { hand: ["denial"], battlefield: ["island", "island", "rhino"] } });
-      s = opponentCasts(s, "jolt", { kind: "permanent", uid: bf(s, "rhino")!.uid });
+      let s = makeState({ you: { hand: ["negate"], battlefield: ["island", "island", "cub"] } });
+      s = opponentCasts(s, "stab", { kind: "permanent", uid: bf(s, "cub")!.uid });
       return s;
     },
-    isComplete: (s) => s.stack.length === 0 && !!bf(s, "rhino") && s.log.some((l) => /countered/.test(l)),
+    isComplete: (s) => s.stack.length === 0 && !!bf(s, "cub") && s.log.some((l) => /countered/.test(l)),
     coach: (before, _after, action) => {
       if (action.type === "pass" && before.stack.length === 1 && before.stack[0]?.caster === "opp") {
-        return "If you pass now, Spark Jolt resolves and your Rhino takes 3 damage. Undo, tap your Islands and cast Quick Denial in response.";
+        return "If you pass now, Stab resolves and your Bear Cub is destroyed. Undo, tap your Islands and cast Negate in response.";
       }
       return null;
     },
@@ -159,4 +160,3 @@ export function step(scenario: Scenario, state: GameState, action: Action): Game
   }
   return scenario.opponent ? scenario.opponent(state, after, action) : after;
 }
-

@@ -48,7 +48,7 @@ Unknown fields are rejected, so a typo like `"tittle"` fails loudly instead of s
 ## Rules accuracy
 
 - Every step cites the Comprehensive Rules (`ruleRefs`). Verify numbers against the current CR at https://magic.wizards.com/rules before publishing.
-- Use only original, fictional example cards. If a real card is ever quoted, copy its exact Oracle text and add it to the verification list below for checking against Scryfall.
+- Example cards are real Foundations cards (see `src/game/cards.ts`). Their names, costs, type lines, rules text and stats are copied exactly from the official Oracle text via Scryfall. Never paraphrase a card's text; if a card is quoted in a lesson, quote it exactly.
 
 ### Rule references to verify (author's note)
 
@@ -113,12 +113,15 @@ section (e.g. `CR 103`) instead of guessing. Verify against the current rules at
 | Commander is the most popular casual format | Module 11 | Widely reported; soften if you prefer |
 | Which abilities belong to which colour (the colour pie) | Module 10 | Mark Rosewater, "Mechanical Color Pie 2017" (Making Magic). Design conventions, not rules; they shift over time |
 
-No real card names, costs or Oracle text are used anywhere. All example cards (Emberclaw Pup, Thornback Rhino,
-Quick Denial) are fictional and follow the card design rules below.
+Every card in the app is a real Magic: The Gathering card from the Foundations set (FDN), used under the
+Wizards of the Coast Fan Content Policy: the app is free, non-commercial and unofficial, and carries the
+required notice in its footer. Card images are the official art crops (via Scryfall), stored in `public/art/`.
+Only cards the practice engine can run exactly as printed are included: basic lands, creatures whose text is
+keywords only, and instants with one simple effect. The exact Oracle text of each is in `src/game/cards.ts`.
 
-## Card design rules for example cards
+## Card choice rules for example cards
 
-All example cards are original and fictional. Each one is checked against these rules, adapted from
+When choosing which real cards to add, each one is checked against these rules, adapted from
 Mark Rosewater's "Design 101" (Making Magic, 2003), before it goes into a lesson or the Practice Table:
 
 1. **One idea per card.** One keyword or one effect, and short rules text. A beginner should

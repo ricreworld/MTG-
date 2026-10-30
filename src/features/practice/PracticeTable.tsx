@@ -80,7 +80,7 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
     if (p.owner === "you" && card.kind === "land") return { label: p.tapped ? "Already tapped" : "Tap for mana", action: () => act({ type: "tapForMana", uid: p.uid }) };
     if (p.owner === "you") return { label: "About this card", action: say(state.step === "blockers" && myTurn ? `${card.name} is attacking. Continue to see the damage.` : `${card.name} acts in combat: go to combat to attack with it, or block with it when your opponent attacks.`) };
     if (targeting) return { label: "About this card", action: say(`${targeting.name} can't target ${card.name}: it isn't a creature.`) };
-    return { label: "About this card", action: say(`${card.name} belongs to your opponent. You can block it when it attacks, or target it with a spell like Spark Jolt.`) };
+    return { label: "About this card", action: say(`${card.name} belongs to your opponent. You can block it when it attacks, or target it with a spell like Stab.`) };
   };
   const tapOf = (p: Permanent): { label: string; onClick: () => void } => {
     const a = permAction(p);
@@ -156,7 +156,6 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
       {/* Opponent */}
       <div className="grid gap-s2 rounded-lg border border-border bg-surface-2 p-s3">
         <p className="flex items-center gap-s3 font-bold">Opponent <span className="rounded-sm bg-surface px-s2 font-mono">Life {state.opp.life}</span>
-          {targeting?.effect === "damage3" && <button type="button" onClick={() => act({ type: "chooseTarget", target: { kind: "player", player: "opp" } })} className={`${secondary} ml-auto`}>Target opponent</button>}
         </p>
         <div className="flex flex-wrap gap-s2">{lands(theirs).map((p) => { const t = tapOf(p); return <GameCard key={p.uid} card={def(p.card)} perm={p} size="sm" action={t.label} onClick={t.onClick} />; })}</div>
         <div className="flex flex-wrap gap-s2">
@@ -201,7 +200,7 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
         <p className="font-bold">Your hand <span className="text-sm font-normal text-text-muted">({state.you.hand.length} card{state.you.hand.length === 1 ? "" : "s"})</span></p>
         {targeting && (
           <div className="flex flex-wrap items-center gap-s2 rounded-md bg-accent-soft p-s2 text-sm">
-            <span>Choose a target for <strong>{targeting.name}</strong>: tap a creature{targeting.effect === "damage3" ? " or Target opponent" : ""}.</span>
+            <span>Choose a target for <strong>{targeting.name}</strong>: tap a creature.</span>
             <button type="button" onClick={() => act({ type: "cancelTarget" })} className={secondary}>Cancel</button>
           </div>
         )}
@@ -252,7 +251,9 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
           {state.log.filter(Boolean).map((l, i) => <li key={i}>{l}</li>)}
         </ol>
       </details>
-      <p className="text-sm text-text-muted">Cards here are made up for practice. {Object.keys(CARDS).length} fictional cards, no official artwork.</p>
+      <p className="text-sm text-text-muted">
+        The {Object.keys(CARDS).length} cards on this table are real cards from the Magic: The Gathering set Foundations, with their official rules text and art. Card images and text are © Wizards of the Coast LLC, used under the Wizards Fan Content Policy. Card data via Scryfall.
+      </p>
     </section>
   );
 });

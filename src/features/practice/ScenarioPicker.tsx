@@ -16,7 +16,7 @@ export const ScenarioPicker = forwardRef<HTMLHeadingElement, Props>(function Sce
         <h2 id="scenarios-heading" ref={headingRef} tabIndex={-1} className="text-2xl font-bold">Practice Table</h2>
         <button type="button" onClick={onBack} className="inline-flex min-h-tap items-center gap-s2 rounded-md border-2 border-border-strong bg-surface px-s3 font-bold"><Icon name="back" /> Lessons</button>
       </div>
-      <p>Short, guided practice with made-up cards. Each scenario has a goal, a Hint button and Undo. You can't lose here: a mistake just gets a hint.</p>
+      <p>Short, guided practice with real Foundations cards. Each scenario has a goal, a Hint button and Undo. You can't lose here: a mistake just gets a hint.</p>
       <ol className="grid gap-s2">
         {SCENARIOS.map((sc, i) => {
           const done = completed.includes(sc.id);

@@ -144,7 +144,7 @@ export const resetUids = () => { uidCounter = 0; };
 function checkState(s: GameState): GameState {
   let next = s;
   for (const p of s.battlefield) {
-    if (isCreature(p) && (p.damage >= toughness(p) || p.deathtouched)) {
+    if (isCreature(p) && (p.damage >= toughness(p) || p.deathtouched || toughness(p) <= 0)) {
       next = { ...next, battlefield: next.battlefield.filter((x) => x.uid !== p.uid) };
       next = log(next, `${def(p.card).name} is destroyed and goes to the graveyard.`);
     }
@@ -163,13 +163,12 @@ function resolveTop(s: GameState): GameState {
   if (!item) return s;
   let next: GameState = { ...s, stack: s.stack.slice(0, -1) };
   const card = def(item.card);
-  const who = item.caster === "you" ? "You" : "Your opponent";
   if (card.kind === "creature") {
     next = { ...next, battlefield: [...next.battlefield, { uid: item.uid, card: item.card, owner: item.caster, tapped: false, summoningSick: true, damage: 0, pump: { power: 0, toughness: 0 }, deathtouched: false }] };
     return log(next, `${card.name} resolves and enters the battlefield.`);
   }
   const t = item.target;
-  if (card.effect === "counter" && t?.kind === "spell") {
+  if ((card.effect === "counter" || card.effect === "counterNoncreature") && t?.kind === "spell") {
     const victim = next.stack.find((x) => x.uid === t.uid);
     if (!victim) return log(next, `${card.name} has nothing to counter any more, so it does nothing.`);
     next = { ...next, stack: next.stack.filter((x) => x.uid !== t.uid) };
@@ -182,17 +181,12 @@ function resolveTop(s: GameState): GameState {
     const after = find(next, t.uid);
     return log(next, `${card.name} resolves: ${def(p.card).name} is ${after ? power(after) : "?"}/${after ? toughness(after) : "?"} until end of turn.`);
   }
-  if (card.effect === "damage3") {
-    if (t?.kind === "player") {
-      next = { ...next, [t.player]: { ...next[t.player], life: next[t.player].life - 3 } };
-      return checkState(log(next, `${card.name} resolves: 3 damage to ${t.player === "you" ? "you" : "your opponent"}.`));
-    }
-    if (t?.kind === "permanent") {
-      const p = find(next, t.uid);
-      if (!p) return log(next, `${card.name}'s target is gone, so it does nothing.`);
-      next = { ...next, battlefield: next.battlefield.map((x) => (x.uid === p.uid ? { ...x, damage: x.damage + 3 } : x)) };
-      return checkState(log(next, `${who === "You" ? "Your" : "Their"} ${card.name} resolves: 3 damage to ${def(p.card).name}.`));
-    }
+  if (card.effect === "shrink2" && t?.kind === "permanent") {
+    const p = find(next, t.uid);
+    if (!p) return log(next, `${card.name}'s target is gone, so it does nothing.`);
+    next = { ...next, battlefield: next.battlefield.map((x) => (x.uid === p.uid ? { ...x, pump: { power: x.pump.power - 2, toughness: x.pump.toughness - 2 } } : x)) };
+    const after = find(next, t.uid);
+    return checkState(log(next, `${card.name} resolves: ${def(p.card).name} is ${after ? power(after) : "?"}/${after ? toughness(after) : "?"} until end of turn.`));
   }
   return log(next, `${card.name} resolves.`);
 }
@@ -295,12 +289,14 @@ export function reduce(state: GameState, action: Action): GameState {
           ? `${card.name} costs ${card.cost}. Tap your lands first to put mana in your pool, then cast it.`
           : `You don't have enough mana for ${card.name} (it costs ${card.cost}). You need more lands, or lands of the right colour.`);
       }
-      if (card.kind === "instant" && card.effect !== "counter" && !s.pendingTarget) {
+      const counters = card.effect === "counter" || card.effect === "counterNoncreature";
+      if (card.kind === "instant" && !counters && !s.pendingTarget) {
         return { ...s, pendingTarget: action.uid };
       }
-      if (card.effect === "counter") {
+      if (counters) {
         const target = s.stack[s.stack.length - 1];
-        if (!target || target.caster === me) return refuse(s, "Quick Denial needs a spell to counter. Cast it in response, while your opponent's spell is on the stack.");
+        if (!target || target.caster === me) return refuse(s, `${card.name} needs a spell to counter. Cast it in response, while your opponent's spell is on the stack.`);
+        if (card.effect === "counterNoncreature" && def(target.card).kind === "creature") return refuse(s, `${card.name} says "noncreature spell", and ${def(target.card).name} is a creature spell. It can't counter that.`);
         const next: GameState = {
           ...s,
           you: { ...s.you, hand: s.you.hand.filter((u) => u !== action.uid), pool: pay(s.you.pool, card.cost) },
@@ -325,7 +321,7 @@ export function reduce(state: GameState, action: Action): GameState {
         const p = find(s, t.uid);
         if (!p || !isCreature(p)) return refuse(s, `${card.name} needs a creature as its target.`);
       }
-      if (t.kind === "player" && card.effect !== "damage3") return refuse(s, `${card.name} targets a creature, not a player.`);
+      if (t.kind === "player") return refuse(s, `${card.name} targets a creature, not a player.`);
       if (t.kind === "spell") return refuse(s, `${card.name} can't target a spell.`);
       const next: GameState = {
         ...s,
@@ -333,8 +329,7 @@ export function reduce(state: GameState, action: Action): GameState {
         you: { ...s.you, hand: s.you.hand.filter((u) => u !== s.pendingTarget), pool: pay(s.you.pool, card.cost) },
         stack: [...s.stack, { uid: s.pendingTarget, card: card.id, caster: me, target: t }],
       };
-      const targetName = t.kind === "player" ? (t.player === "you" ? "yourself" : "your opponent") : name(s, t.uid);
-      return log(next, `You cast ${card.name} targeting ${targetName}. It goes on the stack.`);
+      return log(next, `You cast ${card.name} targeting ${name(s, t.uid)}. It goes on the stack.`);
     }
 
     case "cancelTarget":

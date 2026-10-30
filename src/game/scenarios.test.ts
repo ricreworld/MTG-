@@ -31,7 +31,7 @@ describe("walkthroughs (the 'correct' path completes each scenario)", () => {
     let s = sc.setup();
     s = reduce(s, { type: "tapForMana", uid: bf(s, "forest").uid });
     s = reduce(s, { type: "tapForMana", uid: bf(s, "mountain").uid });
-    s = reduce(s, { type: "cast", uid: inHand(s, "boar") });
+    s = reduce(s, { type: "cast", uid: inHand(s, "cub") });
     expect(sc.isComplete(s)).toBe(false); // still on the stack
     s = reduce(s, { type: "pass" });
     expect(sc.isComplete(s)).toBe(true);
@@ -41,33 +41,38 @@ describe("walkthroughs (the 'correct' path completes each scenario)", () => {
     const sc = get("attack");
     let s = sc.setup();
     s = reduce(s, { type: "goToCombat" });
-    const one = reduce(s, { type: "toggleAttacker", uid: bf(s, "boar").uid });
-    expect(sc.coach?.(one, reduce(one, { type: "declareAttackers" }), { type: "declareAttackers" })).toMatch(/Emberclaw Pup too/);
-    let both = reduce(one, { type: "toggleAttacker", uid: bf(s, "pup").uid });
+    const one = reduce(s, { type: "toggleAttacker", uid: bf(s, "cub").uid });
+    expect(sc.coach?.(one, reduce(one, { type: "declareAttackers" }), { type: "declareAttackers" })).toMatch(/Brazen Scourge too/);
+    let both = reduce(one, { type: "toggleAttacker", uid: bf(s, "scourge").uid });
     expect(sc.coach?.(both, reduce(both, { type: "declareAttackers" }), { type: "declareAttackers" })).toBeNull();
     both = reduce(both, { type: "declareAttackers" });
     both = reduce(both, { type: "declareBlockers" }); // scripted: opponent has nothing to block with
     expect(sc.isComplete(both)).toBe(true);
-    const sick = reduce(s, { type: "toggleAttacker", uid: bf(s, "spider").uid });
+    const sick = reduce(s, { type: "toggleAttacker", uid: bf(s, "archer").uid });
     expect(sick.refusal).toMatch(/summoning sickness/);
   });
 
   it("block: good blocks take no damage; the coach flags a bad block", () => {
     const sc = get("block");
     let s = sc.setup();
-    const ghoul = bf(s, "ghoul", "opp").uid;
-    const bat = bf(s, "bat", "opp").uid;
-    // Canopy Spider (1/3) blocking Crypt Ghoul (3/2) would die without killing it: the coach should say so.
-    const bad = reduce(reduce(s, { type: "pickBlocker", uid: bf(s, "spider").uid }), { type: "assignBlock", attackerUid: ghoul });
-    expect(sc.coach?.(bad, bad, { type: "declareBlockers" })).toMatch(/Canopy Spider would be destroyed/);
-    // Mossback Boar (2/2) blocking the Ghoul is an even trade, so only the unblocked Bat is flagged.
-    const trade = reduce(reduce(s, { type: "pickBlocker", uid: bf(s, "boar").uid }), { type: "assignBlock", attackerUid: ghoul });
-    expect(sc.coach?.(trade, trade, { type: "declareBlockers" })).toMatch(/Night Bat would get through/);
-    s = reduce(reduce(s, { type: "pickBlocker", uid: bf(s, "rhino").uid }), { type: "assignBlock", attackerUid: ghoul });
-    s = reduce(reduce(s, { type: "pickBlocker", uid: bf(s, "spider").uid }), { type: "assignBlock", attackerUid: bat });
+    const vampire = bf(s, "vampire", "opp").uid;
+    const skyhunter = bf(s, "skyhunter", "opp").uid;
+    // Bear Cub (2/2) blocking Highborn Vampire (4/3) would die without killing it: the coach should say so.
+    const bad = reduce(reduce(s, { type: "pickBlocker", uid: bf(s, "cub").uid }), { type: "assignBlock", attackerUid: vampire });
+    expect(sc.coach?.(bad, bad, { type: "declareBlockers" })).toMatch(/Bear Cub would be destroyed/);
+    // Thornweald Archer (deathtouch) blocking the Vampire is a fair trade, so only the unblocked Skyhunter is flagged.
+    const trade = reduce(reduce(s, { type: "pickBlocker", uid: bf(s, "archer").uid }), { type: "assignBlock", attackerUid: vampire });
+    expect(sc.coach?.(trade, trade, { type: "declareBlockers" })).toMatch(/Leonin Skyhunter would get through/);
+    // Bear Cub can't block a flyer at all.
+    const noFly = reduce(reduce(s, { type: "pickBlocker", uid: bf(s, "cub").uid }), { type: "assignBlock", attackerUid: skyhunter });
+    expect(noFly.refusal).toMatch(/Flying/);
+    s = reduce(reduce(s, { type: "pickBlocker", uid: bf(s, "sentry").uid }), { type: "assignBlock", attackerUid: skyhunter });
+    s = reduce(reduce(s, { type: "pickBlocker", uid: bf(s, "archer").uid }), { type: "assignBlock", attackerUid: vampire });
     expect(sc.coach?.(s, s, { type: "declareBlockers" })).toBeNull();
     s = reduce(s, { type: "declareBlockers" });
     expect(s.you.life).toBe(20);
+    expect(bf(s, "vampire", "opp")).toBeUndefined();
+    expect(bf(s, "skyhunter", "opp")).toBeUndefined();
     expect(sc.isComplete(s)).toBe(true);
   });
 
@@ -76,7 +81,7 @@ describe("walkthroughs (the 'correct' path completes each scenario)", () => {
     let s = sc.setup();
     expect(sc.coach?.(s, reduce(s, { type: "pass" }), { type: "pass" })).toMatch(/Undo/);
     for (const l of s.battlefield.filter((p) => p.card === "island")) s = reduce(s, { type: "tapForMana", uid: l.uid });
-    s = reduce(s, { type: "cast", uid: inHand(s, "denial") });
+    s = reduce(s, { type: "cast", uid: inHand(s, "negate") });
     s = reduce(s, { type: "pass" });
     expect(sc.isComplete(s)).toBe(true);
   });

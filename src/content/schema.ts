@@ -38,8 +38,8 @@ export const RuleRef = z.string().regex(/^CR \d{3}(\.\d+[a-z]?)?$/, "Rule refere
 
 export const VisualSchema = z
   .object({
-    type: z.enum(["svg", "image", "placeholder"]),
-    /** svg: id of a built-in diagram · image: path or URL · placeholder: what the visual will show */
+    type: z.enum(["svg", "image", "placeholder", "card"]),
+    /** svg: id of a built-in diagram · image: path or URL · placeholder: what the visual will show · card: id of a practice card (src/game/cards.ts) */
     src: NonEmpty,
     altText: NonEmpty,
   })

@@ -34,7 +34,7 @@
       "id": "creatures",
       "title": "Creatures",
       "body": "[[creature|Creatures]] are your army. They attack, they block, and they're the most common way to win.\n\nEvery creature has power and toughness, and many have keywords like Flying.\n\nYou cast creatures during your main phase, when nothing else is waiting to happen.",
-      "visual": { "type": "placeholder", "src": "Three made-up creatures on the battlefield: a small dog, a spider and a rhino, each showing power and toughness.", "altText": "Three example creatures with their power and toughness." },
+      "visual": { "type": "placeholder", "src": "Three creatures on the battlefield: a small dog, a spider and a rhino, each showing power and toughness.", "altText": "Three example creatures with their power and toughness." },
       "glossaryTerms": ["creature"],
       "ruleRefs": ["CR 302.1"]
     },
@@ -60,7 +60,7 @@
       "id": "artifacts-and-enchantments",
       "title": "Artifacts and enchantments",
       "body": "Both are permanents that stay on the battlefield.\n\n- [[artifact|Artifacts]] are magical objects. Many are colourless, so any deck can use them. Equipment is a kind of artifact you attach to a creature to make it stronger.\n- [[enchantment|Enchantments]] create ongoing effects. Auras are enchantments that attach to something.\n\nYou cast both during your main phase, like creatures.",
-      "visual": { "type": "placeholder", "src": "A made-up hammer artifact attached to a creature, and a glowing enchantment on the table.", "altText": "An equipment artifact on a creature, and an enchantment." },
+      "visual": { "type": "placeholder", "src": "A hammer artifact attached to a creature, and a glowing enchantment on the table.", "altText": "An equipment artifact on a creature, and an enchantment." },
       "glossaryTerms": ["artifact", "enchantment"],
       "ruleRefs": ["CR 301.1", "CR 303.1"]
     },
@@ -68,7 +68,7 @@
       "id": "planeswalkers-and-lands",
       "title": "Planeswalkers and lands",
       "body": "**Planeswalker cards** are powerful allies. Each has a loyalty number and loyalty abilities. You may use one of its abilities once per turn, during your main phase. Your opponent can attack a planeswalker to lower its loyalty.\n\n**Lands** are permanents too, but they aren't spells: you play them for free, one per turn.\n\nThere's also a rarer type called battle. You can learn it later.",
-      "visual": { "type": "placeholder", "src": "A made-up planeswalker card with its loyalty number in the bottom corner, next to a land.", "altText": "A planeswalker card showing its loyalty, next to a land." },
+      "visual": { "type": "placeholder", "src": "A planeswalker card with its loyalty number in the bottom corner, next to a land.", "altText": "A planeswalker card showing its loyalty, next to a land." },
       "glossaryTerms": [],
       "ruleRefs": ["CR 306.1", "CR 606.3", "CR 305.1"],
       "check": {

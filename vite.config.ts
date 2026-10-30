@@ -11,7 +11,7 @@ function offlineServiceWorker(): Plugin {
     generateBundle(_options, bundle) {
       // Skip source maps and old .woff fonts: every current phone uses the .woff2 versions.
       const built = Object.keys(bundle).filter((f) => !f.endsWith(".map") && !f.endsWith(".woff"));
-      const fromPublic = readdirSync("public");
+      const fromPublic = (readdirSync("public", { recursive: true }) as string[]).filter((f) => /\.[a-z0-9]+$/i.test(f) && !f.startsWith("."));
       const files = ["./", ...new Set([...built, ...fromPublic])].map((f) => (f === "./" ? f : `./${f}`));
       const version = createHash("sha256").update(files.join("|")).digest("hex").slice(0, 12);
       const source = readFileSync("sw-template.js", "utf8")
