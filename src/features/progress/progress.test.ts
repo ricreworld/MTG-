@@ -56,6 +56,12 @@ describe("progress", () => {
     expect(hasSavedProgress(run({ type: "toggleChecklist", moduleId: "m1", itemId: "c2" }))).toBe(true);
   });
 
+  it("remembers completed practice scenarios once each", () => {
+    const p = run({ type: "completeScenario", scenarioId: "attack" }, { type: "completeScenario", scenarioId: "attack" });
+    expect(p.scenarios).toEqual(["attack"]);
+    expect(hasSavedProgress(p)).toBe(true);
+  });
+
   it("start over clears everything", () => {
     const p = run({ type: "open", moduleId: "m1", stepId: "s2" }, { type: "passCheck", moduleId: "m1", stepId: "s2" }, { type: "reset" });
     expect(p).toEqual(EMPTY_PROGRESS);
@@ -69,6 +75,6 @@ describe("progress", () => {
       passed: ["m1/s2"],
       checklist: { m1: ["c1", "removed-item"], ghost: ["c1"] },
     };
-    expect(sanitizeProgress(saved, modules)).toEqual({ v: 1, at: null, completed: ["m1/s1"], passed: ["m1/s2"], checklist: { m1: ["c1"] } });
+    expect(sanitizeProgress(saved, modules)).toEqual({ v: 1, at: null, completed: ["m1/s1"], passed: ["m1/s2"], checklist: { m1: ["c1"] }, scenarios: [] });
   });
 });

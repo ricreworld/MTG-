@@ -19,15 +19,18 @@ export interface Progress {
   passed: StepKey[];
   /** Ticked checklist items per module. */
   checklist: Record<string, string[]>;
+  /** Practice Table scenarios the learner has completed. */
+  scenarios: string[];
 }
 
-export const EMPTY_PROGRESS: Readonly<Progress> = Object.freeze({ v: PROGRESS_VERSION, at: null, completed: [], passed: [], checklist: {} });
+export const EMPTY_PROGRESS: Readonly<Progress> = Object.freeze({ v: PROGRESS_VERSION, at: null, completed: [], passed: [], checklist: {}, scenarios: [] });
 
 export type ProgressAction =
   | { type: "open"; moduleId: string; stepId: string } // learner is on this step (saves the place)
   | { type: "complete"; moduleId: string; stepId: string } // learner moved on from this step
   | { type: "passCheck"; moduleId: string; stepId: string }
   | { type: "toggleChecklist"; moduleId: string; itemId: string }
+  | { type: "completeScenario"; scenarioId: string }
   | { type: "reset" };
 
 const addOnce = <T,>(list: readonly T[], item: T): T[] => (list.includes(item) ? [...list] : [...list, item]);
@@ -51,8 +54,10 @@ export function progressReducer(state: Progress, action: ProgressAction): Progre
       const next = ticked.includes(action.itemId) ? ticked.filter((i) => i !== action.itemId) : [...ticked, action.itemId];
       return { ...state, checklist: { ...state.checklist, [action.moduleId]: next } };
     }
+    case "completeScenario":
+      return state.scenarios.includes(action.scenarioId) ? state : { ...state, scenarios: [...state.scenarios, action.scenarioId] };
     case "reset":
-      return { ...EMPTY_PROGRESS, completed: [], passed: [], checklist: {} };
+      return { ...EMPTY_PROGRESS, completed: [], passed: [], checklist: {}, scenarios: [] };
   }
 }
 
@@ -80,6 +85,7 @@ export function sanitizeProgress(raw: unknown, modules: readonly Module[]): Prog
     completed: [...new Set(strings(r.completed))].filter((k) => validSteps.has(k)),
     passed: [...new Set(strings(r.passed))].filter((k) => validSteps.has(k)),
     checklist,
+    scenarios: [...new Set(strings(r.scenarios))],
   };
 }
 
@@ -111,7 +117,7 @@ export function courseStats(p: Progress, modules: readonly Module[]): { done: nu
 /** True when there's enough saved progress to offer "Welcome back, continue?". */
 export function hasSavedProgress(p: Progress): boolean {
   const ticks = Object.values(p.checklist).some((l) => l.length > 0);
-  return p.completed.length > 0 || p.passed.length > 0 || ticks;
+  return p.completed.length > 0 || p.passed.length > 0 || ticks || p.scenarios.length > 0;
 }
 
 /** Converts the saved location into a position (module and step numbers) for navigation. */

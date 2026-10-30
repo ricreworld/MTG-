@@ -1,0 +1,36 @@
+// The list of guided scenarios, with a checkmark on the ones the learner has completed.
+import { forwardRef } from "react";
+import { Icon } from "../../components/Icon";
+import { SCENARIOS } from "../../game/scenarios";
+
+interface Props {
+  completed: readonly string[];
+  onPick: (id: string) => void;
+  onBack: () => void;
+}
+
+export const ScenarioPicker = forwardRef<HTMLHeadingElement, Props>(function ScenarioPicker({ completed, onPick, onBack }, headingRef) {
+  return (
+    <section aria-labelledby="scenarios-heading" className="grid gap-s4 rounded-lg border border-border bg-surface p-s4">
+      <div className="flex flex-wrap items-center justify-between gap-s3">
+        <h2 id="scenarios-heading" ref={headingRef} tabIndex={-1} className="text-2xl font-bold">Practice Table</h2>
+        <button type="button" onClick={onBack} className="inline-flex min-h-tap items-center gap-s2 rounded-md border-2 border-border-strong bg-surface px-s3 font-bold"><Icon name="back" /> Lessons</button>
+      </div>
+      <p>Short, guided practice with made-up cards. Each scenario has a goal, a Hint button and Undo. You can't lose here: a mistake just gets a hint.</p>
+      <ol className="grid gap-s2">
+        {SCENARIOS.map((sc, i) => {
+          const done = completed.includes(sc.id);
+          return (
+            <li key={sc.id}>
+              <button type="button" onClick={() => onPick(sc.id)} className="grid min-h-tap w-full grid-cols-[auto_1fr_auto] items-center gap-s3 rounded-md border-2 border-border-strong bg-surface px-s3 py-s2 text-left hover:bg-surface-2 active:bg-surface-2">
+                <span className="font-mono text-text-muted">{i + 1}</span>
+                <span><span className="font-bold">{sc.title}</span><span className="block text-sm text-text-muted">{sc.teaches}</span></span>
+                {done && <span className="inline-flex items-center gap-s1 text-sm text-success"><Icon name="check" size={1} /> Done</span>}
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
+});

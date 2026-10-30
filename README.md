@@ -54,7 +54,12 @@ src/
     SettingsControls.tsx   Settings form (moves into the settings panel in Phase 3)
   content/                 Phase 2: schema.ts (Zod) + modules/*.json
   features/                Phase 3–7: shell, progress, practice, tts
-  game/                    Phase 6: engine.ts (pure reducer) + tests
+  game/
+    cards.ts               17 original, fictional practice cards
+    engine.ts              Pure rules reducer: (state, action) -> state. No React, no randomness
+    scenarios.ts           5 guided scenarios: setup, goal, hints, coach notes
+    *.test.ts              Engine and scenario tests
+  features/practice/       The Practice Table UI (GameCard, PracticeTable, ScenarioPicker)
 legacy/                    The earlier single-file prototype (Planeswalker Quest), kept for reference
 ```
 
@@ -81,6 +86,6 @@ legacy/                    The earlier single-file prototype (Planeswalker Quest
 3. ✅ App shell: wizard layout, navigation bar, settings panel, Focus Mode (phone-first, installable, offline)
 4. ✅ Progress engine: save/resume, checklist, progress bar
 5. ✅ Full MTG curriculum (10 modules, 46 steps)
-6. Practice Table mini-game (pure reducer + Vitest)
+6. ✅ Practice Table mini-game (pure reducer + Vitest, 5 guided scenarios with hints and Undo)
 7. Text-to-speech (Web Speech API)
 8. Accessibility audit (axe-core + keyboard walkthrough)

@@ -9,6 +9,9 @@ import { STORAGE_KEYS, readJson, writeJson } from "../../lib/storage";
 import { useSettings } from "../../theme/SettingsContext";
 import { START, isFirst, isLast, navigate, type NavAction, type Position } from "../course/navigation";
 import { StepCard } from "../lesson/StepCard";
+import { PracticeTable } from "../practice/PracticeTable";
+import { ScenarioPicker } from "../practice/ScenarioPicker";
+import { SCENARIOS, scenarioById } from "../../game/scenarios";
 import { ModuleChecklist } from "../progress/ModuleChecklist";
 import { ProgressBar } from "../progress/ProgressBar";
 import { WelcomeBack } from "../progress/WelcomeBack";
@@ -19,7 +22,7 @@ import { SettingsPanel } from "./SettingsPanel";
 import { detectSwipe, type TouchPoint } from "./swipe";
 import { useShortcuts } from "./useShortcuts";
 
-type View = "lesson" | "outline" | "settings" | "paused" | "welcome" | "finished";
+type View = "lesson" | "outline" | "settings" | "paused" | "welcome" | "finished" | "practice";
 
 const topButton = "inline-flex min-h-tap items-center gap-s2 rounded-md border-2 px-s3 font-bold";
 
@@ -30,6 +33,8 @@ export function AppShell() {
   const [progress, dispatchProgress] = useReducer(progressReducer, undefined, () => sanitizeProgress(readJson(STORAGE_KEYS.progress), modules));
   const [position, setPosition] = useState<Position>(() => positionOf(progress, modules));
   const [view, setView] = useState<View>(() => (hasSavedProgress(progress) ? "welcome" : "lesson"));
+  const [scenarioId, setScenarioId] = useState<string | null>(null);
+  const scenario = scenarioId ? scenarioById(scenarioId) : undefined;
   const [announcement, setAnnouncement] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
@@ -78,11 +83,12 @@ export function AppShell() {
       paused: "Paused. Your place is saved.",
       welcome: "Welcome back",
       finished: "You reached the end of the lessons so far",
+      practice: scenario ? `Practice: ${scenario.title}` : "Practice Table",
     };
     setAnnouncement(text[view]);
     headingRef.current?.focus({ preventScroll: true });
     window.scrollTo({ top: 0 });
-  }, [position, view]);
+  }, [position, view, scenarioId]);
 
   useShortcuts({
     back: () => go({ type: "back" }),
@@ -120,6 +126,10 @@ export function AppShell() {
           <button type="button" onClick={() => toggleView("outline")} aria-pressed={view === "outline"}
             className={`${topButton} lg:hidden ${view === "outline" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
             <Icon name="list" /> Outline
+          </button>
+          <button type="button" onClick={() => { setScenarioId(null); toggleView("practice"); }} aria-pressed={view === "practice"}
+            className={`${topButton} ${view === "practice" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
+            <Icon name="play" /> Practice
           </button>
           <button type="button" onClick={() => toggleView("settings")} aria-pressed={view === "settings"}
             className={`${topButton} ${view === "settings" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
@@ -191,6 +201,20 @@ export function AppShell() {
 
           {view === "settings" && <SettingsPanel ref={headingRef} onClose={() => setView("lesson")} />}
 
+          {view === "practice" && !scenario && (
+            <ScenarioPicker ref={headingRef} completed={progress.scenarios} onPick={(id) => setScenarioId(id)} onBack={() => setView("lesson")} />
+          )}
+          {view === "practice" && scenario && (
+            <PracticeTable
+              key={scenario.id}
+              ref={headingRef}
+              scenario={scenario}
+              onComplete={() => dispatchProgress({ type: "completeScenario", scenarioId: scenario.id })}
+              onExit={() => setScenarioId(null)}
+              onReadMore={(moduleId) => { const mi = modules.findIndex((m) => m.id === moduleId); if (mi >= 0) goTo(mi, 0); }}
+            />
+          )}
+
           {view === "paused" && (
             <section aria-labelledby="paused-heading" className="grid gap-s4 rounded-lg border border-border bg-surface p-s5">
               <h2 id="paused-heading" ref={headingRef} tabIndex={-1} className="text-2xl font-bold">Paused</h2>
@@ -215,6 +239,18 @@ export function AppShell() {
                 checkPassed={progress.passed.includes(stepKey(mod.id, step.id))}
                 onCheckCorrect={() => dispatchProgress({ type: "passCheck", moduleId: mod.id, stepId: step.id })}
               />
+              {(() => {
+                const sc = (step.tryIt && scenarioById(step.tryIt)) || SCENARIOS.find((x) => x.readMore === mod.id);
+                if (!sc) return null;
+                return (
+                  <div data-focus-hide className="flex flex-wrap items-center gap-s3 rounded-lg border border-border bg-surface p-s4">
+                    <span><strong>Try it:</strong> {sc.title}. {sc.teaches}</span>
+                    <button type="button" onClick={() => { setScenarioId(sc.id); setView("practice"); }} className="inline-flex min-h-tap items-center gap-s2 rounded-md bg-accent px-s4 font-bold text-accent-ink">
+                      <Icon name="play" /> Open the Practice Table
+                    </button>
+                  </div>
+                );
+              })()}
               <ModuleChecklist
                 module={mod}
                 ticked={progress.checklist[mod.id] ?? []}
@@ -232,7 +268,7 @@ export function AppShell() {
         </p>
       </footer>
 
-      <BottomBar
+      {view !== "practice" && <BottomBar
         canBack={view === "lesson" && !isFirst(position)}
         canNext={view === "lesson"}
         nextLabel={atEnd ? "Finish" : "Next"}
@@ -242,7 +278,7 @@ export function AppShell() {
         onNext={() => go({ type: "next" })}
         onPause={() => setView(view === "paused" ? "lesson" : "paused")}
         onToggleFocus={() => dispatch({ type: "toggleFocusMode" })}
-      />
+      />}
 
       <div aria-live="polite" aria-atomic="true" className="sr-only">{announcement}</div>
     </div>
