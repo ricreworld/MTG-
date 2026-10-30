@@ -362,5 +362,47 @@
     "id": "bracket",
     "term": "Bracket",
     "definition": "One of five power levels Wizards describes for Commander decks, from 1 (Exhibition) to 5 (cEDH). Saying your bracket helps a table match decks."
+  },
+  {
+    "id": "constructed",
+    "term": "Constructed",
+    "definition": "Formats where you build your deck in advance from cards you own: at least 60 cards, no more than four of each except basic lands.",
+    "ruleRef": "CR 100.2a"
+  },
+  {
+    "id": "limited",
+    "term": "Limited",
+    "definition": "Formats where you build a deck at the event from booster packs you open: at least 40 cards, and you may use every copy you opened.",
+    "ruleRef": "CR 100.2b"
+  },
+  {
+    "id": "booster-pack",
+    "term": "Booster pack",
+    "definition": "A sealed pack of random cards from one set. Limited events are played with the cards opened from boosters."
+  },
+  {
+    "id": "draft",
+    "term": "Draft",
+    "definition": "A Limited format: players open packs, pick one card each and pass the rest around the table, then build 40-card decks from their picks."
+  },
+  {
+    "id": "sealed",
+    "term": "Sealed",
+    "definition": "A Limited format: each player opens six booster packs and builds a 40-card deck from them. No passing."
+  },
+  {
+    "id": "prerelease",
+    "term": "Prerelease",
+    "definition": "A casual Sealed event run by shops the weekend before a new set is released. A good first event."
+  },
+  {
+    "id": "rotation",
+    "term": "Rotation",
+    "definition": "When the oldest sets leave the Standard format each year, so the card pool stays recent. Pioneer, Modern and Commander don't rotate."
+  },
+  {
+    "id": "rarity",
+    "term": "Rarity",
+    "definition": "How scarce a card is in packs, shown by its set symbol's colour: common (black), uncommon (silver), rare (gold), mythic rare (orange-red)."
   }
 ]

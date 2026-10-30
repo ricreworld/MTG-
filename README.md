@@ -92,7 +92,7 @@ legacy/                    The earlier single-file prototype (Planeswalker Quest
 2. ✅ Content schema (TypeScript + Zod) and a sample module
 3. ✅ App shell: wizard layout, navigation bar, settings panel, Focus Mode (phone-first, installable, offline)
 4. ✅ Progress engine: save/resume, checklist, progress bar
-5. ✅ Full MTG curriculum (11 modules, 53 steps)
+5. ✅ Full MTG curriculum (13 modules, 70 steps)
 6. ✅ Practice Table mini-game (pure reducer + Vitest, 5 guided scenarios with hints and Undo)
 7. Text-to-speech: skipped on purpose (no voice, keep it simple)
 8. ✅ Accessibility audit: axe-core (WCAG 2.2 AA + best practice) reports 0 violations on every screen in both themes; keyboard and screen-reader walkthrough done
@@ -102,7 +102,7 @@ legacy/                    The earlier single-file prototype (Planeswalker Quest
 11. ✅ Foundations card library: every card in the set (517) with official text, search and colour/type filters; pictures load from Scryfall when online (`src/features/library/`, `src/content/foundations.json`)
 12. ✅ Commander in depth: a 10-step module (deck rules, command zone, tax, coming back, three ways to lose, four-player turns, mulligans, table talk, Rule 0 and brackets, first deck)
 13. ✅ Commander on the table: 40 life, command zone, commander tax, commander damage, and four real commanders with their printed abilities (Syr Alin, Linden, Dwynen, Garna) against the computer
-14. Ways to play: Limited (Draft, Sealed) and Constructed (Standard, Pioneer, Modern, Pauper) lessons (next)
+14. ✅ More ways to play: Limited (Draft, Sealed, Prerelease, 40-card deck shape) and Constructed (Standard, Pioneer, Modern, Pauper) with where to play each
 
 ## Licensing of card content
 

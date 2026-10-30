@@ -61,6 +61,7 @@ section (e.g. `CR 103`) instead of guessing. Verify against the current rules at
 |---|---|---|
 | CR 100.1 | Magic is a game for two or more players, each with a deck | high |
 | CR 100.2a | Constructed decks: at least 60 cards, max 4 copies (basic lands excepted) | high |
+| CR 100.2b / 100.2c | Limited decks: at least 40 cards; any number of copies from the opened pool | medium |
 | CR 103 (section) | Starting the game: shuffle, life, who goes first, draw 7, first player skips first draw | high (section) |
 | CR 103.5 | Mulligans (London mulligan: draw 7, bottom one per mulligan) | medium |
 | CR 104.3b / c / d | Lose at 0 life / drawing from an empty library / 10 poison counters | high |
@@ -119,6 +120,10 @@ section (e.g. `CR 103`) instead of guessing. Verify against the current rules at
 | First mulligan is free in multiplayer Commander | Module 12 | Official Commander rules (mtgcommander.net), not the CR. Duel Commander differs |
 | The five Commander brackets (Exhibition, Core, Upgraded, Optimized, cEDH) and the Game Changers list | Module 12 | Wizards "Commander Brackets" beta (Feb 2025) and its October 2025 update; still a beta, details change |
 | Attack the biggest threat; don't look too strong early; table talk is normal | Module 12 | Common Commander advice, not rules |
+| Draft: usually 8 players, 3 packs, pick one and pass (left, right, left); Sealed: 6 packs; Prerelease events | Module 13 | Wizards event rules and format pages; pack counts are the usual tournament defaults, shops may vary |
+| Limited deck shape: 17 lands, 23 spells, two colours, about 15 creatures | Module 13 | Common Limited advice, not a rule |
+| Pioneer starts with sets from late 2012 (Return to Ravnica); Modern from 2003 (Eighth Edition and Mirrodin); Standard rotates yearly; Pauper is commons only | Module 13 | Wizards format pages (banned lists and rotation details change; check the current pages) |
+| MTG Arena offers Standard, Draft and Sealed; store locator; preconstructed decks | Module 13 | Wizards product pages; offerings change |
 
 Every card in the app is a real Magic: The Gathering card from the Foundations set (FDN), used under the
 Wizards of the Coast Fan Content Policy: the app is free, non-commercial and unofficial, and carries the
