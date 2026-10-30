@@ -35,6 +35,8 @@ export interface Scenario {
   coach?: (before: GameState, after: GameState, action: Action) => string | null;
   /** Free play: what the coach suggests before the next decision, and why. */
   advise?: (s: GameState) => { move: string; why: string } | null;
+  /** This scenario teaches mana itself, so the table never pays it automatically here. */
+  manualMana?: boolean;
 }
 
 const bf = (s: GameState, card: string, owner: "you" | "opp" = "you") => s.battlefield.find((p) => p.card === card && p.owner === owner);
@@ -58,9 +60,10 @@ export const SCENARIOS: Scenario[] = [
     hints: [
       "Mana comes from tapping lands. Tap a land on the battlefield to add its mana to your pool.",
       "You need two mana in your pool, and at least one must be green. Tap both lands, then cast the Cub.",
-      "Tap Forest, tap Mountain, then tap Bear Cub in your hand and choose Cast. Then pass priority so it resolves.",
+      "Tap Forest, tap Mountain, then tap Bear Cub in your hand and choose Cast.",
     ],
     readMore: "mana-and-lands",
+    manualMana: true,
     setup: () => makeState({ you: { hand: ["cub"], battlefield: ["forest", "mountain"] } }),
     isComplete: (s) => !!bf(s, "cub"),
   },
@@ -127,8 +130,8 @@ export const SCENARIOS: Scenario[] = [
     goal: "Your opponent cast Stab at your Bear Cub. Counter it with Negate before it resolves.",
     hints: [
       "Stab is on the stack, waiting. If you pass, it resolves: the Cub gets -2/-2 and is destroyed.",
-      "Negate costs {1}{U}. Tap both Islands first.",
-      "Tap Island, tap Island, then tap Negate and choose Cast. It goes on top of the stack and resolves first. Then pass.",
+      "Negate costs {1}{U}. Your two Islands can pay for it.",
+      "Tap Negate in your hand and choose Cast in response. It goes on top of the stack and happens first, so Stab is countered.",
     ],
     readMore: "the-stack",
     setup: () => {

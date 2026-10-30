@@ -103,6 +103,7 @@ legacy/                    The earlier single-file prototype (Planeswalker Quest
 12. ✅ Commander in depth: a 10-step module (deck rules, command zone, tax, coming back, three ways to lose, four-player turns, mulligans, table talk, Rule 0 and brackets, first deck)
 13. ✅ Commander on the table: 40 life, command zone, commander tax, commander damage, and four real commanders with their printed abilities (Syr Alin, Linden, Dwynen, Garna) against the computer
 14. ✅ More ways to play: Limited (Draft, Sealed, Prerelease, 40-card deck shape) and Constructed (Standard, Pioneer, Modern, Pauper) with where to play each
+15. ✅ Practice Table redesign after learner feedback ("I didn't know what to tap next"): a sticky bottom bar with one "Now:" instruction and one main button, Undo and Hint beside it; feedback and a "While you waited" summary of the computer's turn right above the bar; "Can play / Can cast / Can attack / Can block" prompts on cards; and a default setting that pays mana and resolves your own spells for you (off in the mana scenario, and switchable in Settings)
 
 ## Licensing of card content
 

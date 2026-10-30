@@ -28,6 +28,7 @@ export interface Settings {
   animations: boolean;       // off by default; the OS reduced-motion setting still wins
   focusMode: boolean;
   swipeToNavigate: boolean; // off by default, so scrolling never jumps to another step
+  autoPlay: boolean;        // on by default: the table pays mana and resolves your own spells for you
 }
 
 export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
@@ -40,6 +41,7 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   animations: false,
   focusMode: false,
   swipeToNavigate: false,
+  autoPlay: true,
 });
 
 export type SettingsAction =
@@ -65,6 +67,7 @@ export function sanitizeSettings(raw: unknown): Settings {
     animations: typeof r.animations === "boolean" ? r.animations : d.animations,
     focusMode: typeof r.focusMode === "boolean" ? r.focusMode : d.focusMode,
     swipeToNavigate: typeof r.swipeToNavigate === "boolean" ? r.swipeToNavigate : d.swipeToNavigate,
+    autoPlay: typeof r.autoPlay === "boolean" ? r.autoPlay : d.autoPlay,
   };
 }
 

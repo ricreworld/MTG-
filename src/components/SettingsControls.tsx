@@ -127,6 +127,12 @@ export function SettingsControls() {
         onChange={(animations) => set({ animations })}
       />
       <Toggle
+        label="Practice Table does the fiddly bits"
+        description="On by default. Tapping a card pays its mana for you, and your spells resolve on their own unless the computer responds. Turn off to tap lands and pass priority yourself."
+        checked={settings.autoPlay}
+        onChange={(autoPlay) => set({ autoPlay })}
+      />
+      <Toggle
         label="Swipe to change steps"
         description="Swipe left for Next, right for Back. Off by default, so scrolling never moves you to another step by accident."
         checked={settings.swipeToNavigate}

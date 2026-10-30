@@ -66,9 +66,11 @@ interface Props {
   badge?: string | undefined;
   onClick?: (() => void) | undefined;
   size?: "sm" | "md" | "lg";
+  /** A short visible prompt when the card can be used right now, e.g. "Can cast". */
+  highlight?: string | undefined;
 }
 
-export function GameCard({ card, perm, action, selected, badge, onClick, size = "md" }: Props) {
+export function GameCard({ card, perm, action, selected, badge, onClick, size = "md", highlight }: Props) {
   const tapped = perm?.tapped ?? false;
   const sm = size === "sm";
   const lg = size === "lg";
@@ -81,7 +83,7 @@ export function GameCard({ card, perm, action, selected, badge, onClick, size = 
   const body = (
     <span
       className={`relative grid ${dims} aspect-[5/7] grid-cols-[minmax(0,1fr)] grid-rows-[auto_1fr_auto_auto] gap-[2px] rounded-[0.45rem] border-[3px] p-[3px] text-left leading-tight ${FRAME[card.color]} ${
-        selected ? "border-focus ring-[3px] ring-focus" : "border-border-strong"
+        selected ? "border-focus ring-[3px] ring-focus" : highlight ? "border-accent ring-[3px] ring-accent" : "border-border-strong"
       } ${tapped ? "rotate-6" : ""}`}
     >
       {/* Name bar */}
@@ -119,6 +121,9 @@ export function GameCard({ card, perm, action, selected, badge, onClick, size = 
         </button>
       ) : (
         <span>{body}<span className="sr-only">{srDetail}</span></span>
+      )}
+      {highlight && !badge && !tapped && (
+        <span className="max-w-[7rem] rounded-sm bg-accent px-1 text-center text-[0.65rem] font-bold leading-tight text-accent-ink">{highlight}</span>
       )}
       {(badge || tapped) && (
         <span className="max-w-[7rem] rounded-sm bg-surface-2 px-1 text-center text-[0.65rem] font-bold leading-tight">{[tapped ? "Tapped" : null, badge].filter(Boolean).join(" · ")}</span>
