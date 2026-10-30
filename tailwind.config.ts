@@ -5,6 +5,7 @@ import type { Config } from "tailwindcss";
 const rgb = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
 
 export default {
+  future: { hoverOnlyWhenSupported: true },
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   darkMode: ["selector", '[data-theme="dark"]'],
   theme: {

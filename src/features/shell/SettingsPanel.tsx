@@ -44,8 +44,8 @@ export const SettingsPanel = forwardRef<HTMLHeadingElement, { onClose: () => voi
       <SettingsControls />
 
       <section aria-labelledby="shortcuts-heading" className="grid gap-s3">
-        <h3 id="shortcuts-heading" className="text-lg font-bold">Keyboard shortcuts</h3>
-        <p className="text-sm text-text-muted">Shortcuts don't work while you're choosing an answer or typing, so they never get in the way.</p>
+        <h3 id="shortcuts-heading" className="text-lg font-bold">Keyboard shortcuts (with a keyboard connected)</h3>
+        <p className="text-sm text-text-muted">Useful with a Bluetooth keyboard or switch control. They don't work while you're choosing an answer or typing, so they never get in the way.</p>
         <dl className="grid gap-s2">
           {SHORTCUTS.map((s) => (
             <div key={s.keys} className="flex flex-wrap gap-s3">

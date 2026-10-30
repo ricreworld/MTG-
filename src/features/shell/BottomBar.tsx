@@ -47,7 +47,7 @@ function BarButton({ icon, label, srExtra, onClick, disabled, pressed, primary, 
 
 export function BottomBar({ canBack, canNext, focusMode, paused, onBack, onNext, onPause, onToggleFocus }: Props) {
   return (
-    <nav aria-label="Step navigation" className="sticky bottom-0 z-10 border-t border-border bg-bg/95 px-s3 py-s2 [padding-bottom:max(0.5rem,env(safe-area-inset-bottom))]">
+    <nav aria-label="Step navigation" className="sticky bottom-0 z-10 border-t border-border bg-bg/95 py-s2 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] [padding-bottom:max(0.5rem,env(safe-area-inset-bottom))] [@media(max-height:500px)]:py-s1">
       <div className="mx-auto grid max-w-[64rem] grid-cols-4 gap-s2 sm:flex sm:items-center">
         <BarButton icon="back" label="Back" onClick={onBack} disabled={!canBack || paused} />
         <BarButton icon={paused ? "play" : "pause"} label={paused ? "Resume" : "Pause"} onClick={onPause} pressed={paused} />

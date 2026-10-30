@@ -14,12 +14,25 @@ npm test         # unit tests (Vitest)
 npm run build    # type-check + production build into dist/
 ```
 
+## Use it on your phone
+
+Mana Steps is built for phones (iPhone and Android) and installs as a home-screen app:
+
+1. Open the app's web address in **Safari** (iPhone) or **Chrome** (Android).
+2. iPhone: tap **Share → Add to Home Screen**. Android: tap **⋮ → Add to Home screen** (or **Install app**).
+3. Open it from the new icon. It runs full screen and **works offline** after the first visit (about 650 KB is saved).
+
+Updates download in the background and apply the next time the app is fully closed and reopened,
+so a lesson is never interrupted. Note: offline support needs the app served over https (or localhost).
+
 ## Structure
 
 ```
-index.html                 HTML entry. Loads Atkinson Hyperlegible + Lexend from Google Fonts
+index.html                 HTML entry + phone/install meta tags (fonts are bundled via @fontsource)
+public/                    App icons and manifest.webmanifest (home-screen install)
+sw-template.js             Offline service worker; vite.config.ts fills in the file list at build time
 tailwind.config.ts         Tailwind theme: every value points at a CSS variable
-vite.config.ts             Vite + Vitest config (relative base path)
+vite.config.ts             Vite + Vitest config, offline-file generator (relative base path)
 src/
   main.tsx                 Applies saved settings before first paint, then mounts <App>
   App.tsx                  Phase 1: token preview page (replaced by the app shell in Phase 3)

@@ -27,6 +27,7 @@ export interface Settings {
   wordSpacingStep: number;   // index into WORD_SPACING_STEPS
   animations: boolean;       // off by default; the OS reduced-motion setting still wins
   focusMode: boolean;
+  swipeToNavigate: boolean; // off by default, so scrolling never jumps to another step
 }
 
 export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
@@ -38,6 +39,7 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   wordSpacingStep: 0,
   animations: false,
   focusMode: false,
+  swipeToNavigate: false,
 });
 
 export type SettingsAction =
@@ -62,6 +64,7 @@ export function sanitizeSettings(raw: unknown): Settings {
     wordSpacingStep: clampStep(r.wordSpacingStep, WORD_SPACING_STEPS, d.wordSpacingStep),
     animations: typeof r.animations === "boolean" ? r.animations : d.animations,
     focusMode: typeof r.focusMode === "boolean" ? r.focusMode : d.focusMode,
+    swipeToNavigate: typeof r.swipeToNavigate === "boolean" ? r.swipeToNavigate : d.swipeToNavigate,
   };
 }
 
@@ -101,4 +104,6 @@ export function applySettings(s: Settings, root: HTMLElement = document.document
   const { attrs, vars } = settingsToDom(s);
   for (const [name, value] of Object.entries(attrs)) root.setAttribute(name, value);
   for (const [name, value] of Object.entries(vars)) root.style.setProperty(name, value);
+  // Phone browser bar / status bar colour follows the theme (Android Chrome; iOS Safari tab bar).
+  root.ownerDocument.querySelector('meta[name="theme-color"]')?.setAttribute("content", s.theme === "dark" ? "#17191F" : "#F4F2ED");
 }

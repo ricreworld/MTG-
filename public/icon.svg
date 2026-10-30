@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Mana Steps app icon: original artwork (three steps rising to a spark). Not an official Magic symbol. -->
+  <rect width="512" height="512" rx="112" fill="#17191F"/>
+  <rect x="96" y="320" width="96" height="96" rx="18" fill="#8FB4E6"/>
+  <rect x="208" y="248" width="96" height="168" rx="18" fill="#8FB4E6"/>
+  <rect x="320" y="176" width="96" height="240" rx="18" fill="#8FB4E6"/>
+  <path d="M368 52 L382 106 L436 120 L382 134 L368 188 L354 134 L300 120 L354 106 Z" fill="#F2C14E"/>
+</svg>

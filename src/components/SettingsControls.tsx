@@ -126,6 +126,12 @@ export function SettingsControls() {
         checked={settings.animations}
         onChange={(animations) => set({ animations })}
       />
+      <Toggle
+        label="Swipe to change steps"
+        description="Swipe left for Next, right for Back. Off by default, so scrolling never moves you to another step by accident."
+        checked={settings.swipeToNavigate}
+        onChange={(swipeToNavigate) => set({ swipeToNavigate })}
+      />
       <div>
         <button
           type="button"

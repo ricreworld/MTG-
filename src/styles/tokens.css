@@ -37,9 +37,8 @@
   --mtg-colorless: 189 184 174; --mtg-colorless-ink: 38 35 30; /* diamond symbol */
 
   /* ---------- Typography ---------- */
-  --font-atkinson: "Atkinson Hyperlegible", "Atkinson Hyperlegible Next", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-atkinson: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-lexend: "Lexend", system-ui, -apple-system, "Segoe UI", sans-serif;
-  /* OpenDyslexic is not on Google Fonts; it needs a self-hosted font file (pending approval). */
   --font-opendyslexic: "OpenDyslexic", "Atkinson Hyperlegible", system-ui, sans-serif;
   --font-body: var(--font-atkinson);           /* swapped by Settings via [data-font] */
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;

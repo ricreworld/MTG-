@@ -10,6 +10,8 @@
   }
   body {
     margin: 0;
+    -webkit-tap-highlight-color: transparent; /* we draw our own pressed and focus states */
+    -webkit-text-size-adjust: 100%;           /* phones must not resize text on rotate; Settings does that */
     background: rgb(var(--color-bg));
     color: rgb(var(--color-text));
     font-family: var(--font-body);
@@ -24,9 +26,22 @@
   p, li { max-width: var(--measure); }
 
   /* One clear, high-contrast focus ring everywhere. */
+  button, a, label, summary, input { touch-action: manipulation; } /* no double-tap zoom delay */
   :focus-visible {
     outline: var(--focus-width) solid rgb(var(--color-focus));
     outline-offset: 2px;
+  }
+}
+
+/* Installed iPhone app: the status bar text is white, so keep a dark band behind it in both themes. */
+@media (display-mode: standalone) {
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto;
+    height: env(safe-area-inset-top);
+    background: #17191f;
+    z-index: 30;
   }
 }
 

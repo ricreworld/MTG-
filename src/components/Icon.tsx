@@ -1,5 +1,5 @@
 // Small stroke icons. Always decorative (aria-hidden): the button or text next to them carries the label.
-export type IconName = "back" | "next" | "pause" | "settings" | "focus" | "check" | "info" | "book" | "close" | "play";
+export type IconName = "back" | "next" | "pause" | "settings" | "focus" | "check" | "info" | "book" | "close" | "play" | "list";
 
 const PATHS: Record<IconName, string> = {
   back: "M15 5l-7 7 7 7",
@@ -12,6 +12,7 @@ const PATHS: Record<IconName, string> = {
   book: "M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM17 20H8a3 3 0 0 1-3-3",
   close: "M6 6l12 12M18 6L6 18",
   play: "M8 5v14l11-7z",
+  list: "M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01",
 };
 
 export function Icon({ name, size = 1.25 }: { name: IconName; size?: number }) {

@@ -42,7 +42,7 @@ function BlockView({ block, glossary }: { block: Block; glossary: ReadonlyMap<st
           onClick={() => toggle(n.id)}
           aria-expanded={expanded}
           aria-controls={defId(n.id)}
-          className="inline rounded-sm font-[inherit] text-[inherit] underline decoration-2 underline-offset-4 decoration-accent hover:bg-accent-soft"
+          className="-my-s2 inline rounded-sm px-[0.1rem] py-s2 font-[inherit] text-[inherit] underline decoration-2 underline-offset-4 decoration-accent hover:bg-accent-soft active:bg-accent-soft"
         >
           {label}
           <span className="sr-only"> (show definition)</span>
