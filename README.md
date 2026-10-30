@@ -100,6 +100,9 @@ legacy/                    The earlier single-file prototype (Planeswalker Quest
 9b. ✅ Real cards: the 25 practice cards are real Foundations cards with official art and exact Oracle text, under the Wizards Fan Content Policy (`public/art/`, `src/game/cards.ts`)
 10. ✅ Decks and free play: five ready-made 30-card decks, a full game against a simple computer opponent (`src/game/ai.ts`), and a coach that suggests each move with a reason and flags weaker moves (`src/game/coach.ts`). Undo everything; losing shows a calm summary
 11. ✅ Foundations card library: every card in the set (517) with official text, search and colour/type filters; pictures load from Scryfall when online (`src/features/library/`, `src/content/foundations.json`)
+12. ✅ Commander in depth: a 10-step module (deck rules, command zone, tax, coming back, three ways to lose, four-player turns, mulligans, table talk, Rule 0 and brackets, first deck)
+13. ✅ Commander on the table: 40 life, command zone, commander tax, commander damage, and four real commanders with their printed abilities (Syr Alin, Linden, Dwynen, Garna) against the computer
+14. Ways to play: Limited (Draft, Sealed) and Constructed (Standard, Pioneer, Modern, Pauper) lessons (next)
 
 ## Licensing of card content
 

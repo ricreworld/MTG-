@@ -5,6 +5,7 @@ import {
   availableMana,
   canBlock,
   canPay,
+  commanderCost,
   def,
   has,
   isCreature,
@@ -87,6 +88,11 @@ export function advise(s: GameState): Advice | null {
     const land = cards.find((h) => h.card.kind === "land");
     if (land && !s.you.landPlayedThisTurn) return { move: `Play ${land.card.name}.`, why: "One land per turn is free, and more lands mean bigger spells later. Do this before anything else." };
     const castable = cards.filter((h) => h.card.kind === "creature" && canPay(mana, h.card.cost)).sort((a, b) => manaValue(b.card.cost) - manaValue(a.card.cost));
+    const cmdCost = commanderCost(s, "you");
+    const cz = s.you.commandZone;
+    if (cmdCost && cz && canPay(mana, cmdCost) && (!castable[0] || manaValue(cmdCost) >= manaValue(castable[0].card.cost))) {
+      return { move: `Cast ${def(cz.card).name} from the command zone.`, why: `Your commander costs ${cmdCost} right now${cz.casts ? ` (that includes ${2 * cz.casts} commander tax)` : ""}, and it's the strongest card you can cast. Tap your lands, then choose Cast commander.` };
+    }
     if (castable[0]) return { move: `Cast ${castable[0].card.name}.`, why: `It's the biggest creature you can afford (${castable[0].card.cost}). Unused mana does nothing, so spend it.${s.step === "main1" && safeAttackers(s).length ? " You can attack first and cast it after combat, which hides your plan." : ""}` };
     if (s.step === "main1") {
       const safe = safeAttackers(s);
@@ -116,7 +122,9 @@ export function critique(before: GameState, after: GameState, action: Action): s
   }
   if (action.type === "endTurn") {
     const mana = availableMana(before, "you");
-    const castable = hand(before).filter((h) => h.card.kind === "creature" && canPay(mana, h.card.cost));
+    const castable = hand(before).filter((h) => h.card.kind === "creature" && canPay(mana, h.card.cost)).sort((a, b) => manaValue(b.card.cost) - manaValue(a.card.cost));
+    const cmdCost = commanderCost(before, "you");
+    if (cmdCost && before.you.commandZone && canPay(mana, cmdCost) && (!castable[0] || manaValue(cmdCost) >= manaValue(castable[0].card.cost))) return `You could cast ${def(before.you.commandZone.card).name} from the command zone this turn for ${cmdCost}. Undo and cast it: a commander on the battlefield is how Commander games are won.`;
     if (castable[0]) return `You could still cast ${castable[0].card.name} this turn. Mana you don't use is wasted. Undo and cast it.`;
   }
   if (action.type === "declareAttackers") {
@@ -128,7 +136,7 @@ export function critique(before: GameState, after: GameState, action: Action): s
     const missed = safeAttackers(before).filter((p) => !chosen.some((c) => c.uid === p.uid));
     if (missed.length && chosen.length < safeAttackers(before).length) return `${names(missed)} could attack safely too. Undo to add it, or keep it back as a blocker if you're worried about their attack.`;
   }
-  if (action.type === "declareBlockers") {
+  if (action.type === "declareBlockers" && before.turn === "opp") {
     for (const [a, b] of Object.entries(before.attackers)) {
       if (!b) continue;
       const attacker = before.battlefield.find((p) => p.uid === a)!;

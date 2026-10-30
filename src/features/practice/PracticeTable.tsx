@@ -4,7 +4,7 @@
 import { forwardRef, useMemo, useState } from "react";
 import { Icon } from "../../components/Icon";
 import { CARDS, type CardDef } from "../../game/cards";
-import { canPay, def, type Action, type GameState, type Permanent, type Step } from "../../game/engine";
+import { canPay, commanderCost, def, type Action, type GameState, type Permanent, type Step } from "../../game/engine";
 import { step as applyStep, type Scenario } from "../../game/scenarios";
 import { GameCard } from "./GameCard";
 
@@ -38,6 +38,8 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
   const [celebrated, setCelebrated] = useState(false);
   const [showCoach, setShowCoach] = useState(true);
   const freePlay = !!scenario.advise;
+  const commander = state.mode === "commander";
+  const cmdDamageText = (d: Record<string, number> | undefined) => { const entries = Object.entries(d ?? {}); return entries.length ? entries.map(([card, n]) => `${n} of 21 from ${def(card).name}`).join("; ") : "none yet"; };
   const advice = useMemo(() => (scenario.advise ? scenario.advise(state) : null), [scenario, state]);
   if (complete && !celebrated) { setCelebrated(true); setCoach({ kind: "done", text: freePlay ? "You won the game. Well played!" : "Goal reached. Nice work!" }); onComplete(); }
 
@@ -105,8 +107,8 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
     if (blocks) return `Blocks ${def(state.battlefield.find((x) => x.uid === blocks[0])?.card ?? "").name}`;
     if (state.selectedAttackers.includes(p.uid)) return "Attacking";
     if (state.pendingBlocker === p.uid) return "Chosen to block";
-    if (p.summoningSick && def(p.card).kind === "creature" && !def(p.card).keywords?.includes("Haste")) return "Arrived this turn";
-    return undefined;
+    if (p.summoningSick && def(p.card).kind === "creature" && !def(p.card).keywords?.includes("Haste")) return p.isCommander ? "Commander · arrived this turn" : "Arrived this turn";
+    return p.isCommander ? "Commander" : undefined;
   };
 
   const handCardDef = (uid: string): CardDef => def(state.cards[uid] ?? "");
@@ -195,7 +197,16 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
       <div className="grid gap-s2 rounded-lg border border-border bg-surface-2 p-s3">
         <p className="flex flex-wrap items-center gap-s3 font-bold">Opponent <span className="rounded-sm bg-surface px-s2 font-mono">Life {state.opp.life}</span>
           {freePlay && <span className="text-sm font-normal text-text-muted">Hand: {state.opp.hand.length} · Library: {state.opp.library.length}</span>}
+          {commander && <span className="text-sm font-normal text-text-muted">Commander damage taken: {cmdDamageText(state.opp.commanderDamage)}</span>}
         </p>
+        {commander && state.opp.commandZone && (
+          <div className="flex flex-wrap items-center gap-s2 rounded-md border border-dashed border-border-strong p-s2">
+            <span className="text-sm font-bold">Command zone:</span>
+            {state.opp.commandZone.inZone
+              ? <GameCard card={def(state.opp.commandZone.card)} size="sm" badge={state.opp.commandZone.casts ? `Tax: +${2 * state.opp.commandZone.casts}` : undefined} />
+              : <span className="text-sm text-text-muted">{def(state.opp.commandZone.card).name} is on the battlefield.</span>}
+          </div>
+        )}
         <div className="flex flex-wrap gap-s2">{lands(theirs).map((p) => { const t = tapOf(p); return <GameCard key={p.uid} card={def(p.card)} perm={p} size="sm" action={t.label} onClick={t.onClick} />; })}</div>
         <div className="flex flex-wrap gap-s2">
           {creatures(theirs).length === 0 && <p className="text-sm text-text-muted">No creatures.</p>}
@@ -223,6 +234,7 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
       <div className="grid gap-s2 rounded-lg border border-border bg-surface p-s3">
         <p className="flex flex-wrap items-center gap-s3 font-bold">You <span className="rounded-sm bg-surface-2 px-s2 font-mono">Life {state.you.life}</span>
           {freePlay && <span className="text-sm font-normal text-text-muted">Library: {state.you.library.length}</span>}
+          {commander && <span className="text-sm font-normal text-text-muted">Commander damage taken: {cmdDamageText(state.you.commanderDamage)}</span>}
           <span className="text-sm font-normal">Mana pool: {pool.length ? pool.map(([c, n]) => `${n} ${c === "W" ? "white" : c === "U" ? "blue" : c === "B" ? "black" : c === "R" ? "red" : "green"}`).join(", ") : "empty"}</span>
         </p>
         <div className="flex flex-wrap gap-s2">
@@ -234,6 +246,27 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
           {lands(mine).map((p) => { const t = tapOf(p); return <GameCard key={p.uid} card={def(p.card)} perm={p} size="sm" action={t.label} onClick={t.onClick} />; })}
         </div>
       </div>
+
+      {/* Your command zone (Commander games) */}
+      {commander && state.you.commandZone && (
+        <div className="grid gap-s2 rounded-lg border-2 border-dashed border-border-strong bg-surface p-s3">
+          <p className="font-bold">Your command zone</p>
+          {state.you.commandZone.inZone ? (() => {
+            const cz = state.you.commandZone;
+            const cost = commanderCost(state, "you") ?? "";
+            const affordable = canPay(state.you.pool, cost);
+            return (
+              <div className="flex flex-wrap items-start gap-s3">
+                <GameCard card={def(cz.card)} badge={cz.casts ? `Cast ${cz.casts}× · tax +${2 * cz.casts}` : "Ready"} />
+                <div className="grid gap-s2">
+                  <p className="text-sm">Costs <strong>{cost}</strong> right now{cz.casts ? ` (${2 * cz.casts} of that is commander tax)` : ""}. Tap lands for mana, then cast it.</p>
+                  <div><button type="button" onClick={() => act({ type: "castCommander" })} className={affordable ? primary : secondary}>Cast commander ({cost})</button></div>
+                </div>
+              </div>
+            );
+          })() : <p className="text-sm text-text-muted">{def(state.you.commandZone.card).name} is on the battlefield. If it's destroyed, it comes back here.</p>}
+        </div>
+      )}
 
       {/* Hand */}
       <div className="grid gap-s2 rounded-lg border border-border bg-surface p-s3">

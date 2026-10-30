@@ -39,7 +39,7 @@ export function AppShell() {
   const [view, setView] = useState<View>(() => (hasSavedProgress(progress) ? "welcome" : "lesson"));
   const [scenarioId, setScenarioId] = useState<string | null>(null);
   const [matchSetup, setMatchSetup] = useState<MatchSetup | null>(null);
-  const [pickingDeck, setPickingDeck] = useState(false);
+  const [pickingDeck, setPickingDeck] = useState<null | "standard" | "commander">(null);
   const match = useMemo(() => (matchSetup ? makeMatch(matchSetup) : undefined), [matchSetup]);
   const scenario = match ?? (scenarioId ? scenarioById(scenarioId) : undefined);
   const [announcement, setAnnouncement] = useState("");
@@ -135,7 +135,7 @@ export function AppShell() {
             className={`${topButton} lg:hidden ${view === "outline" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
             <Icon name="list" /> Outline
           </button>
-          <button type="button" onClick={() => { setScenarioId(null); setMatchSetup(null); setPickingDeck(false); toggleView("practice"); }} aria-pressed={view === "practice"}
+          <button type="button" onClick={() => { setScenarioId(null); setMatchSetup(null); setPickingDeck(null); toggleView("practice"); }} aria-pressed={view === "practice"}
             className={`${topButton} ${view === "practice" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
             <Icon name="play" /> Practice
           </button>
@@ -210,7 +210,7 @@ export function AppShell() {
           {view === "settings" && <SettingsPanel ref={headingRef} onClose={() => setView("lesson")} />}
 
           {view === "practice" && !scenario && !pickingDeck && (
-            <ScenarioPicker ref={headingRef} completed={progress.scenarios} onPick={(id) => setScenarioId(id)} onPlayGame={() => setPickingDeck(true)} onLibrary={() => setView("library")} onBack={() => setView("lesson")} />
+            <ScenarioPicker ref={headingRef} completed={progress.scenarios} onPick={(id) => setScenarioId(id)} onPlayGame={() => setPickingDeck("standard")} onPlayCommander={() => setPickingDeck("commander")} onLibrary={() => setView("library")} onBack={() => setView("lesson")} />
           )}
           {view === "library" && (
             <Suspense fallback={<p className="p-s4">Loading the card library…</p>}>
@@ -218,7 +218,7 @@ export function AppShell() {
             </Suspense>
           )}
           {view === "practice" && !scenario && pickingDeck && (
-            <DeckPicker ref={headingRef} onStart={(yourDeck, oppDeck) => { setPickingDeck(false); setMatchSetup({ yourDeck, oppDeck, seed: Math.floor(Math.random() * 1e9) }); }} onBack={() => setPickingDeck(false)} />
+            <DeckPicker ref={headingRef} mode={pickingDeck} onStart={(yourDeck, oppDeck) => { setMatchSetup({ yourDeck, oppDeck, seed: Math.floor(Math.random() * 1e9), mode: pickingDeck }); setPickingDeck(null); }} onBack={() => setPickingDeck(null)} />
           )}
           {view === "practice" && scenario && (
             <PracticeTable
@@ -227,7 +227,7 @@ export function AppShell() {
               scenario={scenario}
               exitLabel={match ? "Leave the game" : "All scenarios"}
               onComplete={() => { if (!match) dispatchProgress({ type: "completeScenario", scenarioId: scenario.id }); }}
-              onExit={() => { setScenarioId(null); setMatchSetup(null); setPickingDeck(!!match); }}
+              onExit={() => { setScenarioId(null); setMatchSetup(null); setPickingDeck(match ? (matchSetup?.mode ?? "standard") : null); }}
               onReadMore={(moduleId) => { const mi = modules.findIndex((m) => m.id === moduleId); if (mi >= 0) goTo(mi, 0); }}
             />
           )}

@@ -102,6 +102,10 @@ section (e.g. `CR 103`) instead of guessing. Verify against the current rules at
 | CR 704.6c | 21 combat damage from one commander | medium |
 | CR 903 / 903.4 / 903.5a / 903.5b / 903.7 / 903.8 | Commander; colour identity; 100 cards; singleton; 40 life; commander tax | high |
 | CR 903.6 / 903.9a | Commander starts in command zone; may return to command zone | medium |
+| CR 903.1 / 903.3a / 903.10a | Commander is a casual multiplayer variant; commander is a legendary creature; 21 combat damage from one commander (also 704.6c) | medium |
+| CR 103.8c / 800.4a / 802.2 | No first-draw skip in multiplayer (other than 2HG); a leaving player's cards leave; attacking player chooses a defending player per attacker | medium (numbering shifts between CR editions: 103.8c was 103.7c) |
+| CR 205.4a / 408.1 | Legendary supertype; command zone | medium |
+| CR 704.5a / 704.5b | Lose at 0 life; lose when drawing from an empty library | high |
 
 ### Facts that aren't Comprehensive Rules (also verify)
 
@@ -112,6 +116,9 @@ section (e.g. `CR 103`) instead of guessing. Verify against the current rules at
 | Commander deck recipe: 36–38 lands, ~10 ramp, ~10 draw, 7–8 removal, ~5 board wipes | Module 11 | Tyrna, "Commander Stats" (community Google Doc you provided). Guidelines, not rules |
 | Commander is the most popular casual format | Module 11 | Widely reported; soften if you prefer |
 | Which abilities belong to which colour (the colour pie) | Module 10 | Mark Rosewater, "Mechanical Color Pie 2017" (Making Magic). Design conventions, not rules; they shift over time |
+| First mulligan is free in multiplayer Commander | Module 12 | Official Commander rules (mtgcommander.net), not the CR. Duel Commander differs |
+| The five Commander brackets (Exhibition, Core, Upgraded, Optimized, cEDH) and the Game Changers list | Module 12 | Wizards "Commander Brackets" beta (Feb 2025) and its October 2025 update; still a beta, details change |
+| Attack the biggest threat; don't look too strong early; table talk is normal | Module 12 | Common Commander advice, not rules |
 
 Every card in the app is a real Magic: The Gathering card from the Foundations set (FDN), used under the
 Wizards of the Coast Fan Content Policy: the app is free, non-commercial and unofficial, and carries the

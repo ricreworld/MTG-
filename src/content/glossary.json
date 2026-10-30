@@ -322,5 +322,45 @@
     "term": "Reach",
     "definition": "A creature with Reach can block creatures with Flying.",
     "ruleRef": "CR 702.17"
+  },
+  {
+    "id": "singleton",
+    "term": "Singleton",
+    "definition": "A deck with only one copy of each card, except basic lands. Commander decks are singleton.",
+    "ruleRef": "CR 903.5b"
+  },
+  {
+    "id": "legendary",
+    "term": "Legendary",
+    "definition": "A supertype on a card's type line. A legendary creature can be your commander. You can't control two legendary permanents with the same name at once.",
+    "ruleRef": "CR 205.4a"
+  },
+  {
+    "id": "command-zone",
+    "term": "Command zone",
+    "definition": "The zone where your commander sits at the start of a Commander game, and where it can return when it would leave the battlefield.",
+    "ruleRef": "CR 408.1"
+  },
+  {
+    "id": "commander-tax",
+    "term": "Commander tax",
+    "definition": "The everyday name for the extra cost: casting your commander from the command zone costs {2} more for each time you've already cast it from there.",
+    "ruleRef": "CR 903.8"
+  },
+  {
+    "id": "commander-damage",
+    "term": "Commander damage",
+    "definition": "Combat damage dealt to a player by one commander over the whole game. At 21 or more from the same commander, that player loses.",
+    "ruleRef": "CR 903.10a"
+  },
+  {
+    "id": "rule-zero",
+    "term": "Rule 0",
+    "definition": "The everyday name for the chat before a casual game, where the table agrees what kind of game it wants and any house rules. Not a printed rule."
+  },
+  {
+    "id": "bracket",
+    "term": "Bracket",
+    "definition": "One of five power levels Wizards describes for Commander decks, from 1 (Exhibition) to 5 (cEDH). Saying your bracket helps a table match decks."
   }
 ]

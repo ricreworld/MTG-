@@ -19,6 +19,10 @@ export interface Permanent {
   uid: string;
   card: string; // CardDef id
   owner: Player;
+  /** True for a commander on the battlefield (Commander games). */
+  isCommander?: boolean;
+  /** Continuous +X/+X from other permanents' static abilities (recomputed by the engine). */
+  bonus?: { power: number; toughness: number };
   tapped: boolean;
   /** True until the controller has started a turn with it (summoning sickness). */
   summoningSick: boolean;
@@ -33,6 +37,8 @@ export interface StackItem {
   uid: string;
   card: string;
   caster: Player;
+  /** Cast from the command zone (Commander games). */
+  fromCommandZone?: boolean;
   target?: { kind: "permanent"; uid: string } | { kind: "player"; player: Player } | { kind: "spell"; uid: string };
 }
 
@@ -44,9 +50,15 @@ export interface PlayerState {
   graveyard: string[]; // card ids
   landPlayedThisTurn: boolean;
   pool: Partial<Record<Color, number>>;
+  /** Commander games: the player's commander, whether it's in the command zone now, and how often it was cast from there. */
+  commandZone?: { card: string; casts: number; inZone: boolean } | null;
+  /** Commander games: combat damage taken from each commander (by card id), for the 21-damage rule. */
+  commanderDamage?: Record<string, number>;
 }
 
 export interface GameState {
+  /** "commander": 40 life, command zone, commander tax and commander damage (CR 903). */
+  mode?: "standard" | "commander";
   turn: Player;
   step: Step;
   /** 1 on the first turn of the game; the first player skips their first draw (CR 103.8a). */
@@ -76,6 +88,7 @@ export type Action =
   | { type: "playLand"; uid: string }
   | { type: "tapForMana"; uid: string }
   | { type: "cast"; uid: string } // from hand; instants with a target go to pendingTarget first
+  | { type: "castCommander" } // from the command zone (Commander games)
   | { type: "chooseTarget"; target: NonNullable<StackItem["target"]> }
   | { type: "cancelTarget" }
   | { type: "pass" } // pass priority: resolve the top of the stack
@@ -96,8 +109,37 @@ export const def = (cardId: string): CardDef => {
   if (!c) throw new Error(`Unknown card ${cardId}`);
   return c;
 };
-export const power = (p: Permanent): number => (def(p.card).power ?? 0) + p.pump.power;
-export const toughness = (p: Permanent): number => (def(p.card).toughness ?? 0) + p.pump.toughness;
+export const power = (p: Permanent): number => (def(p.card).power ?? 0) + p.pump.power + (p.bonus?.power ?? 0);
+export const toughness = (p: Permanent): number => (def(p.card).toughness ?? 0) + p.pump.toughness + (p.bonus?.toughness ?? 0);
+export const hasAbility = (p: Permanent, a: NonNullable<CardDef["abilities"]>[number]): boolean => def(p.card).abilities?.includes(a) ?? false;
+export const hasSubtype = (p: Permanent, sub: string): boolean => new RegExp(`\\b${sub}\\b`).test(def(p.card).type.split("—")[1] ?? "");
+
+/** Recomputes continuous +X/+X bonuses from static abilities (CR 611.3), e.g. "Other Elf creatures you control get +1/+1". */
+export function refreshStatics(s: GameState): GameState {
+  return {
+    ...s,
+    battlefield: s.battlefield.map((p) => {
+      let bonus = 0;
+      if (isCreature(p)) {
+        for (const src of s.battlefield) {
+          if (src.uid !== p.uid && src.owner === p.owner && hasAbility(src, "dwynen-elves") && hasSubtype(p, "Elf")) bonus += 1;
+        }
+      }
+      return bonus || p.bonus ? { ...p, bonus: { power: bonus, toughness: bonus } } : p;
+    }),
+  };
+}
+
+/** The cost to cast a commander from the command zone right now: its cost plus {2} per earlier cast (CR 903.8). */
+export function commanderCost(s: GameState, player: Player): string | null {
+  const cz = s[player].commandZone;
+  if (!cz || !cz.inZone) return null;
+  const base = def(cz.card).cost ?? "";
+  const need = parseCost(base);
+  const generic = need.generic + 2 * cz.casts;
+  const colored = base.replace(/\d+/g, "");
+  return `${generic || ""}${colored}` || "0";
+}
 export const has = (p: Permanent, kw: NonNullable<CardDef["keywords"]>[number]): boolean => def(p.card).keywords?.includes(kw) ?? false;
 export const isLand = (p: Permanent) => def(p.card).kind === "land";
 export const isCreature = (p: Permanent) => def(p.card).kind === "creature";
@@ -158,15 +200,35 @@ const newPermanent = (uid: string, card: string, owner: Player, sick: boolean): 
 
 /** State-based actions (CR 704): lethal damage, deathtouch, toughness 0, life totals. */
 export function checkState(s: GameState): GameState {
-  let next = s;
-  for (const p of s.battlefield) {
+  let next = refreshStatics(s);
+  for (const p of next.battlefield) {
     if (isCreature(p) && (p.damage >= toughness(p) || p.deathtouched || toughness(p) <= 0)) {
-      next = { ...next, battlefield: next.battlefield.filter((x) => x.uid !== p.uid), [p.owner]: { ...next[p.owner], graveyard: [...next[p.owner].graveyard, p.card] } };
-      next = log(next, `${def(p.card).name} is destroyed and goes to the graveyard.`);
+      const wasAttacking = next.attackers[p.uid] !== undefined && (next.step === "damage" || next.step === "blockers");
+      next = { ...next, battlefield: next.battlefield.filter((x) => x.uid !== p.uid) };
+      if (p.isCommander) {
+        // CR 903.9a: the owner may put the commander into the command zone instead. On this table they always do.
+        const cz = next[p.owner].commandZone;
+        next = { ...next, [p.owner]: { ...next[p.owner], commandZone: { card: p.card, casts: cz?.casts ?? 0, inZone: true } } };
+        next = log(next, `${def(p.card).name} is destroyed. It goes back to the command zone instead of the graveyard.`);
+      } else {
+        next = { ...next, [p.owner]: { ...next[p.owner], graveyard: [...next[p.owner].graveyard, p.card] } };
+        next = log(next, `${def(p.card).name} is destroyed and goes to the graveyard.`);
+      }
+      // Garna: "Whenever another creature you control dies, draw a card if it was attacking. Otherwise, Garna deals 1 damage to each opponent."
+      for (const g of next.battlefield.filter((x) => x.owner === p.owner && hasAbility(x, "garna-death"))) {
+        if (wasAttacking) next = drawCards(log(next, `${def(g.card).name} triggers: that creature was attacking, so ${p.owner === "you" ? "you draw" : "your opponent draws"} a card.`), p.owner, 1);
+        else { const foe = other(p.owner); next = log({ ...next, [foe]: { ...next[foe], life: next[foe].life - 1 } }, `${def(g.card).name} triggers: 1 damage to ${foe === "you" ? "you" : "your opponent"}.`); }
+      }
+      next = refreshStatics(next);
     }
   }
   if (next.opp.life <= 0 && !next.result) next = { ...log(next, "Your opponent's life is 0. You win!"), result: "win" };
   else if (next.you.life <= 0 && !next.result) next = { ...log(next, "Your life is 0."), result: "lose" };
+  for (const pl of ["you", "opp"] as Player[]) {
+    for (const [card, dmg] of Object.entries(next[pl].commanderDamage ?? {})) {
+      if (dmg >= 21 && !next.result) next = { ...log(next, `${def(card).name} has dealt ${pl === "you" ? "you" : "your opponent"} ${dmg} combat damage in total. 21 or more from one commander loses the game.`), result: pl === "you" ? "lose" : "win" };
+    }
+  }
   return next;
 }
 
@@ -181,15 +243,20 @@ function resolveTop(s: GameState): GameState {
   const card = def(item.card);
   const toGrave = (st: GameState): GameState => ({ ...st, [item.caster]: { ...st[item.caster], graveyard: [...st[item.caster].graveyard, item.card] } });
   if (card.kind === "creature") {
-    next = { ...next, battlefield: [...next.battlefield, newPermanent(item.uid, item.card, item.caster, true)] };
-    return log(next, `${card.name} resolves and enters the battlefield${item.caster === "opp" ? " on your opponent's side" : ""}.`);
+    next = { ...next, battlefield: [...next.battlefield, { ...newPermanent(item.uid, item.card, item.caster, true), ...(item.fromCommandZone ? { isCommander: true } : {}) }] };
+    return refreshStatics(log(next, `${card.name} resolves and enters the battlefield${item.caster === "opp" ? " on your opponent's side" : ""}.`));
   }
   next = toGrave(next);
   const t = item.target;
   if ((card.effect === "counter" || card.effect === "counterNoncreature") && t?.kind === "spell") {
     const victim = next.stack.find((x) => x.uid === t.uid);
     if (!victim) return log(next, `${card.name} has nothing to counter any more, so it does nothing.`);
-    next = { ...next, stack: next.stack.filter((x) => x.uid !== t.uid), [victim.caster]: { ...next[victim.caster], graveyard: [...next[victim.caster].graveyard, victim.card] } };
+    next = { ...next, stack: next.stack.filter((x) => x.uid !== t.uid) };
+    if (victim.fromCommandZone) {
+      next = { ...next, [victim.caster]: { ...next[victim.caster], commandZone: { card: victim.card, casts: next[victim.caster].commandZone?.casts ?? 0, inZone: true } } };
+      return log(next, `${card.name} resolves: ${def(victim.card).name} is countered. It goes back to the command zone.`);
+    }
+    next = { ...next, [victim.caster]: { ...next[victim.caster], graveyard: [...next[victim.caster].graveyard, victim.card] } };
     return log(next, `${card.name} resolves: ${def(victim.card).name} is countered. It goes to the graveyard without happening.`);
   }
   if ((card.effect === "pump3" || card.effect === "shrink2") && t?.kind === "permanent") {
@@ -209,6 +276,7 @@ function dealCombatDamage(s: GameState, firstStrikeOnly: boolean): GameState {
   const strikes = (p: Permanent) => (firstStrikeOnly ? has(p, "First strike") : !has(p, "First strike"));
   const dmg: Record<string, number> = {};
   const dt: Record<string, boolean> = {};
+  const cmdDmg: Record<string, number> = {};
   let toPlayer = 0;
   let lifeGain = 0;
   const lines: string[] = [];
@@ -221,12 +289,14 @@ function dealCombatDamage(s: GameState, firstStrikeOnly: boolean): GameState {
       if (!b) {
         toPlayer += p;
         lines.push(`${def(a.card).name} is unblocked and deals ${p} damage to ${defender === "you" ? "you" : "your opponent"}.`);
+        if (a.isCommander && p > 0) cmdDmg[a.card] = (cmdDmg[a.card] ?? 0) + p;
       } else {
         let toBlocker = p;
         if (has(a, "Trample")) {
           const lethal = has(a, "Deathtouch") ? 1 : Math.max(0, toughness(b) - b.damage - (dmg[b.uid] ?? 0));
           toBlocker = Math.min(p, lethal);
           const over = p - toBlocker;
+          if (over > 0 && a.isCommander) cmdDmg[a.card] = (cmdDmg[a.card] ?? 0) + over;
           if (over > 0) { toPlayer += over; lines.push(`${def(a.card).name} tramples over: ${toBlocker} to ${def(b.card).name}, ${over} to ${defender === "you" ? "you" : "your opponent"}.`); }
           else lines.push(`${def(a.card).name} deals ${toBlocker} damage to ${def(b.card).name}.`);
         } else lines.push(`${def(a.card).name} deals ${toBlocker} damage to ${def(b.card).name}.`);
@@ -247,6 +317,11 @@ function dealCombatDamage(s: GameState, firstStrikeOnly: boolean): GameState {
   if (firstStrikeOnly) next = log(next, "First strike damage happens first.");
   next = { ...next, battlefield: next.battlefield.map((p) => ({ ...p, damage: p.damage + (dmg[p.uid] ?? 0), deathtouched: p.deathtouched || !!dt[p.uid] })) };
   if (toPlayer > 0) next = { ...next, [defender]: { ...next[defender], life: next[defender].life - toPlayer } };
+  for (const [card, d] of Object.entries(cmdDmg)) {
+    const total = (next[defender].commanderDamage?.[card] ?? 0) + d;
+    next = { ...next, [defender]: { ...next[defender], commanderDamage: { ...next[defender].commanderDamage, [card]: total } } };
+    lines.push(`Commander damage from ${def(card).name} to ${defender === "you" ? "you" : "your opponent"}: ${total} of 21.`);
+  }
   if (lifeGain > 0) { next = { ...next, [s.turn]: { ...next[s.turn], life: next[s.turn].life + lifeGain } }; lines.push(`Lifelink: ${s.turn === "you" ? "you gain" : "your opponent gains"} ${lifeGain} life.`); }
   for (const l of lines) next = log(next, l);
   return checkState(next);
@@ -284,7 +359,7 @@ export function beginTurn(s: GameState, player: Player): GameState {
     battlefield: s.battlefield.map((p) => (p.owner === player ? { ...p, tapped: false, summoningSick: false } : p)),
   };
   next = { ...next, [player]: { ...next[player], landPlayedThisTurn: false, pool: {} } };
-  next = log(next, player === "you" ? "Your turn. Your cards untap." : "Your opponent's turn. Their cards untap.");
+  next = refreshStatics(log(next, player === "you" ? "Your turn. Your cards untap." : "Your opponent's turn. Their cards untap."));
   // The player who goes first skips the draw on the very first turn of the game (CR 103.8a).
   const skipDraw = player === "you" && s.turnNumber === 0;
   if (!skipDraw) next = drawCards(next, player, 1);
@@ -378,7 +453,42 @@ export function attackWith(s: GameState, player: Player, uids: string[]): GameSt
     pendingBlocker: null,
     battlefield: s.battlefield.map((p) => (attackers[p.uid] !== undefined && !has(p, "Vigilance") ? { ...p, tapped: true } : p)),
   };
-  return log(next, `${who(player)} attack${player === "you" ? "" : "s"} with ${uids.map((u) => name(s, u)).join(" and ")}.${player === "opp" ? " Choose your blockers." : ""}`);
+  let out = log(next, `${who(player)} attack${player === "you" ? "" : "s"} with ${uids.map((u) => name(s, u)).join(" and ")}.${player === "opp" ? " Choose your blockers." : ""}`);
+  // Attack triggers (resolved right away on this table; in a real game they use the stack).
+  const atk = out.battlefield.filter((p) => attackers[p.uid] !== undefined);
+  for (const p of out.battlefield.filter((x) => x.owner === player)) {
+    if (hasAbility(p, "linden-lifegain")) {
+      const n = atk.filter((a) => def(a.card).color === "W").length;
+      if (n) out = log({ ...out, [player]: { ...out[player], life: out[player].life + n } }, `${def(p.card).name} triggers ${n} time${n === 1 ? "" : "s"}: ${player === "you" ? "you gain" : "your opponent gains"} ${n} life.`);
+    }
+  }
+  for (const a of atk) {
+    if (hasAbility(a, "syralin-anthem")) {
+      out = { ...out, battlefield: out.battlefield.map((x) => (x.owner === player && x.uid !== a.uid && isCreature(x) ? { ...x, pump: { power: x.pump.power + 1, toughness: x.pump.toughness + 1 } } : x)) };
+      out = log(out, `${def(a.card).name} triggers: ${player === "you" ? "your" : "their"} other creatures get +1/+1 until end of turn.`);
+    }
+    if (hasAbility(a, "dwynen-lifegain")) {
+      const n = atk.filter((x) => hasSubtype(x, "Elf")).length;
+      out = log({ ...out, [player]: { ...out[player], life: out[player].life + n } }, `${def(a.card).name} triggers: ${n} attacking Elf${n === 1 ? "" : "s"}, so ${player === "you" ? "you gain" : "your opponent gains"} ${n} life.`);
+    }
+  }
+  return out;
+}
+
+/** Casts a player's commander from the command zone, paying the taxed cost from the pool (CR 903.8). */
+export function castCommanderFor(s: GameState, player: Player): GameState {
+  const cz = s[player].commandZone;
+  if (!cz || !cz.inZone) return s;
+  const cost = commanderCost(s, player) ?? "";
+  const uid = newUid("cmd");
+  const item: StackItem = { uid, card: cz.card, caster: player, fromCommandZone: true };
+  const next: GameState = {
+    ...s,
+    cards: { ...s.cards, [uid]: cz.card },
+    [player]: { ...s[player], pool: pay(s[player].pool, cost), commandZone: { card: cz.card, casts: cz.casts + 1, inZone: false } },
+    stack: [...s.stack, item],
+  };
+  return log(next, `${who(player)} cast${player === "you" ? "" : "s"} ${def(cz.card).name} from the command zone for ${cost}${cz.casts ? ` (commander tax: ${2 * cz.casts} extra)` : ""}. It goes on the stack.`);
 }
 
 /* ---------- the reducer (the learner's actions) ---------- */
@@ -438,6 +548,21 @@ export function reduce(state: GameState, action: Action): GameState {
         return castFor(s, me, action.uid, { kind: "spell", uid: target.uid });
       }
       return castFor(s, me, action.uid);
+    }
+
+    case "castCommander": {
+      const cz = s.you.commandZone;
+      if (!cz || !cz.inZone) return refuse(s, "Your commander isn't in the command zone right now.");
+      if (s.turn !== me || (s.step !== "main1" && s.step !== "main2")) return refuse(s, "Creatures, including your commander, can only be cast during your own main phase.");
+      if (s.stack.length) return refuse(s, "Something is waiting on the stack. Creatures can only be cast when the stack is empty.");
+      const cost = commanderCost(s, me) ?? "";
+      if (!canPay(s.you.pool, cost)) {
+        const could = canPay(availableMana(s, me), cost);
+        return refuse(s, could
+          ? `${def(cz.card).name} costs ${cost} right now${cz.casts ? ` (that includes the commander tax of ${2 * cz.casts})` : ""}. Tap your lands first, then cast it.`
+          : `You don't have enough mana for ${def(cz.card).name}. It costs ${cost} right now${cz.casts ? `, because of the commander tax` : ""}.`);
+      }
+      return castCommanderFor(s, me);
     }
 
     case "chooseTarget": {
@@ -552,7 +677,7 @@ export function makeState(init: {
     });
   const youHand = hand(init.you?.hand);
   const oppHand = hand(init.opp?.hand);
-  return {
+  return refreshStatics({
     turn: init.turn ?? "you",
     step: init.step ?? "main1",
     turnNumber: init.turnNumber ?? 1,
@@ -568,7 +693,7 @@ export function makeState(init: {
     log: [],
     refusal: null,
     result: null,
-  };
+  });
 }
 
 /** Puts an opponent's spell on the stack from nowhere (scenario scripts use this for "respond" practice). */

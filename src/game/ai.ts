@@ -9,7 +9,9 @@ import {
   beginTurn,
   canBlock,
   canPay,
+  castCommanderFor,
   castFor,
+  commanderCost,
   dealDamage,
   def,
   endTurnFor,
@@ -52,10 +54,15 @@ function castSomething(s: GameState): GameState | null {
     const tapped = tapLandsFor(s, opp, stab.card.cost);
     if (tapped) return log(castFor(tapped, opp, stab.uid, { kind: "permanent", uid: victim.uid }), `(Why: ${def(victim.card).name} has only ${toughness(victim)} toughness, so Stab destroys it.)`);
   }
-  // Then the biggest creature it can afford.
+  // Then the biggest creature it can afford, counting the commander in the command zone (with its tax).
+  const cmdCost = commanderCost(s, opp);
   const creature = hand
     .filter((h) => h.card.kind === "creature" && canPay(mana, h.card.cost))
     .sort((a, b) => manaValue(b.card.cost) - manaValue(a.card.cost))[0];
+  if (cmdCost && canPay(mana, cmdCost) && (!creature || manaValue(cmdCost) >= manaValue(creature.card.cost))) {
+    const tapped = tapLandsFor(s, opp, cmdCost);
+    if (tapped) return castCommanderFor(tapped, opp);
+  }
   if (creature) {
     const tapped = tapLandsFor(s, opp, creature.card.cost);
     if (tapped) return castFor(tapped, opp, creature.uid);

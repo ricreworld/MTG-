@@ -13,6 +13,8 @@ export interface Deck {
   howToPlay: string;
   /** Card id -> number of copies. */
   cards: Record<string, number>;
+  /** Commander games: the legendary creature that leads this deck (starts in the command zone). */
+  commander?: string;
 }
 
 export const DECKS: Deck[] = [
@@ -23,6 +25,7 @@ export const DECKS: Deck[] = [
     style: "Go wide: lots of small creatures, some with Flying and Lifelink.",
     howToPlay: "Play a creature every turn and attack with the ones that are safe. Lifelink creatures gain you life while they fight.",
     cards: { plains: 12, lions: 4, hawk: 4, soldier: 4, skyhunter: 3, serra: 3 },
+    commander: "syralin",
   },
   {
     id: "blue-white-sky",
@@ -39,6 +42,7 @@ export const DECKS: Deck[] = [
     style: "Midrange: strong creatures and a removal spell.",
     howToPlay: "Use Stab to destroy a small creature, then attack with Vampires and Goblins. Brazen Scourge can attack the turn it arrives.",
     cards: { swamp: 7, mountain: 6, nighthawk: 3, vampire: 3, stab: 3, goblin: 3, scourge: 3, giant: 2 },
+    commander: "garna",
   },
   {
     id: "red-fire",
@@ -55,6 +59,7 @@ export const DECKS: Deck[] = [
     style: "Big creatures with Reach and Trample, plus a combat trick.",
     howToPlay: "Your creatures are bigger than most. Block with Reach creatures, attack with Trample, and save Giant Growth for a fight you want to win.",
     cards: { forest: 12, cub: 4, archer: 4, sentry: 4, pathwarden: 3, growth: 3 },
+    commander: "dwynen",
   },
 ];
 

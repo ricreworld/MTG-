@@ -30,7 +30,18 @@ export interface CardDef {
   artist: string;
   /** Collector number in Foundations. */
   num: string;
+  /** Legendary creatures can lead a Commander deck. */
+  legendary?: boolean;
+  /** Rules text beyond keywords, as the engine understands it (see engine.ts). */
+  abilities?: Ability[];
 }
+
+export type Ability =
+  | "linden-lifegain" // Whenever a white creature you control attacks, you gain 1 life.
+  | "syralin-anthem" // Whenever Syr Alin attacks, other creatures you control get +1/+1 until end of turn.
+  | "dwynen-elves" // Other Elf creatures you control get +1/+1.
+  | "dwynen-lifegain" // Whenever Dwynen attacks, you gain 1 life for each attacking Elf you control.
+  | "garna-death"; // Whenever another creature you control dies, draw a card if it was attacking. Otherwise, Garna deals 1 damage to each opponent.
 
 const land = (id: string, name: string, color: Color, artist: string, num: string): CardDef => ({ id, name, kind: "land", color, type: `Basic Land — ${name}`, text: `{T}: Add {${color}}.`, artist, num });
 
@@ -57,6 +68,11 @@ export const CARDS: Record<string, CardDef> = {
   archer: { id: "archer", name: "Thornweald Archer", kind: "creature", color: "G", cost: "1G", type: "Creature — Elf Archer", power: 2, toughness: 1, keywords: ["Reach", "Deathtouch"], text: "Reach\nDeathtouch", artist: "Dave Kendall", num: "559" },
   sentry: { id: "sentry", name: "Magnigoth Sentry", kind: "creature", color: "G", cost: "3G", type: "Creature — Treefolk", power: 4, toughness: 4, keywords: ["Reach"], text: "Reach", artist: "Dave Kendall", num: "556" },
   pathwarden: { id: "pathwarden", name: "Tajuru Pathwarden", kind: "creature", color: "G", cost: "4G", type: "Creature — Elf Warrior Ally", power: 5, toughness: 4, keywords: ["Vigilance", "Trample"], text: "Vigilance\nTrample", artist: "Victor Adame Minguez", num: "558" },
+
+  linden: { id: "linden", name: "Linden, the Steadfast Queen", kind: "creature", color: "W", cost: "WWW", type: "Legendary Creature — Human Noble", power: 3, toughness: 3, keywords: ["Vigilance"], legendary: true, abilities: ["linden-lifegain"], text: "Vigilance\nWhenever a white creature you control attacks, you gain 1 life.", artist: "Ryan Pancoast", num: "737" },
+  syralin: { id: "syralin", name: "Syr Alin, the Lion's Claw", kind: "creature", color: "W", cost: "3WW", type: "Legendary Creature — Human Knight", power: 4, toughness: 4, keywords: ["First strike"], legendary: true, abilities: ["syralin-anthem"], text: "First strike\nWhenever Syr Alin attacks, other creatures you control get +1/+1 until end of turn.", artist: "Paul Scott Canavan", num: "582" },
+  dwynen: { id: "dwynen", name: "Dwynen, Gilt-Leaf Daen", kind: "creature", color: "G", cost: "2GG", type: "Legendary Creature — Elf Warrior", power: 3, toughness: 4, keywords: ["Reach"], legendary: true, abilities: ["dwynen-elves", "dwynen-lifegain"], text: "Reach\nOther Elf creatures you control get +1/+1.\nWhenever Dwynen attacks, you gain 1 life for each attacking Elf you control.", artist: "Johannes Voss", num: "217" },
+  garna: { id: "garna", name: "Garna, Bloodfist of Keld", kind: "creature", color: "B", cost: "1BRR", type: "Legendary Creature — Human Berserker", power: 4, toughness: 3, legendary: true, abilities: ["garna-death"], text: "Whenever another creature you control dies, draw a card if it was attacking. Otherwise, Garna deals 1 damage to each opponent.", artist: "Andrey Kuzinskiy", num: "658" },
 
   growth: { id: "growth", name: "Giant Growth", kind: "instant", color: "G", cost: "G", type: "Instant", effect: "pump3", text: "Target creature gets +3/+3 until end of turn.", artist: "Matt Cavotta", num: "223" },
   stab: { id: "stab", name: "Stab", kind: "instant", color: "B", cost: "B", type: "Instant", effect: "shrink2", text: "Target creature gets -2/-2 until end of turn.", artist: "Milivoj Ćeran", num: "71" },
