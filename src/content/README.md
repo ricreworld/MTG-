@@ -28,7 +28,6 @@ No code changes are needed.
 | `id`, `title` | kebab-case id, unique within the module |
 | `body` | markdown subset, **max 120 words** (counted as the learner reads it) |
 | `visual` | `{ type: "svg" \| "image" \| "placeholder", src, altText }`. `altText` is required |
-| `ttsText` | optional; read-aloud uses the body's plain text if it's missing |
 | `glossaryTerms[]` | every `[[term]]` in the body must be listed here **and** exist in `glossary.json` |
 | `ruleRefs[]` | at least one, formatted like `"CR 500.1"` or `"CR 104.3b"` |
 | `tryIt` | optional interaction id (interactions arrive in later phases) |

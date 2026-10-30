@@ -4,13 +4,6 @@ import { Icon } from "../../components/Icon";
 import { SettingsControls } from "../../components/SettingsControls";
 import { useSettings } from "../../theme/SettingsContext";
 
-export const SHORTCUTS: readonly { keys: string; action: string; note?: string }[] = [
-  { keys: "← Left arrow", action: "Back one step" },
-  { keys: "→ Right arrow", action: "Next step" },
-  { keys: "F", action: "Turn Focus Mode on or off" },
-  { keys: "R", action: "Read the step aloud", note: "arrives in a later update" },
-];
-
 export const SettingsPanel = forwardRef<HTMLHeadingElement, { onClose: () => void }>(function SettingsPanel({ onClose }, headingRef) {
   const { settings, dispatch } = useSettings();
   return (
@@ -25,7 +18,7 @@ export const SettingsPanel = forwardRef<HTMLHeadingElement, { onClose: () => voi
       <div className="flex items-start justify-between gap-s4 rounded-md bg-surface-2 p-s4">
         <div>
           <span className="font-bold">Focus Mode</span>
-          <p className="text-sm text-text-muted">Hides the outline and footer. Shows only the step and the buttons. Shortcut: F.</p>
+          <p className="text-sm text-text-muted">Hides the outline and footer. Shows only the step and the buttons.</p>
         </div>
         <button
           type="button"
@@ -43,18 +36,6 @@ export const SettingsPanel = forwardRef<HTMLHeadingElement, { onClose: () => voi
 
       <SettingsControls />
 
-      <section aria-labelledby="shortcuts-heading" className="grid gap-s3">
-        <h3 id="shortcuts-heading" className="text-lg font-bold">Keyboard shortcuts (with a keyboard connected)</h3>
-        <p className="text-sm text-text-muted">Useful with a Bluetooth keyboard or switch control. They don't work while you're choosing an answer or typing, so they never get in the way.</p>
-        <dl className="grid gap-s2">
-          {SHORTCUTS.map((s) => (
-            <div key={s.keys} className="flex flex-wrap gap-s3">
-              <dt><kbd className="rounded-sm border border-border-strong bg-surface-2 px-s2 font-mono">{s.keys}</kbd></dt>
-              <dd>{s.action}{s.note && <span className="text-text-muted"> ({s.note})</span>}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
     </section>
   );
 });

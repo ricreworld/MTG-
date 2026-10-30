@@ -122,7 +122,7 @@ export function AppShell() {
 
       <header data-focus-hide className="border-b border-border pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex max-w-[64rem] items-center gap-s2 py-s2 [@media(max-height:500px)]:py-s1 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
-          <p className="mr-auto text-lg font-bold">Mana Steps</p>
+          <h1 className="mr-auto text-lg font-bold">Mana Steps</h1>
           <button type="button" onClick={() => toggleView("outline")} aria-pressed={view === "outline"}
             className={`${topButton} lg:hidden ${view === "outline" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
             <Icon name="list" /> Outline

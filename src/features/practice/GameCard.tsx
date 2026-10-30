@@ -92,12 +92,14 @@ interface Props {
 export function GameCard({ card, perm, action, selected, badge, onClick, size = "md" }: Props) {
   const tapped = perm?.tapped ?? false;
   const w = size === "sm" ? "w-[4.6rem]" : "w-[5.6rem]";
-  const label = `${describeCard(card, perm)}${action ? `. ${action}` : ""}`;
+  // Screen readers get the visible card text plus this hidden detail; the name always contains the visible text.
+  const detail = describeCard(card, perm).replace(`${card.name}, `, "");
+  const srDetail = `, ${detail}${action ? `. ${action}` : ""}`;
   const body = (
     <span
       className={`relative grid ${w} aspect-[5/7] content-start gap-[2px] rounded-md border-2 p-[3px] text-left text-[0.62rem] leading-tight ${FRAME[card.color]} ${
         selected ? "border-focus ring-[3px] ring-focus" : "border-border-strong"
-      } ${tapped ? "rotate-6 opacity-80" : ""}`}
+      } ${tapped ? "rotate-6" : ""}`}
     >
       <span className="flex items-start justify-between gap-1 font-bold">
         <span className="truncate">{card.name}</span>
@@ -107,21 +109,22 @@ export function GameCard({ card, perm, action, selected, badge, onClick, size = 
       <span className="truncate text-[0.56rem] font-bold uppercase tracking-wide opacity-90">{card.kind}{card.keywords?.length ? ` · ${card.keywords.join(", ")}` : ""}</span>
       {card.kind === "instant" && <span className="line-clamp-3 opacity-90">{card.text}</span>}
       {card.kind === "creature" && (
-        <span className="absolute bottom-[3px] right-[3px] rounded-sm bg-bg/20 px-1 font-mono text-[0.7rem] font-bold">
+        <span className="absolute bottom-[3px] right-[3px] rounded-sm bg-surface px-1 font-mono text-[0.7rem] font-bold text-text">
           {perm ? power(perm) : card.power}/{perm ? toughness(perm) : card.toughness}
         </span>
       )}
-      {perm && perm.damage > 0 && <span className="absolute bottom-[3px] left-[3px] rounded-sm bg-bg/20 px-1 font-mono text-[0.6rem] font-bold">-{perm.damage}</span>}
+      {perm && perm.damage > 0 && <span className="absolute bottom-[3px] left-[3px] rounded-sm bg-surface px-1 font-mono text-[0.6rem] font-bold text-text">-{perm.damage}</span>}
     </span>
   );
   return (
     <span className="grid justify-items-center gap-1">
       {onClick ? (
-        <button type="button" onClick={onClick} aria-label={label} aria-pressed={selected} className="rounded-md">
+        <button type="button" onClick={onClick} aria-pressed={selected} className="rounded-md">
           {body}
+          <span className="sr-only">{srDetail}</span>
         </button>
       ) : (
-        <span role="img" aria-label={label}>{body}</span>
+        <span>{body}<span className="sr-only">{srDetail}</span></span>
       )}
       {(badge || tapped) && (
         <span className="max-w-[6rem] rounded-sm bg-surface-2 px-1 text-center text-[0.65rem] font-bold leading-tight">{[tapped ? "Tapped" : null, badge].filter(Boolean).join(" · ")}</span>

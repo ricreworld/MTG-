@@ -4,7 +4,6 @@ export interface ShortcutHandlers {
   back: () => void;
   next: () => void;
   focus: () => void;
-  read?: () => void;
 }
 
 /** True when a key press belongs to a control (typing, choosing a radio option, a select…). */
@@ -14,7 +13,7 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
   return ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
 }
 
-/** ← Back, → Next, F Focus Mode, R Read aloud. Ignored while the learner is using a form control. */
+/** ← Back, → Next, F Focus Mode (for anyone with a keyboard attached). Ignored while using a form control. */
 export function useShortcuts(handlers: ShortcutHandlers): void {
   const ref = useRef(handlers);
   ref.current = handlers;
@@ -25,7 +24,6 @@ export function useShortcuts(handlers: ShortcutHandlers): void {
       if (e.key === "ArrowLeft") { e.preventDefault(); h.back(); }
       else if (e.key === "ArrowRight") { e.preventDefault(); h.next(); }
       else if (e.key === "f" || e.key === "F") { e.preventDefault(); h.focus(); }
-      else if ((e.key === "r" || e.key === "R") && h.read) { e.preventDefault(); h.read(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

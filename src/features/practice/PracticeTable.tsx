@@ -73,6 +73,21 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
     }
     return null;
   };
+  // A card with nothing to do right now still answers a tap, so focus never jumps and every tap gets feedback.
+  const explain = (p: Permanent): { label: string; action: () => void } => {
+    const card = def(p.card);
+    const say = (text: string) => () => setCoach({ kind: "hint", text });
+    if (p.owner === "you" && card.kind === "land") return { label: p.tapped ? "Already tapped" : "Tap for mana", action: () => act({ type: "tapForMana", uid: p.uid }) };
+    if (p.owner === "you") return { label: "About this card", action: say(state.step === "blockers" && myTurn ? `${card.name} is attacking. Continue to see the damage.` : `${card.name} acts in combat: go to combat to attack with it, or block with it when your opponent attacks.`) };
+    if (targeting) return { label: "About this card", action: say(`${targeting.name} can't target ${card.name}: it isn't a creature.`) };
+    return { label: "About this card", action: say(`${card.name} belongs to your opponent. You can block it when it attacks, or target it with a spell like Spark Jolt.`) };
+  };
+  const tapOf = (p: Permanent): { label: string; onClick: () => void } => {
+    const a = permAction(p);
+    if (a) return { label: a.label, onClick: () => act(a.action) };
+    const e = explain(p);
+    return { label: e.label, onClick: e.action };
+  };
   const blockerOf = (attackerUid: string) => { const b = state.attackers[attackerUid]; return b ? def(state.battlefield.find((p) => p.uid === b)?.card ?? "").name : null; };
   const permBadge = (p: Permanent): string | undefined => {
     if (state.attackers[p.uid] !== undefined && (state.step === "blockers" || state.step === "damage")) { const b = blockerOf(p.uid); return b ? `Attacking · blocked by ${b}` : "Attacking"; }
@@ -143,10 +158,10 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
         <p className="flex items-center gap-s3 font-bold">Opponent <span className="rounded-sm bg-surface px-s2 font-mono">Life {state.opp.life}</span>
           {targeting?.effect === "damage3" && <button type="button" onClick={() => act({ type: "chooseTarget", target: { kind: "player", player: "opp" } })} className={`${secondary} ml-auto`}>Target opponent</button>}
         </p>
-        <div className="flex flex-wrap gap-s2">{lands(theirs).map((p) => <GameCard key={p.uid} card={def(p.card)} perm={p} size="sm" />)}</div>
+        <div className="flex flex-wrap gap-s2">{lands(theirs).map((p) => { const t = tapOf(p); return <GameCard key={p.uid} card={def(p.card)} perm={p} size="sm" action={t.label} onClick={t.onClick} />; })}</div>
         <div className="flex flex-wrap gap-s2">
           {creatures(theirs).length === 0 && <p className="text-sm text-text-muted">No creatures.</p>}
-          {creatures(theirs).map((p) => { const a = permAction(p); return <GameCard key={p.uid} card={def(p.card)} perm={p} badge={permBadge(p)} action={a?.label} onClick={a ? () => act(a.action) : undefined} />; })}
+          {creatures(theirs).map((p) => { const t = tapOf(p); return <GameCard key={p.uid} card={def(p.card)} perm={p} badge={permBadge(p)} action={t.label} onClick={t.onClick} />; })}
         </div>
       </div>
 
@@ -173,11 +188,11 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
         </p>
         <div className="flex flex-wrap gap-s2">
           {creatures(mine).length === 0 && <p className="text-sm text-text-muted">No creatures on the battlefield.</p>}
-          {creatures(mine).map((p) => { const a = permAction(p); return <GameCard key={p.uid} card={def(p.card)} perm={p} badge={permBadge(p)} selected={state.selectedAttackers.includes(p.uid) || state.pendingBlocker === p.uid} action={a?.label} onClick={a ? () => act(a.action) : undefined} />; })}
+          {creatures(mine).map((p) => { const t = tapOf(p); return <GameCard key={p.uid} card={def(p.card)} perm={p} badge={permBadge(p)} selected={state.selectedAttackers.includes(p.uid) || state.pendingBlocker === p.uid} action={t.label} onClick={t.onClick} />; })}
         </div>
         <div className="flex flex-wrap gap-s2">
           {lands(mine).length === 0 && <p className="text-sm text-text-muted">No lands yet.</p>}
-          {lands(mine).map((p) => { const a = permAction(p); return <GameCard key={p.uid} card={def(p.card)} perm={p} size="sm" action={a?.label} onClick={a ? () => act(a.action) : undefined} />; })}
+          {lands(mine).map((p) => { const t = tapOf(p); return <GameCard key={p.uid} card={def(p.card)} perm={p} size="sm" action={t.label} onClick={t.onClick} />; })}
         </div>
       </div>
 

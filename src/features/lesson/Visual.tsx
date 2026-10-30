@@ -7,15 +7,10 @@ export function Visual({ visual }: { visual: VisualData }) {
     return <img src={visual.src} alt={visual.altText} className="max-w-full rounded-md border border-border" />;
   }
   return (
-    <figure
-      role="img"
-      aria-label={visual.altText}
-      className="grid min-h-[8rem] content-center rounded-md border-2 border-dashed border-border-strong bg-surface-2 p-s4"
-    >
-      <figcaption className="grid gap-s1 text-text-muted">
-        <span className="text-sm font-bold">Picture coming soon</span>
-        <span>{visual.type === "placeholder" ? visual.src : visual.altText}</span>
-      </figcaption>
-    </figure>
+    // The placeholder is text, so it's read as text (no image role needed).
+    <div className="grid min-h-[8rem] content-center gap-s1 rounded-md border-2 border-dashed border-border-strong bg-surface-2 p-s4 text-text-muted">
+      <p className="text-sm font-bold">Picture coming soon</p>
+      <p>{visual.type === "placeholder" ? visual.src : visual.altText}</p>
+    </div>
   );
 }

@@ -67,8 +67,6 @@ export const StepSchema = z
     title: NonEmpty,
     body: NonEmpty,
     visual: VisualSchema,
-    /** Optional. Read-aloud text; defaults to the body's plain text. */
-    ttsText: NonEmpty.optional(),
     glossaryTerms: z.array(Id).default([]),
     /** At least one Comprehensive Rules reference, shown as a small footnote. */
     ruleRefs: z.array(RuleRef).min(1, "Every step needs at least one rule reference"),

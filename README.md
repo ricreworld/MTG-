@@ -72,6 +72,13 @@ legacy/                    The earlier single-file prototype (Planeswalker Quest
 - All sizes are in rem, so the 4 text-size steps scale the whole UI.
 - Animations are off by default. Turning them on still respects `prefers-reduced-motion`.
 
+## Accessibility checks
+
+- `npm test` covers the settings, content, navigation, progress, engine and scenario logic (59 tests).
+- The axe-core audit and phone walkthroughs were run with Playwright against the production build
+  (iPhone 13 and Pixel 5 emulation, dark and light). Repeat them before a release.
+- Everything works by tap or keyboard alone. Focus never jumps after an action; every control is at least 44px.
+
 ## Accessibility rules baked into the tokens
 
 - No pure black on pure white. Every text pair meets WCAG 2.2 AA (ratios are noted in `tokens.css`).
@@ -87,5 +94,5 @@ legacy/                    The earlier single-file prototype (Planeswalker Quest
 4. ✅ Progress engine: save/resume, checklist, progress bar
 5. ✅ Full MTG curriculum (10 modules, 46 steps)
 6. ✅ Practice Table mini-game (pure reducer + Vitest, 5 guided scenarios with hints and Undo)
-7. Text-to-speech (Web Speech API)
-8. Accessibility audit (axe-core + keyboard walkthrough)
+7. Text-to-speech: skipped on purpose (no voice, keep it simple)
+8. ✅ Accessibility audit: axe-core (WCAG 2.2 AA + best practice) reports 0 violations on every screen in both themes; keyboard and screen-reader walkthrough done
