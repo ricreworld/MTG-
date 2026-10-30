@@ -45,6 +45,15 @@ describe("markdown subset", () => {
     expect(blocks.map((b) => b.kind)).toEqual(["p", "ul", "p"]);
     expect(blocks[1] && termsInBlock(blocks[1])).toEqual(["deck"]);
   });
+  it("turns {R} and {2} into mana symbols", () => {
+    expect(parseInline("Costs {2}{R}.")).toEqual([
+      { kind: "text", text: "Costs " },
+      { kind: "mana", symbol: "2" },
+      { kind: "mana", symbol: "R" },
+      { kind: "text", text: "." },
+    ]);
+    expect(parseInline("{X} stays text")).toEqual([{ kind: "text", text: "{X} stays text" }]);
+  });
   it("never produces HTML from raw text", () => {
     expect(parseInline("<script>alert(1)</script>")).toEqual([{ kind: "text", text: "<script>alert(1)</script>" }]);
   });

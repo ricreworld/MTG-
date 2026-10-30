@@ -3,6 +3,7 @@
 import { Fragment, useId, useState, type ReactNode } from "react";
 import type { GlossaryEntry } from "../../content/schema";
 import { Icon } from "../../components/Icon";
+import { MANA, ManaSymbol, type ManaColor } from "../../components/ManaSymbol";
 import { parseBlocks, termsInBlock, type Block, type Inline } from "./markdown";
 
 interface Props {
@@ -31,6 +32,15 @@ function BlockView({ block, glossary }: { block: Block; glossary: ReadonlyMap<st
     nodes.map((n, i) => {
       if (n.kind === "text") return <Fragment key={i}>{n.text}</Fragment>;
       if (n.kind === "bold") return <strong key={i}>{renderInline(n.children)}</strong>;
+      if (n.kind === "mana") {
+        if (n.symbol in MANA) return <span key={i} className="mx-[0.1em] inline-block align-[-0.2em]"><ManaSymbol color={n.symbol as ManaColor} size={1.15} /></span>;
+        // Generic mana: a grey circle with the number (any colour can pay for it).
+        return (
+          <span key={i} role="img" aria-label={`${n.symbol} generic mana`} className="mx-[0.1em] inline-grid h-[1.15rem] w-[1.15rem] place-items-center rounded-full bg-mtg-colorless align-[-0.2em] font-mono text-sm font-bold text-mtg-colorless-ink">
+            {n.symbol}
+          </span>
+        );
+      }
       const entry = glossary.get(n.id);
       const label = n.label ?? entry?.term.toLowerCase() ?? n.id;
       if (!entry) return <Fragment key={i}>{label}</Fragment>;

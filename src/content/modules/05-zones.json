@@ -1,0 +1,77 @@
+{
+  "id": "zones",
+  "order": 5,
+  "title": "Zones",
+  "summary": "Library, hand, battlefield, graveyard, exile and the stack.",
+  "estimatedMinutes": 4,
+  "checklist": [
+    { "id": "zones-exist", "label": "I know cards are always in a zone" },
+    { "id": "library-hand", "label": "I know the library and hand" },
+    { "id": "battlefield-graveyard", "label": "I know the battlefield and graveyard" },
+    { "id": "exile-stack", "label": "I know what exile and the stack are" }
+  ],
+  "steps": [
+    {
+      "id": "where-cards-live",
+      "title": "Where cards live",
+      "body": "During a game, every card is in a [[zone]]. Think of zones as places on the table.\n\nThe main ones are your **library**, your **hand**, the **battlefield**, your **graveyard**, **exile** and **the stack**.\n\nKnowing where a card is tells you what it can do right now.",
+      "visual": { "type": "placeholder", "src": "A bird's-eye view of a play mat with each zone labelled: library, hand, battlefield, graveyard, exile, and the stack in the middle.", "altText": "A play area with each zone labelled." },
+      "glossaryTerms": ["zone"],
+      "ruleRefs": ["CR 400.1"]
+    },
+    {
+      "id": "library-and-hand",
+      "title": "Library and hand",
+      "body": "Your [[library]] is your face-down deck. Nobody may look through it or change its order.\n\nYour [[hand]] holds the cards you've drawn. Only you can see them. You start with seven, and you usually draw one each turn.\n\nAt the end of your turn, if you have more than seven cards in hand, you discard down to seven.",
+      "visual": { "type": "placeholder", "src": "A face-down library, and a hand of seven cards fanned out.", "altText": "A face-down library and a hand of seven cards." },
+      "glossaryTerms": ["library", "hand"],
+      "ruleRefs": ["CR 401.2", "CR 402.2", "CR 514.1"],
+      "check": {
+        "question": "At the end of your turn you have nine cards in hand. What happens?",
+        "options": [
+          { "id": "nothing", "text": "Nothing" },
+          { "id": "discard-two", "text": "I discard two, down to seven" },
+          { "id": "lose", "text": "I lose the game" }
+        ],
+        "correctOptionId": "discard-two",
+        "hint": "Seven is the most you can keep at the end of your turn."
+      }
+    },
+    {
+      "id": "battlefield-and-graveyard",
+      "title": "Battlefield and graveyard",
+      "body": "The [[battlefield]] is the shared play area. Your lands, creatures and other permanents are here.\n\nYour [[graveyard]] is your face-up discard pile. Cards go here when they're destroyed, discarded, or used up, like an instant after it happens.\n\nAnyone can look at any graveyard at any time.",
+      "visual": { "type": "placeholder", "src": "A creature being destroyed and moving from the battlefield to the face-up graveyard pile.", "altText": "A destroyed creature moving to the graveyard." },
+      "glossaryTerms": ["battlefield", "graveyard"],
+      "ruleRefs": ["CR 403.1", "CR 404.1", "CR 404.2"],
+      "check": {
+        "question": "A creature is destroyed. Where does it go?",
+        "options": [
+          { "id": "graveyard", "text": "Its owner's graveyard" },
+          { "id": "library", "text": "The bottom of the library" },
+          { "id": "hand", "text": "Back to its owner's hand" }
+        ],
+        "correctOptionId": "graveyard",
+        "hint": "Think of the face-up discard pile."
+      }
+    },
+    {
+      "id": "exile-and-stack",
+      "title": "Exile and the stack",
+      "body": "[[exile|Exile]] is for cards removed from the game. Exiled cards usually never come back.\n\nThe [[stack]] is where spells wait after you cast them, before they happen. Each player gets a chance to respond. You'll learn how in Module 9.\n\nThere's also a command zone, used mostly in the Commander format.",
+      "visual": { "type": "placeholder", "src": "A card set far off to the side in exile, and a spell card waiting in the middle of the table on the stack.", "altText": "An exiled card set aside, and a spell waiting on the stack." },
+      "glossaryTerms": ["exile", "stack"],
+      "ruleRefs": ["CR 406.1", "CR 405.1", "CR 408.1"],
+      "check": {
+        "question": "Which zone holds spells that are waiting to happen?",
+        "options": [
+          { "id": "exile", "text": "Exile" },
+          { "id": "stack", "text": "The stack" },
+          { "id": "graveyard", "text": "The graveyard" }
+        ],
+        "correctOptionId": "stack",
+        "hint": "Spells wait there so players can respond."
+      }
+    }
+  ]
+}

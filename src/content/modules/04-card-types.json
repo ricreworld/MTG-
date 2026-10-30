@@ -1,0 +1,86 @@
+{
+  "id": "card-types",
+  "order": 4,
+  "title": "Card types",
+  "summary": "Creatures, instants, sorceries, artifacts, enchantments, planeswalkers and lands.",
+  "estimatedMinutes": 6,
+  "checklist": [
+    { "id": "permanent-vs-one-shot", "label": "I know which cards stay on the battlefield" },
+    { "id": "creatures", "label": "I know what creatures do" },
+    { "id": "instant-vs-sorcery", "label": "I know when to cast an instant or a sorcery" },
+    { "id": "artifacts-enchantments", "label": "I know what artifacts and enchantments are" },
+    { "id": "planeswalkers", "label": "I know what planeswalker cards do" }
+  ],
+  "steps": [
+    {
+      "id": "permanents",
+      "title": "Stays, or one and done?",
+      "body": "Every card is either a [[permanent]] or a one-shot spell.\n\n- **Permanents** stay on the [[battlefield]]: lands, creatures, artifacts, enchantments and planeswalkers.\n- **Instants and sorceries** happen once, then go to your [[graveyard]].\n\nThe type line tells you which kind a card is.",
+      "visual": { "type": "placeholder", "src": "Two groups: permanents sitting on the table, and an instant and a sorcery going into a discard pile.", "altText": "Permanents stay on the table; instants and sorceries go to the graveyard." },
+      "glossaryTerms": ["permanent", "battlefield", "graveyard"],
+      "ruleRefs": ["CR 110.4", "CR 608.2"],
+      "check": {
+        "question": "Which of these stays on the battlefield?",
+        "options": [
+          { "id": "instant", "text": "An instant" },
+          { "id": "creature", "text": "A creature" },
+          { "id": "sorcery", "text": "A sorcery" }
+        ],
+        "correctOptionId": "creature",
+        "hint": "Instants and sorceries are the one-shot spells."
+      }
+    },
+    {
+      "id": "creatures",
+      "title": "Creatures",
+      "body": "[[creature|Creatures]] are your army. They attack, they block, and they're the most common way to win.\n\nEvery creature has power and toughness, and many have keywords like Flying.\n\nYou cast creatures during your main phase, when nothing else is waiting to happen.",
+      "visual": { "type": "placeholder", "src": "Three made-up creatures on the battlefield: a small dog, a spider and a rhino, each showing power and toughness.", "altText": "Three example creatures with their power and toughness." },
+      "glossaryTerms": ["creature"],
+      "ruleRefs": ["CR 302.1"]
+    },
+    {
+      "id": "instants-and-sorceries",
+      "title": "Instants and sorceries",
+      "body": "Both are one-shot spells. The difference is **when** you can cast them.\n\n- A [[sorcery]]: only in your own main phase, when nothing else is waiting to happen.\n- An [[instant]]: almost any time, even during your opponent's turn or in the middle of combat.\n\nInstants let you surprise your opponent. You'll see how in Module 9.",
+      "visual": { "type": "placeholder", "src": "A timeline of two turns. The sorcery can only go in your main phases; the instant can go almost anywhere.", "altText": "A turn timeline showing when sorceries and instants can be cast." },
+      "glossaryTerms": ["sorcery", "instant"],
+      "ruleRefs": ["CR 304.1", "CR 307.1"],
+      "check": {
+        "question": "It's your opponent's turn. Which of these can you cast?",
+        "options": [
+          { "id": "sorcery", "text": "A sorcery" },
+          { "id": "instant", "text": "An instant" },
+          { "id": "creature", "text": "A creature" }
+        ],
+        "correctOptionId": "instant",
+        "hint": "Only one of these can be cast outside your own main phase."
+      }
+    },
+    {
+      "id": "artifacts-and-enchantments",
+      "title": "Artifacts and enchantments",
+      "body": "Both are permanents that stay on the battlefield.\n\n- [[artifact|Artifacts]] are magical objects. Many are colourless, so any deck can use them. Equipment is a kind of artifact you attach to a creature to make it stronger.\n- [[enchantment|Enchantments]] create ongoing effects. Auras are enchantments that attach to something.\n\nYou cast both during your main phase, like creatures.",
+      "visual": { "type": "placeholder", "src": "A made-up hammer artifact attached to a creature, and a glowing enchantment on the table.", "altText": "An equipment artifact on a creature, and an enchantment." },
+      "glossaryTerms": ["artifact", "enchantment"],
+      "ruleRefs": ["CR 301.1", "CR 303.1"]
+    },
+    {
+      "id": "planeswalkers-and-lands",
+      "title": "Planeswalkers and lands",
+      "body": "**Planeswalker cards** are powerful allies. Each has a loyalty number and loyalty abilities. You may use one of its abilities once per turn, during your main phase. Your opponent can attack a planeswalker to lower its loyalty.\n\n**Lands** are permanents too, but they aren't spells: you play them for free, one per turn.\n\nThere's also a rarer type called battle. You can learn it later.",
+      "visual": { "type": "placeholder", "src": "A made-up planeswalker card with its loyalty number in the bottom corner, next to a land.", "altText": "A planeswalker card showing its loyalty, next to a land." },
+      "glossaryTerms": [],
+      "ruleRefs": ["CR 306.1", "CR 606.3", "CR 305.1"],
+      "check": {
+        "question": "How often can you use one planeswalker's loyalty abilities?",
+        "options": [
+          { "id": "once", "text": "Once per turn, in my main phase" },
+          { "id": "any", "text": "As often as I like" },
+          { "id": "their-turn", "text": "Only on my opponent's turn" }
+        ],
+        "correctOptionId": "once",
+        "hint": "Look at the third sentence of this step."
+      }
+    }
+  ]
+}

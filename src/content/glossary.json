@@ -1,42 +1,60 @@
 [
-  {
-    "id": "deck",
-    "term": "Deck",
-    "definition": "The cards you bring to play with. In Standard, a deck has at least 60 cards.",
-    "ruleRef": "CR 100.2a"
-  },
-  {
-    "id": "planeswalker",
-    "term": "Planeswalker",
-    "definition": "In Magic's story, you, the player, are a planeswalker: a powerful wizard. There's also a card type with the same name, which you'll meet later."
-  },
-  {
-    "id": "spell",
-    "term": "Spell",
-    "definition": "A card you're casting. It becomes a spell while it waits to take effect. Lands are never spells: you play them, you don't cast them.",
-    "ruleRef": "CR 112.1"
-  },
-  {
-    "id": "life-total",
-    "term": "Life total",
-    "definition": "How much life a player has. Each player starts with 20 in a normal game. Damage lowers it. At 0 or less, that player loses.",
-    "ruleRef": "CR 119.1"
-  },
-  {
-    "id": "opponent",
-    "term": "Opponent",
-    "definition": "The player you're playing against."
-  },
-  {
-    "id": "library",
-    "term": "Library",
-    "definition": "Your deck, once the game has started. It sits face down, and you draw cards from the top of it.",
-    "ruleRef": "CR 401.1"
-  },
-  {
-    "id": "poison-counter",
-    "term": "Poison counter",
-    "definition": "A marker some cards give to a player. A player with 10 or more poison counters loses the game.",
-    "ruleRef": "CR 104.3d"
-  }
+  { "id": "deck", "term": "Deck", "definition": "The cards you bring to play with. In Standard, a deck has at least 60 cards.", "ruleRef": "CR 100.2a" },
+  { "id": "planeswalker", "term": "Planeswalker", "definition": "In Magic's story, you, the player, are a planeswalker: a powerful wizard. There's also a card type with the same name, which you'll meet later." },
+  { "id": "spell", "term": "Spell", "definition": "A card you're casting. It becomes a spell while it waits to take effect. Lands are never spells: you play them, you don't cast them.", "ruleRef": "CR 112.1" },
+  { "id": "life-total", "term": "Life total", "definition": "How much life a player has. Each player starts with 20 in a normal game. Damage lowers it. At 0 or less, that player loses.", "ruleRef": "CR 119.1" },
+  { "id": "opponent", "term": "Opponent", "definition": "The player you're playing against." },
+  { "id": "library", "term": "Library", "definition": "Your deck, once the game has started. It sits face down, and you draw cards from the top of it.", "ruleRef": "CR 401.1" },
+  { "id": "poison-counter", "term": "Poison counter", "definition": "A marker some cards give to a player. A player with 10 or more poison counters loses the game.", "ruleRef": "CR 104.3d" },
+
+  { "id": "mana", "term": "Mana", "definition": "The energy you spend to cast spells. Lands make most of it. Each mana is white, blue, black, red, green, or colourless.", "ruleRef": "CR 106.1" },
+  { "id": "land", "term": "Land", "definition": "A card you play (not cast) to make mana. You may play one land per turn, during your main phase.", "ruleRef": "CR 305.2" },
+  { "id": "tap", "term": "Tap", "definition": "Turn a card sideways to show you've used it, for example to make mana or to attack. It stays tapped until it untaps." },
+  { "id": "untap", "term": "Untap", "definition": "Turn a tapped card back upright. All your cards untap at the start of each of your turns.", "ruleRef": "CR 502" },
+  { "id": "mana-cost", "term": "Mana cost", "definition": "The symbols in a card's top-right corner. They show what mana you must pay to cast it.", "ruleRef": "CR 202.1" },
+  { "id": "mana-value", "term": "Mana value", "definition": "The total amount of mana in a card's cost. A card costing one generic and one red mana has a mana value of 2.", "ruleRef": "CR 202.3" },
+  { "id": "generic-mana", "term": "Generic mana", "definition": "A number in a mana cost, shown in a grey circle. You can pay it with mana of any colour.", "ruleRef": "CR 107.4" },
+  { "id": "mana-pool", "term": "Mana pool", "definition": "Where mana waits after you make it. Unused mana empties out at the end of each step and phase, so spend it right away.", "ruleRef": "CR 106.4" },
+
+  { "id": "card-type", "term": "Card type", "definition": "What kind of card something is, shown on its type line: land, creature, instant, sorcery, artifact, enchantment, planeswalker or battle.", "ruleRef": "CR 205.2a" },
+  { "id": "permanent", "term": "Permanent", "definition": "A card or token on the battlefield. Lands, creatures, artifacts, enchantments and planeswalkers become permanents. Instants and sorceries never do.", "ruleRef": "CR 110.4" },
+  { "id": "creature", "term": "Creature", "definition": "A permanent that can attack and block. It has power (the damage it deals) and toughness (how much damage destroys it).", "ruleRef": "CR 302" },
+  { "id": "instant", "term": "Instant", "definition": "A spell you can cast almost any time, even during your opponent's turn. It does its thing, then goes to the graveyard.", "ruleRef": "CR 304.1" },
+  { "id": "sorcery", "term": "Sorcery", "definition": "A spell you can cast only during your own main phase, when nothing is waiting on the stack. Then it goes to the graveyard.", "ruleRef": "CR 307.1" },
+  { "id": "artifact", "term": "Artifact", "definition": "A permanent that's a magical object. Many artifacts are colourless, so any deck can use them.", "ruleRef": "CR 301" },
+  { "id": "enchantment", "term": "Enchantment", "definition": "A permanent with an ongoing magical effect. An Aura is an enchantment that attaches to something.", "ruleRef": "CR 303" },
+  { "id": "type-line", "term": "Type line", "definition": "The line in the middle of a card, under the picture. It shows the card type, for example Creature, and often a subtype like Dog.", "ruleRef": "CR 205.1" },
+  { "id": "power-toughness", "term": "Power and toughness", "definition": "The two numbers in a creature's corner, like 2/1. Power is the damage it deals. Toughness is how much damage destroys it in one turn.", "ruleRef": "CR 208.1" },
+  { "id": "keyword", "term": "Keyword", "definition": "A word on a card that's short for a rule, like Flying or Haste.", "ruleRef": "CR 702.1" },
+
+  { "id": "zone", "term": "Zone", "definition": "A place where cards can be during a game: library, hand, battlefield, graveyard, stack, exile and command.", "ruleRef": "CR 400.1" },
+  { "id": "hand", "term": "Hand", "definition": "The cards you're holding. Your opponent can't see them. You start the game with seven.", "ruleRef": "CR 402.1" },
+  { "id": "battlefield", "term": "Battlefield", "definition": "The shared play area in front of both players, where permanents are. Cards here stay until something removes them.", "ruleRef": "CR 403.1" },
+  { "id": "graveyard", "term": "Graveyard", "definition": "Your face-up discard pile. Used instants and sorceries, destroyed creatures and discarded cards go here.", "ruleRef": "CR 404.1" },
+  { "id": "exile", "term": "Exile", "definition": "A zone for cards removed from the game. Exiled cards usually never come back.", "ruleRef": "CR 406.1" },
+  { "id": "stack", "term": "Stack", "definition": "Where spells and abilities wait before they happen. The last thing added happens first.", "ruleRef": "CR 405.1" },
+
+  { "id": "mulligan", "term": "Mulligan", "definition": "Shuffling away your opening hand to draw a new seven. For each mulligan, you then put one card from that hand on the bottom of your library.", "ruleRef": "CR 103.5" },
+  { "id": "phase", "term": "Phase", "definition": "One part of a turn. Every turn has five phases: beginning, first main, combat, second main and ending.", "ruleRef": "CR 500.1" },
+  { "id": "turn-step", "term": "Step (of a turn)", "definition": "A smaller part inside a phase. For example, the beginning phase has three steps: untap, upkeep and draw.", "ruleRef": "CR 500.1" },
+  { "id": "main-phase", "term": "Main phase", "definition": "The part of your turn where you can play a land and cast creatures, sorceries, artifacts, enchantments and planeswalkers. Each turn has two.", "ruleRef": "CR 505.1" },
+
+  { "id": "attack", "term": "Attack", "definition": "Sending your untapped creatures at your opponent (or one of their planeswalkers) during combat. Attacking taps a creature, unless it has Vigilance.", "ruleRef": "CR 508.1" },
+  { "id": "block", "term": "Block", "definition": "Putting your untapped creature in front of an attacking creature. They deal damage to each other instead of to you.", "ruleRef": "CR 509.1" },
+  { "id": "summoning-sickness", "term": "Summoning sickness", "definition": "The everyday name for this rule: a creature can't attack, or use an ability with the tap symbol, until you've controlled it since the start of your turn.", "ruleRef": "CR 302.6" },
+  { "id": "damage", "term": "Damage", "definition": "Damage to a player makes them lose that much life. Damage to a creature stays marked on it until the end of the turn.", "ruleRef": "CR 120.3" },
+  { "id": "flying", "term": "Flying", "definition": "A creature with Flying can only be blocked by creatures with Flying or Reach.", "ruleRef": "CR 702.9" },
+  { "id": "haste", "term": "Haste", "definition": "A creature with Haste can attack, and use tap abilities, the turn it arrives. It ignores summoning sickness.", "ruleRef": "CR 702.10" },
+  { "id": "trample", "term": "Trample", "definition": "When a creature with Trample is blocked, damage beyond what's needed to destroy the blockers goes through to the player.", "ruleRef": "CR 702.19" },
+  { "id": "deathtouch", "term": "Deathtouch", "definition": "Any amount of damage from a creature with Deathtouch destroys the creature it hits.", "ruleRef": "CR 702.2" },
+  { "id": "first-strike", "term": "First strike", "definition": "A creature with First strike deals its combat damage before creatures without it.", "ruleRef": "CR 702.7" },
+
+  { "id": "priority", "term": "Priority", "definition": "Permission to cast a spell or use an ability. Players pass it back and forth. When everyone passes in a row, the top of the stack happens.", "ruleRef": "CR 117.1" },
+  { "id": "resolve", "term": "Resolve", "definition": "When a spell or ability actually happens. It leaves the stack and does what it says.", "ruleRef": "CR 608.1" },
+  { "id": "counter-spell", "term": "Counter (a spell)", "definition": "To cancel a spell while it waits on the stack. A countered spell does nothing and goes to its owner's graveyard." },
+
+  { "id": "format", "term": "Format", "definition": "A set of rules for which cards and decks you may use. The core rules of the game are the same in every format." },
+  { "id": "standard", "term": "Standard", "definition": "A one-against-one format that uses only recent sets. Decks have at least 60 cards and at most four copies of any card except basic lands.", "ruleRef": "CR 100.2a" },
+  { "id": "commander", "term": "Commander", "definition": "A format, usually for four players. Each deck has exactly 100 cards, only one copy of each except basic lands, and a legendary creature leading it.", "ruleRef": "CR 903" },
+  { "id": "color-identity", "term": "Colour identity", "definition": "All the mana symbols on a card, including in its rules text. In Commander, every card in your deck must fit your commander's colour identity.", "ruleRef": "CR 903.4" }
 ]

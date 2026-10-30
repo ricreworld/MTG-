@@ -1,0 +1,92 @@
+{
+  "id": "the-turn",
+  "order": 7,
+  "title": "Your turn, phase by phase",
+  "summary": "Beginning, first main, combat, second main, ending. Same order, every turn.",
+  "estimatedMinutes": 6,
+  "checklist": [
+    { "id": "five-phases", "label": "I know the five phases in order" },
+    { "id": "beginning-steps", "label": "I know untap, upkeep and draw" },
+    { "id": "main-phases", "label": "I know what I can do in a main phase" },
+    { "id": "ending", "label": "I know what happens in the ending phase" }
+  ],
+  "steps": [
+    {
+      "id": "five-phases",
+      "title": "Five phases, every turn",
+      "body": "Every turn follows the same five [[phase|phases]], always in this order:\n\n- Beginning\n- First [[main-phase|main phase]]\n- Combat\n- Second main phase\n- Ending\n\nA memory trick: **wake up, build, fight, build again, wind down**.",
+      "visual": { "type": "placeholder", "src": "Five boxes in a row, labelled Beginning, Main 1, Combat, Main 2, Ending, with an arrow looping back to the start.", "altText": "The five phases of a turn in order." },
+      "glossaryTerms": ["phase", "main-phase"],
+      "ruleRefs": ["CR 500.1"],
+      "check": {
+        "question": "Which phase comes right after combat?",
+        "options": [
+          { "id": "ending", "text": "Ending" },
+          { "id": "second-main", "text": "Second main phase" },
+          { "id": "beginning", "text": "Beginning" }
+        ],
+        "correctOptionId": "second-main",
+        "hint": "Fight, then build again."
+      }
+    },
+    {
+      "id": "beginning-phase",
+      "title": "Phase 1: Beginning",
+      "body": "The beginning phase has three [[turn-step|steps]]:\n\n- **Untap:** [[untap]] all your tapped cards.\n- **Upkeep:** anything that says \"at the beginning of your upkeep\" happens now.\n- **Draw:** draw one card.\n\nYou can't play lands or creatures in this phase.",
+      "visual": { "type": "placeholder", "src": "Three small panels: tapped lands turning upright, an upkeep reminder, and a card being drawn.", "altText": "The untap, upkeep and draw steps." },
+      "glossaryTerms": ["turn-step", "untap"],
+      "ruleRefs": ["CR 501.1", "CR 502", "CR 503.1", "CR 504.1"]
+    },
+    {
+      "id": "first-main-phase",
+      "title": "Phase 2: First main phase",
+      "body": "This is your building time. You can:\n\n- Play one [[land]], if you haven't this turn.\n- Cast creatures, sorceries, artifacts, enchantments and planeswalkers.\n- Cast instants, as you can at most times.\n\nYou don't have to do anything. You can also go straight to combat.",
+      "visual": { "type": "placeholder", "src": "A land being played and a creature being cast during the main phase.", "altText": "Playing a land and casting a creature in the main phase." },
+      "glossaryTerms": ["land"],
+      "ruleRefs": ["CR 505.1", "CR 305.2"]
+    },
+    {
+      "id": "combat-phase",
+      "title": "Phase 3: Combat",
+      "body": "Combat is where creatures fight. In short:\n\n- You choose which creatures [[attack]].\n- Your opponent chooses which creatures [[block]].\n- Damage happens.\n\nAttacking is always optional. Module 8 covers combat step by step.",
+      "visual": { "type": "placeholder", "src": "Two attacking creatures moving across the table, and one blocker stepping in front of one of them.", "altText": "Creatures attacking and one being blocked." },
+      "glossaryTerms": ["attack", "block"],
+      "ruleRefs": ["CR 506.1"]
+    },
+    {
+      "id": "second-main-phase",
+      "title": "Phase 4: Second main phase",
+      "body": "After combat you get another main phase. It works just like the first one.\n\nMany players cast creatures here instead of before combat. That way, the opponent doesn't know about them while deciding how to block.\n\nIf you didn't play a land earlier this turn, you can play it now.",
+      "visual": { "type": "placeholder", "src": "After combat, a new creature being cast from the hand.", "altText": "Casting a creature after combat." },
+      "glossaryTerms": [],
+      "ruleRefs": ["CR 505.1", "CR 305.2"],
+      "check": {
+        "question": "You played a land before combat. Can you play another one in your second main phase?",
+        "options": [
+          { "id": "yes", "text": "Yes" },
+          { "id": "no", "text": "No, it's one land per turn" }
+        ],
+        "correctOptionId": "no",
+        "hint": "The second main phase is part of the same turn."
+      }
+    },
+    {
+      "id": "ending-phase",
+      "title": "Phase 5: Ending",
+      "body": "The ending phase has two steps:\n\n- **End step:** anything that says \"at the beginning of the end step\" happens.\n- **Cleanup:** if you have more than seven cards in hand, discard down to seven. Then [[damage]] on creatures wears off, and effects that last \"until end of turn\" end.\n\nThen the next player's turn begins.",
+      "visual": { "type": "placeholder", "src": "Damage markers being cleared from creatures, and extra cards being discarded down to seven.", "altText": "Cleanup: damage wears off and the hand goes down to seven." },
+      "glossaryTerms": ["damage"],
+      "ruleRefs": ["CR 512.1", "CR 513.1", "CR 514.1", "CR 514.2"],
+      "check": {
+        "question": "A creature took 2 damage in combat and survived. What happens to that damage?",
+        "options": [
+          { "id": "stays", "text": "It stays on the creature forever" },
+          { "id": "wears-off", "text": "It wears off in the cleanup step" },
+          { "id": "moves", "text": "It moves to my life total" }
+        ],
+        "correctOptionId": "wears-off",
+        "hint": "Look at the cleanup step."
+      }
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "id": "combat",
+  "order": 8,
+  "title": "Combat",
+  "summary": "Attacking, summoning sickness, blocking, damage and combat keywords.",
+  "estimatedMinutes": 7,
+  "checklist": [
+    { "id": "attacking", "label": "I know how to attack" },
+    { "id": "summoning-sickness", "label": "I know why new creatures can't attack" },
+    { "id": "blocking", "label": "I know how blocking works" },
+    { "id": "damage", "label": "I can work out which creatures are destroyed" },
+    { "id": "keywords", "label": "I know Flying, Trample, Deathtouch and First strike" }
+  ],
+  "steps": [
+    {
+      "id": "attacking",
+      "title": "Attacking",
+      "body": "In combat, you choose which of your untapped creatures [[attack]]. You [[tap]] them as they attack.\n\nAttackers go after your opponent, or one of their planeswalkers.\n\nYou can attack with all, some or none of your creatures. It's always your choice.",
+      "visual": { "type": "placeholder", "src": "Two creatures turning sideways as they attack the opponent.", "altText": "Two creatures tapping to attack." },
+      "glossaryTerms": ["attack", "tap"],
+      "ruleRefs": ["CR 508.1"]
+    },
+    {
+      "id": "summoning-sickness",
+      "title": "Summoning sickness",
+      "body": "A creature can't attack on the turn it arrives. Players call this [[summoning-sickness|summoning sickness]].\n\nThe rule: a creature can attack only if you've controlled it **since the start of your turn**.\n\nCreatures with [[haste|Haste]] ignore this rule and can attack right away.",
+      "visual": { "type": "placeholder", "src": "A newly cast creature with a small New tag, waiting, next to a Haste creature already attacking.", "altText": "A new creature waiting, and a Haste creature attacking." },
+      "glossaryTerms": ["summoning-sickness", "haste"],
+      "ruleRefs": ["CR 302.6", "CR 702.10"],
+      "check": {
+        "question": "You cast a creature without Haste this turn. Can it attack this turn?",
+        "options": [
+          { "id": "yes", "text": "Yes" },
+          { "id": "no", "text": "No, it has to wait until my next turn" }
+        ],
+        "correctOptionId": "no",
+        "hint": "Only Haste lets a creature attack the turn it arrives."
+      }
+    },
+    {
+      "id": "blocking",
+      "title": "Blocking",
+      "body": "Now your opponent chooses blockers. Each of their untapped creatures may [[block]] one attacker. Blocking doesn't tap a creature, and several creatures can block the same attacker.\n\n- **Blocked** attackers and their blockers deal damage to each other.\n- **Unblocked** attackers deal their damage to the player or planeswalker they attacked.\n\nBlocking is optional too.",
+      "visual": { "type": "placeholder", "src": "One attacker blocked by a creature, and another attacker going unblocked to hit the player.", "altText": "One blocked attacker and one unblocked attacker." },
+      "glossaryTerms": ["block"],
+      "ruleRefs": ["CR 509.1"]
+    },
+    {
+      "id": "combat-damage",
+      "title": "Combat damage",
+      "body": "All combat damage happens **at the same time**.\n\nEach creature deals damage equal to its power. A creature with damage equal to or more than its toughness is destroyed.\n\nExample: a 3/3 blocks a 2/2. The 2/2 takes 3 and is destroyed. The 3/3 takes 2 and survives. That damage wears off at the end of the turn.",
+      "visual": { "type": "placeholder", "src": "A 3/3 and a 2/2 trading blows: the 2/2 is destroyed, the 3/3 survives with 2 damage marked.", "altText": "A 3/3 blocking a 2/2: only the 2/2 is destroyed." },
+      "glossaryTerms": [],
+      "ruleRefs": ["CR 510.2", "CR 704.5g", "CR 514.2"],
+      "check": {
+        "question": "Your 3/3 attacks. Your opponent blocks with a 2/4. What happens?",
+        "options": [
+          { "id": "both", "text": "Both creatures are destroyed" },
+          { "id": "neither", "text": "Neither creature is destroyed" },
+          { "id": "mine", "text": "Only my 3/3 is destroyed" }
+        ],
+        "correctOptionId": "neither",
+        "hint": "Compare each creature's power with the other creature's toughness."
+      }
+    },
+    {
+      "id": "combat-keywords",
+      "title": "Combat keywords",
+      "body": "Keywords change how combat works:\n\n- [[flying|Flying]]: only Flying or Reach creatures can block it.\n- [[trample|Trample]]: extra damage beyond what destroys its blockers goes to the player.\n- [[deathtouch|Deathtouch]]: any damage it deals to a creature destroys it.\n- [[first-strike|First strike]]: deals its damage before other creatures.\n\nYou'll practise these at the Practice Table.",
+      "visual": { "type": "placeholder", "src": "Four small scenes: a flyer passing over a ground blocker, a trampler pushing damage through, a deathtouch snake defeating a giant, and a first-striking knight hitting first.", "altText": "Four combat keywords in action." },
+      "glossaryTerms": ["flying", "trample", "deathtouch", "first-strike"],
+      "ruleRefs": ["CR 702.9", "CR 702.19", "CR 702.2", "CR 702.7"],
+      "check": {
+        "question": "A 1/1 with Deathtouch blocks a 5/5. What happens?",
+        "options": [
+          { "id": "small-only", "text": "Only the 1/1 is destroyed" },
+          { "id": "both", "text": "Both creatures are destroyed" },
+          { "id": "nothing", "text": "Nothing is destroyed" }
+        ],
+        "correctOptionId": "both",
+        "hint": "The 5/5 deals plenty of damage. And Deathtouch makes even 1 damage enough."
+      }
+    }
+  ]
+}

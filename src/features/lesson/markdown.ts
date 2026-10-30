@@ -4,13 +4,14 @@
 export type Inline =
   | { kind: "text"; text: string }
   | { kind: "bold"; children: Inline[] }
-  | { kind: "term"; id: string; label: string | undefined };
+  | { kind: "term"; id: string; label: string | undefined }
+  | { kind: "mana"; symbol: string }; // one mana symbol: W U B R G C, or a number (generic mana)
 
 export type Block =
   | { kind: "p"; inline: Inline[] }
   | { kind: "ul"; items: Inline[][] };
 
-const INLINE_TOKEN = /(\*\*[^*]+\*\*|\[\[[a-z0-9-]+(?:\|[^\]]+)?\]\])/;
+const INLINE_TOKEN = /(\*\*[^*]+\*\*|\[\[[a-z0-9-]+(?:\|[^\]]+)?\]\]|\{(?:[WUBRGC]|\d{1,2})\})/;
 
 export function parseInline(text: string): Inline[] {
   const out: Inline[] = [];
@@ -18,6 +19,8 @@ export function parseInline(text: string): Inline[] {
     if (!part) continue;
     if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
       out.push({ kind: "bold", children: parseInline(part.slice(2, -2)) });
+    } else if (/^\{(?:[WUBRGC]|\d{1,2})\}$/.test(part)) {
+      out.push({ kind: "mana", symbol: part.slice(1, -1) });
     } else if (part.startsWith("[[") && part.endsWith("]]")) {
       const [id = "", label] = part.slice(2, -2).split("|");
       out.push({ kind: "term", id, label });

@@ -80,7 +80,7 @@ legacy/                    The earlier single-file prototype (Planeswalker Quest
 2. ✅ Content schema (TypeScript + Zod) and a sample module
 3. ✅ App shell: wizard layout, navigation bar, settings panel, Focus Mode (phone-first, installable, offline)
 4. ✅ Progress engine: save/resume, checklist, progress bar
-5. Full MTG curriculum
+5. ✅ Full MTG curriculum (10 modules, 46 steps)
 6. Practice Table mini-game (pure reducer + Vitest)
 7. Text-to-speech (Web Speech API)
 8. Accessibility audit (axe-core + keyboard walkthrough)

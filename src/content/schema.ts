@@ -22,6 +22,7 @@ export function termLinks(markdown: string): string[] {
 export function plainText(markdown: string): string {
   return markdown
     .replace(TERM_LINK, (_m, id: string, label?: string) => label ?? id.replace(/-/g, " "))
+    .replace(/\{([WUBRGC]|\d{1,2})\}/g, " $1 ")
     .replace(/\*\*/g, "")
     .replace(/^\s*-\s+/gm, "");
 }

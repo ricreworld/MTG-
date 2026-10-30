@@ -53,16 +53,66 @@ Unknown fields are rejected, so a typo like `"tittle"` fails loudly instead of s
 
 ### Rule references to verify (author's note)
 
+Every `ruleRefs` value used in the content, with how sure I am of the exact number.
+**High**: I'm confident of the rule and its number. **Medium**: the rule is right, but the sub-number may have
+shifted between Comprehensive Rules updates. Where I wasn't sure of the sub-rule, the content cites the whole
+section (e.g. `CR 103`) instead of guessing. Verify against the current rules at https://magic.wizards.com/rules.
+
 | Ref | Used for | Confidence |
 |---|---|---|
 | CR 100.1 | Magic is a game for two or more players, each with a deck | high |
-| CR 100.2a | Constructed decks have at least 60 cards | high |
-| CR 104.3b | A player with 0 or less life loses | high |
-| CR 104.3c | Drawing from an empty library loses (checked as a state-based action) | high |
-| CR 104.3d | 10 or more poison counters loses | high |
+| CR 100.2a | Constructed decks: at least 60 cards, max 4 copies (basic lands excepted) | high |
+| CR 103 (section) | Starting the game: shuffle, life, who goes first, draw 7, first player skips first draw | high (section) |
+| CR 103.5 | Mulligans (London mulligan: draw 7, bottom one per mulligan) | medium |
+| CR 104.3b / c / d | Lose at 0 life / drawing from an empty library / 10 poison counters | high |
+| CR 105.1 | The five colours | high |
+| CR 106.1 | Mana is the primary resource | high |
+| CR 106.4 | Mana pool empties at the end of each step and phase | high |
+| CR 107.4 | Mana symbols, generic mana | medium |
+| CR 109.3 | An object's characteristics (name, cost, type, text, P/T…) | medium |
+| CR 110.4 | The permanent types | high |
 | CR 112.1 | A spell is a card on the stack | high |
-| CR 119.1 | Starting life total is 20 | high |
-| CR 401.1 | The library is where a player's deck goes when the game starts | high |
+| CR 117.1 / 117.4 | Priority; all players pass in succession → top of stack resolves | high |
+| CR 119.1 | Starting life total 20 | high |
+| CR 120.3 | Results of damage (player loses life, damage marked on creatures) | medium |
+| CR 201.1 / 202.1 / 202.3 | Name; mana cost; mana value | high |
+| CR 205.1 / 205.2a / 205.3 | Type line; card types list; subtypes | high / medium / high |
+| CR 207.1 / 207.2 | Text box; flavour and reminder text | medium |
+| CR 208.1 | Power and toughness | high |
+| CR 301.1 / 303.1 / 306.1 | Casting artifacts / enchantments / planeswalkers (main phase, empty stack) | medium |
+| CR 302.1 / 302.6 | Casting creatures; summoning sickness | high |
+| CR 304.1 / 307.1 | Instant timing; sorcery timing | high |
+| CR 305.1 / 305.2 / 305.6 | Playing lands; one per turn; basic land mana abilities | high |
+| CR 400.1 | The zones | high |
+| CR 401.1 / 401.2 | Library; face down, order can't be changed | high / medium |
+| CR 402.1 / 402.2 | Hand; maximum hand size seven | high |
+| CR 403.1 / 404.1 / 404.2 | Battlefield; graveyard; graveyards are public | high / high / medium |
+| CR 405.1 / 406.1 / 408.1 | Stack; exile; command zone | high / high / medium |
+| CR 500.1 | Five phases in order | high |
+| CR 501.1 / 502 / 503.1 / 504.1 | Beginning phase; untap step (section); upkeep; draw step | medium / high / medium / high |
+| CR 505.1 / 506.1 | Main phase; combat phase steps | high |
+| CR 508.1 / 509.1 / 510.2 | Declare attackers; declare blockers; damage dealt simultaneously | high |
+| CR 512.1 / 513.1 / 514.1 / 514.2 | Ending phase; end step; cleanup discard; damage removed | medium / medium / high / high |
+| CR 601.2a | Casting a spell puts it on the stack | medium |
+| CR 606.3 | Loyalty abilities: once per turn, main phase, empty stack | medium |
+| CR 608.1 / 608.2 | Resolving spells; instants and sorceries go to the graveyard as they finish resolving | medium |
+| CR 702.1 / 702.2 / 702.7 / 702.9 / 702.10 / 702.19 | Keywords; Deathtouch; First strike; Flying; Haste; Trample | high |
+| CR 704.5g | Creature with lethal damage is destroyed | high |
+| CR 704.6c | 21 combat damage from one commander | medium |
+| CR 903 / 903.4 / 903.5a / 903.5b / 903.7 / 903.8 | Commander; colour identity; 100 cards; singleton; 40 life; commander tax | high |
+| CR 903.6 / 903.9a | Commander starts in command zone; may return to command zone | medium |
+
+### Facts that aren't Comprehensive Rules (also verify)
+
+| Fact | Where | Source |
+|---|---|---|
+| Standard uses recent sets that rotate out; playable in MTG Arena | Module 10 | Wizards format pages (formats change; check current Standard rules) |
+| "A good hand usually has 2 to 5 lands" | Module 6 | Common beginner strategy advice, not a rule |
+| Commander deck recipe: 36–38 lands, ~10 ramp, ~10 draw, 7–8 removal, ~5 board wipes | Module 10 | Tyrna, "Commander Stats" (community Google Doc you provided). Guidelines, not rules |
+| Commander is the most popular casual format | Module 10 | Widely reported; soften if you prefer |
+
+No real card names, costs or Oracle text are used anywhere. All example cards (Emberclaw Pup, Thornback Rhino,
+Quick Denial) are fictional and follow the card design rules below.
 
 ## Card design rules for example cards
 

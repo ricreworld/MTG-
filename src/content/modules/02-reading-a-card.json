@@ -1,0 +1,85 @@
+{
+  "id": "reading-a-card",
+  "order": 2,
+  "title": "Reading a card",
+  "summary": "Name, mana cost, type line, text box, power and toughness.",
+  "estimatedMinutes": 5,
+  "checklist": [
+    { "id": "find-name-cost", "label": "I can find a card's name and mana cost" },
+    { "id": "read-type-line", "label": "I can read the type line" },
+    { "id": "read-text-box", "label": "I know the text box says what a card does" },
+    { "id": "read-pt", "label": "I know what power and toughness mean" }
+  ],
+  "steps": [
+    {
+      "id": "card-parts",
+      "title": "The parts of a card",
+      "body": "Every Magic card uses the same layout. Once you know it, you can read any card.\n\nFrom top to bottom:\n\n- **Name** on the left and [[mana-cost]] on the right\n- **Picture**\n- [[type-line|Type line]]\n- **Text box**: what the card does\n- [[power-toughness|Power and toughness]] in the bottom-right corner (creatures only)",
+      "visual": { "type": "placeholder", "src": "An example creature card, Emberclaw Pup, with labels pointing to its name, mana cost, picture, type line, text box, and power and toughness.", "altText": "A labelled example card showing where each part is." },
+      "glossaryTerms": ["mana-cost", "type-line", "power-toughness"],
+      "ruleRefs": ["CR 109.3"]
+    },
+    {
+      "id": "name-and-cost",
+      "title": "Name and mana cost",
+      "body": "Our example is **Emberclaw Pup**, a made-up card. Its name is at the top left.\n\nAt the top right is its mana cost: {1}{R}. That means **one red mana** plus **one mana of any colour**. You pay it to cast the card.\n\nAdd up every symbol and you get its [[mana-value|mana value]]: 2.",
+      "visual": { "type": "placeholder", "src": "The top of the Emberclaw Pup card: the name on the left, and a grey 1 symbol and a red mana symbol on the right.", "altText": "The card's name, and its cost of one generic and one red mana." },
+      "glossaryTerms": ["mana-value"],
+      "ruleRefs": ["CR 201.1", "CR 202.1", "CR 202.3"],
+      "check": {
+        "question": "Emberclaw Pup costs one generic and one red mana. What do you need to pay?",
+        "options": [
+          { "id": "two-red", "text": "Two red mana" },
+          { "id": "red-plus-any", "text": "One red mana, plus one mana of any colour" },
+          { "id": "one-red", "text": "Just one red mana" }
+        ],
+        "correctOptionId": "red-plus-any",
+        "hint": "The grey number can be paid with any colour. The red symbol must be red."
+      }
+    },
+    {
+      "id": "type-line",
+      "title": "The type line",
+      "body": "Under the picture is the [[type-line|type line]]. Emberclaw Pup's says **Creature — Dog**.\n\n- **Creature** is its [[card-type|card type]]. It tells you what the card is and when you can play it.\n- **Dog** is its subtype. Subtypes only matter when another card mentions them.\n\nYou'll meet every card type in Module 4.",
+      "visual": { "type": "placeholder", "src": "The middle of the card, showing the words Creature — Dog.", "altText": "A type line reading Creature, Dog." },
+      "glossaryTerms": ["type-line", "card-type"],
+      "ruleRefs": ["CR 205.1", "CR 205.3"]
+    },
+    {
+      "id": "text-box",
+      "title": "The text box",
+      "body": "The text box says what the card does. Emberclaw Pup's says **Haste**.\n\nHaste is a [[keyword]]: one word that stands for a longer rule. You'll learn the common keywords in Module 8.\n\nSome cards also have flavour text, printed in a different style. It's a little bit of story and never changes how the card plays.",
+      "visual": { "type": "placeholder", "src": "The card's text box with the keyword Haste, and a short line of flavour text below it.", "altText": "A text box with the keyword Haste and some flavour text." },
+      "glossaryTerms": ["keyword"],
+      "ruleRefs": ["CR 207.1", "CR 207.2"],
+      "check": {
+        "question": "What does flavour text change about how a card plays?",
+        "options": [
+          { "id": "nothing", "text": "Nothing. It's just a bit of story" },
+          { "id": "hidden-rule", "text": "It adds a hidden rule" },
+          { "id": "power", "text": "It makes the card stronger" }
+        ],
+        "correctOptionId": "nothing",
+        "hint": "Look at the last sentence of this step."
+      }
+    },
+    {
+      "id": "power-and-toughness",
+      "title": "Power and toughness",
+      "body": "A creature has two numbers in its bottom-right corner. Emberclaw Pup shows **2/1**.\n\n- **Power** (the 2): the [[damage]] it deals in combat.\n- **Toughness** (the 1): how much damage destroys it in one turn.\n\nSo the Pup hits for 2, and just 1 damage is enough to destroy it.",
+      "visual": { "type": "placeholder", "src": "The bottom-right corner of the card, showing 2/1.", "altText": "Power and toughness reading 2 slash 1." },
+      "glossaryTerms": ["damage"],
+      "ruleRefs": ["CR 208.1", "CR 704.5g"],
+      "check": {
+        "question": "A creature shows 3/4. How much damage destroys it in one turn?",
+        "options": [
+          { "id": "three", "text": "3" },
+          { "id": "four", "text": "4" },
+          { "id": "seven", "text": "7" }
+        ],
+        "correctOptionId": "four",
+        "hint": "Toughness is the second number."
+      }
+    }
+  ]
+}

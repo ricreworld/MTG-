@@ -67,9 +67,9 @@ describe("module schema rules", () => {
 
 describe("cross-file validation", () => {
   it("names the file when a glossary term doesn't exist", () => {
-    const bad = withStep({ body: "A [[mana]] symbol.", glossaryTerms: ["mana"] });
+    const bad = withStep({ body: "A [[not-a-real-term]] symbol.", glossaryTerms: ["not-a-real-term"] });
     const { errors } = validateContent({ "99-bad.json": bad }, glossary);
-    expect(errors).toEqual([expect.objectContaining({ file: "99-bad.json", message: expect.stringMatching(/"mana" isn't defined/) })]);
+    expect(errors).toEqual([expect.objectContaining({ file: "99-bad.json", message: expect.stringMatching(/"not-a-real-term" isn't defined/) })]);
   });
   it("catches two modules with the same id or order", () => {
     const { errors } = validateContent({ "a.json": validModule, "b.json": validModule }, glossary);
