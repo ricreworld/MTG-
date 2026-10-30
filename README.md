@@ -98,7 +98,8 @@ legacy/                    The earlier single-file prototype (Planeswalker Quest
 8. ✅ Accessibility audit: axe-core (WCAG 2.2 AA + best practice) reports 0 violations on every screen in both themes; keyboard and screen-reader walkthrough done
 9. ✅ Card frames: every practice card has a name bar, art box with mana cost, type line, text box and power/toughness box
 9b. ✅ Real cards: the 25 practice cards are real Foundations cards with official art and exact Oracle text, under the Wizards Fan Content Policy (`public/art/`, `src/game/cards.ts`)
-10. Decks and free play: pick a ready-made deck, play a full practice game against the computer with the coach (next)
+10. ✅ Decks and free play: five ready-made 30-card decks, a full game against a simple computer opponent (`src/game/ai.ts`), and a coach that suggests each move with a reason and flags weaker moves (`src/game/coach.ts`). Undo everything; losing shows a calm summary
+11. Foundations card library: browse every card in the set (next)
 
 ## Licensing of card content
 

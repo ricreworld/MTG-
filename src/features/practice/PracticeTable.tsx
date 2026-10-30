@@ -20,6 +20,7 @@ const PHASES: Step[] = ["main1", "attackers", "blockers", "main2", "end"];
 
 interface Props {
   scenario: Scenario;
+  exitLabel?: string | undefined;
   onComplete: () => void;
   onExit: () => void;
   onReadMore: (moduleId: string) => void;
@@ -27,7 +28,7 @@ interface Props {
 
 interface Coach { kind: "hint" | "coach" | "done"; text: string }
 
-export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function PracticeTable({ scenario, onComplete, onExit, onReadMore }, headingRef) {
+export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function PracticeTable({ scenario, exitLabel, onComplete, onExit, onReadMore }, headingRef) {
   const [history, setHistory] = useState<GameState[]>(() => [scenario.setup()]);
   const [coach, setCoach] = useState<Coach | null>(null);
   const [hintIndex, setHintIndex] = useState(0);
@@ -35,7 +36,10 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
   const state = history[history.length - 1]!;
   const complete = useMemo(() => scenario.isComplete(state), [scenario, state]);
   const [celebrated, setCelebrated] = useState(false);
-  if (complete && !celebrated) { setCelebrated(true); setCoach({ kind: "done", text: "Goal reached. Nice work!" }); onComplete(); }
+  const [showCoach, setShowCoach] = useState(true);
+  const freePlay = !!scenario.advise;
+  const advice = useMemo(() => (scenario.advise ? scenario.advise(state) : null), [scenario, state]);
+  if (complete && !celebrated) { setCelebrated(true); setCoach({ kind: "done", text: freePlay ? "You won the game. Well played!" : "Goal reached. Nice work!" }); onComplete(); }
 
   const act = (action: Action) => {
     if (complete) return;
@@ -56,7 +60,13 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
   const creatures = (list: Permanent[]) => list.filter((p) => def(p.card).kind === "creature");
   const info = state.step === "blockers" && state.turn === "you"
     ? { name: "Combat: opponent's blocks", allowed: "Your opponent has chosen their blocks (shown on the cards). Continue to see the damage." }
-    : STEP_INFO[state.step];
+    : state.step === "damage"
+      ? { name: "Combat damage", allowed: state.stack.length ? "A spell was cast before damage. Respond, or pass to let it resolve." : "Continue to deal combat damage." }
+      : state.turn === "opp" && state.stack.length
+        ? { name: STEP_INFO[state.step].name, allowed: "Your opponent cast a spell. You can respond with an instant, or pass to let it resolve." }
+        : state.turn === "opp" && state.step !== "blockers"
+          ? { name: STEP_INFO[state.step].name, allowed: "Your opponent is taking their turn." }
+          : STEP_INFO[state.step];
   const myTurn = state.turn === "you";
   const targeting = state.pendingTarget ? def(state.cards[state.pendingTarget] ?? "") : null;
 
@@ -120,7 +130,7 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
       <div className="grid gap-s2 rounded-lg border border-border bg-surface p-s4">
         <div className="flex flex-wrap items-center justify-between gap-s2">
           <h2 id="practice-heading" ref={headingRef} tabIndex={-1} className="text-xl font-bold">Practice: {scenario.title}</h2>
-          <button type="button" onClick={onExit} className={secondary}><Icon name="back" /> All scenarios</button>
+          <button type="button" onClick={onExit} className={secondary}><Icon name="back" /> {exitLabel ?? "All scenarios"}</button>
         </div>
         <p><strong>Goal:</strong> {scenario.goal}</p>
       </div>
@@ -140,6 +150,34 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
         <p className="text-sm"><strong>{myTurn ? "Your turn" : "Opponent's turn"} · {info.name}.</strong> {info.allowed}</p>
       </div>
 
+      {/* Free play: the coach's suggestion before each decision */}
+      {freePlay && !state.result && (
+        <div className="grid gap-s2 rounded-lg border border-border bg-surface p-s3">
+          <div className="flex flex-wrap items-center justify-between gap-s2">
+            <p className="font-bold"><Icon name="info" /> Coach</p>
+            <button type="button" onClick={() => setShowCoach((v) => !v)} aria-expanded={showCoach} className={secondary}>{showCoach ? "Hide" : "Show"}</button>
+          </div>
+          {showCoach && advice && (
+            <div className="grid gap-s1">
+              <p><strong>Suggested move:</strong> {advice.move}</p>
+              <p className="text-sm"><strong>Why:</strong> {advice.why}</p>
+            </div>
+          )}
+          {showCoach && !advice && <p className="text-sm text-text-muted">Nothing to decide right now.</p>}
+        </div>
+      )}
+      {freePlay && state.result === "lose" && (
+        <div role="status" className="grid gap-s2 rounded-lg border-2 border-border-strong bg-surface-2 p-s4">
+          <p className="text-lg font-bold">This game is over.</p>
+          <p>Your life reached 0, or you had no card to draw. Every Magic player loses games, including the best ones. The useful part is the next one.</p>
+          <p className="text-sm">Look at the game log below to see the turn that decided it, or Undo a few moves and try a different line.</p>
+          <div className="flex flex-wrap gap-s2">
+            <button type="button" onClick={undo} disabled={history.length <= 1} className={`${secondary} disabled:opacity-50`}>Undo</button>
+            <button type="button" onClick={restart} className={primary}>Play again</button>
+          </div>
+        </div>
+      )}
+
       {/* Coach / hint area, inline, never a popup */}
       {coach && (
         <div role="status" className={`flex items-start gap-s3 rounded-md p-s3 ${coach.kind === "done" ? "bg-success-soft" : "bg-hint-soft"}`}>
@@ -155,7 +193,8 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
 
       {/* Opponent */}
       <div className="grid gap-s2 rounded-lg border border-border bg-surface-2 p-s3">
-        <p className="flex items-center gap-s3 font-bold">Opponent <span className="rounded-sm bg-surface px-s2 font-mono">Life {state.opp.life}</span>
+        <p className="flex flex-wrap items-center gap-s3 font-bold">Opponent <span className="rounded-sm bg-surface px-s2 font-mono">Life {state.opp.life}</span>
+          {freePlay && <span className="text-sm font-normal text-text-muted">Hand: {state.opp.hand.length} · Library: {state.opp.library.length}</span>}
         </p>
         <div className="flex flex-wrap gap-s2">{lands(theirs).map((p) => { const t = tapOf(p); return <GameCard key={p.uid} card={def(p.card)} perm={p} size="sm" action={t.label} onClick={t.onClick} />; })}</div>
         <div className="flex flex-wrap gap-s2">
@@ -183,6 +222,7 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
       {/* You */}
       <div className="grid gap-s2 rounded-lg border border-border bg-surface p-s3">
         <p className="flex flex-wrap items-center gap-s3 font-bold">You <span className="rounded-sm bg-surface-2 px-s2 font-mono">Life {state.you.life}</span>
+          {freePlay && <span className="text-sm font-normal text-text-muted">Library: {state.you.library.length}</span>}
           <span className="text-sm font-normal">Mana pool: {pool.length ? pool.map(([c, n]) => `${n} ${c === "W" ? "white" : c === "U" ? "blue" : c === "B" ? "black" : c === "R" ? "red" : "green"}`).join(", ") : "empty"}</span>
         </p>
         <div className="flex flex-wrap gap-s2">
@@ -234,6 +274,7 @@ export const PracticeTable = forwardRef<HTMLHeadingElement, Props>(function Prac
         {myTurn && state.step === "attackers" && <button type="button" onClick={() => act({ type: "declareAttackers" })} className={primary}>{state.selectedAttackers.length ? `Attack with ${state.selectedAttackers.length}` : "Don't attack"}</button>}
         {!myTurn && state.step === "blockers" && <button type="button" onClick={() => act({ type: "declareBlockers" })} className={primary}>{Object.values(state.attackers).some(Boolean) ? "Confirm blocks" : "No blocks"}</button>}
         {myTurn && state.step === "blockers" && <button type="button" onClick={() => act({ type: "declareBlockers" })} className={primary}><Icon name="next" /> Continue to damage</button>}
+        {state.step === "damage" && !state.stack.length && <button type="button" onClick={() => act({ type: "dealDamage" })} className={primary}><Icon name="next" /> Continue to damage</button>}
         {myTurn && state.step === "main2" && !state.stack.length && <button type="button" onClick={() => act({ type: "endTurn" })} className={primary}>End turn</button>}
       </div>
 

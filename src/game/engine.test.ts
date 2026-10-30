@@ -106,7 +106,7 @@ describe("combat", () => {
     expect(s.step).toBe("blockers");
     // Scenario script: the opponent's Swab Goblin blocks the Bear Cub (simulate by setting the block).
     s = { ...s, attackers: { ...s.attackers, [bf(s, "cub")!.uid]: bf(s, "goblin", "opp")!.uid } };
-    s = reduce(s, { type: "declareBlockers" });
+    s = reduce(reduce(s, { type: "declareBlockers" }), { type: "dealDamage" });
     expect(s.opp.life).toBe(17); // Brazen Scourge (3 power) unblocked
     expect(bf(s, "cub")).toBeFalsy(); // 2/2 vs 2/2: both destroyed
     expect(bf(s, "goblin", "opp")).toBeFalsy();
@@ -118,7 +118,7 @@ describe("combat", () => {
     s = run(s, { type: "goToCombat" }, { type: "toggleAttacker", uid: bf(s, "pathwarden")!.uid }, { type: "declareAttackers" });
     expect(bf(s, "pathwarden")!.tapped).toBe(false); // vigilance
     s = { ...s, attackers: { [bf(s, "pathwarden")!.uid]: bf(s, "goblin", "opp")!.uid } };
-    s = reduce(s, { type: "declareBlockers" });
+    s = reduce(reduce(s, { type: "declareBlockers" }), { type: "dealDamage" });
     expect(bf(s, "pathwarden")!.damage).toBe(2);
     expect(s.opp.life).toBe(17); // trample: 5 power, 2 lethal to the 2/2 goblin, 3 to the player
     s = reduce(s, { type: "endTurn" });
@@ -132,7 +132,7 @@ describe("combat", () => {
     expect(s.refusal).toMatch(/Flying/);
     s = run(s, { type: "pickBlocker", uid: bf(s, "sentry")!.uid }, { type: "assignBlock", attackerUid: bf(s, "skyhunter", "opp")!.uid });
     expect(s.refusal).toBeNull();
-    s = reduce(s, { type: "declareBlockers" });
+    s = reduce(reduce(s, { type: "declareBlockers" }), { type: "dealDamage" });
     expect(bf(s, "skyhunter", "opp")).toBeFalsy();
     expect(s.you.life).toBe(20);
   });
@@ -143,7 +143,7 @@ describe("combat", () => {
     const soldier = bf(s, "soldier", "opp")!.uid;
     s = opponentAttacks(s, [vampire, soldier]);
     s = run(s, { type: "pickBlocker", uid: bf(s, "archer")!.uid }, { type: "assignBlock", attackerUid: vampire }, { type: "pickBlocker", uid: bf(s, "cub")!.uid }, { type: "assignBlock", attackerUid: soldier });
-    s = reduce(s, { type: "declareBlockers" });
+    s = reduce(reduce(s, { type: "declareBlockers" }), { type: "dealDamage" });
     expect(bf(s, "vampire", "opp")).toBeFalsy(); // deathtouch from the Archer
     expect(bf(s, "archer")).toBeFalsy(); // 4 damage to a 2/1
     expect(bf(s, "cub")).toBeFalsy(); // 2/2 vs 2/2: both destroyed
@@ -154,7 +154,7 @@ describe("combat", () => {
   it("a learner who takes lethal damage gets a result, not a crash", () => {
     let s = makeState({ turn: "opp", you: { life: 4 }, opp: { battlefield: ["vampire"] } });
     s = opponentAttacks(s, [bf(s, "vampire", "opp")!.uid]);
-    s = reduce(s, { type: "declareBlockers" });
+    s = reduce(reduce(s, { type: "declareBlockers" }), { type: "dealDamage" });
     expect(s.result).toBe("lose");
     expect(s.you.life).toBe(0);
   });

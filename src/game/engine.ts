@@ -4,10 +4,12 @@
 // It implements the beginner rules taught in the course: lands and mana (CR 305, 106), casting
 // creatures and instants (CR 302, 304), the stack with responses (CR 405, 117), combat with
 // attackers, one blocker per attacker, simultaneous damage, first strike, flying/reach, trample,
-// deathtouch and lifelink (CR 506-510, 702), summoning sickness (CR 302.6) and lethal damage (CR 704.5g).
+// deathtouch and lifelink (CR 506-510, 702), summoning sickness (CR 302.6), lethal damage and
+// toughness 0 (CR 704.5f-g), drawing from an empty library (CR 704.5b) and the turn cycle (CR 500).
 //
 // Simplifications (on purpose, for teaching): one blocker per attacker, no multiple blockers;
-// the mana pool empties only when a step changes; the opponent is scripted by the scenario.
+// the mana pool empties only when a step changes; no mulligans; the opponent is scripted
+// (scenarios) or driven by the simple computer player in ai.ts.
 import { CARDS, parseCost, type CardDef, type Color } from "./cards";
 
 export type Player = "you" | "opp";
@@ -21,7 +23,7 @@ export interface Permanent {
   /** True until the controller has started a turn with it (summoning sickness). */
   summoningSick: boolean;
   damage: number;
-  /** Temporary +X/+X until end of turn. */
+  /** Temporary +X/+X (or -X/-X) until end of turn. */
   pump: { power: number; toughness: number };
   /** Hit by deathtouch damage this turn. */
   deathtouched: boolean;
@@ -37,6 +39,9 @@ export interface StackItem {
 export interface PlayerState {
   life: number;
   hand: string[]; // card uids (see state.cards)
+  /** Card ids, top of the library first. Empty in scenarios that don't draw. */
+  library: string[];
+  graveyard: string[]; // card ids
   landPlayedThisTurn: boolean;
   pool: Partial<Record<Color, number>>;
 }
@@ -44,6 +49,8 @@ export interface PlayerState {
 export interface GameState {
   turn: Player;
   step: Step;
+  /** 1 on the first turn of the game; the first player skips their first draw (CR 103.8a). */
+  turnNumber: number;
   you: PlayerState;
   opp: PlayerState;
   battlefield: Permanent[];
@@ -79,6 +86,7 @@ export type Action =
   | { type: "pickBlocker"; uid: string }
   | { type: "assignBlock"; attackerUid: string }
   | { type: "declareBlockers" }
+  | { type: "dealDamage" }
   | { type: "endTurn" };
 
 /* ---------- helpers ---------- */
@@ -91,15 +99,18 @@ export const def = (cardId: string): CardDef => {
 export const power = (p: Permanent): number => (def(p.card).power ?? 0) + p.pump.power;
 export const toughness = (p: Permanent): number => (def(p.card).toughness ?? 0) + p.pump.toughness;
 export const has = (p: Permanent, kw: NonNullable<CardDef["keywords"]>[number]): boolean => def(p.card).keywords?.includes(kw) ?? false;
-const isLand = (p: Permanent) => def(p.card).kind === "land";
-const isCreature = (p: Permanent) => def(p.card).kind === "creature";
+export const isLand = (p: Permanent) => def(p.card).kind === "land";
+export const isCreature = (p: Permanent) => def(p.card).kind === "creature";
+export const other = (p: Player): Player => (p === "you" ? "opp" : "you");
 const find = (s: GameState, uid: string) => s.battlefield.find((p) => p.uid === uid);
 const handCard = (s: GameState, player: Player, uid: string): CardDef | undefined => (s[player].hand.includes(uid) ? def(s.cards[uid] ?? "") : undefined);
+const COLORS: Color[] = ["W", "U", "B", "R", "G"];
+export const colorName = (c: Color) => (c === "W" ? "white" : c === "U" ? "blue" : c === "B" ? "black" : c === "R" ? "red" : "green");
 
 export function canPay(pool: PlayerState["pool"], cost: string | undefined): boolean {
   const need = parseCost(cost);
   let spare = 0;
-  for (const c of ["W", "U", "B", "R", "G"] as Color[]) {
+  for (const c of COLORS) {
     const have = pool[c] ?? 0;
     const want = need[c] ?? 0;
     if (have < want) return false;
@@ -111,15 +122,16 @@ export function canPay(pool: PlayerState["pool"], cost: string | undefined): boo
 function pay(pool: PlayerState["pool"], cost: string | undefined): PlayerState["pool"] {
   const next = { ...pool };
   const need = parseCost(cost);
-  for (const c of ["W", "U", "B", "R", "G"] as Color[]) next[c] = (next[c] ?? 0) - (need[c] ?? 0);
+  for (const c of COLORS) next[c] = (next[c] ?? 0) - (need[c] ?? 0);
   let generic = need.generic;
-  for (const c of ["W", "U", "B", "R", "G"] as Color[]) {
+  for (const c of COLORS) {
     while (generic > 0 && (next[c] ?? 0) > 0) { next[c] = (next[c] ?? 0) - 1; generic--; }
   }
   for (const c of Object.keys(next) as Color[]) if (!next[c]) delete next[c];
   return next;
 }
 
+/** Mana in the pool plus what untapped lands could add. */
 export const availableMana = (s: GameState, player: Player): PlayerState["pool"] => {
   const pool = { ...s[player].pool };
   for (const p of s.battlefield) if (p.owner === player && isLand(p) && !p.tapped) pool[def(p.card).color] = (pool[def(p.card).color] ?? 0) + 1;
@@ -134,18 +146,22 @@ export const canAttack = (p: Permanent, s: GameState): boolean =>
 
 const refuse = (s: GameState, why: string): GameState => ({ ...s, refusal: why });
 const log = (s: GameState, line: string): GameState => ({ ...s, log: [...s.log, line] });
-const name = (s: GameState, uid: string) => { const p = find(s, uid); return p ? def(p.card).name : def(s.cards[uid] ?? "").name; };
+const name = (s: GameState, uid: string) => { const p = find(s, uid); if (p) return def(p.card).name; const item = s.stack.find((x) => x.uid === uid); if (item) return def(item.card).name; const id = s.cards[uid]; return id ? def(id).name : "a card"; };
+const who = (p: Player) => (p === "you" ? "You" : "Your opponent");
+const whose = (p: Player) => (p === "you" ? "your" : "their");
 
 let uidCounter = 0;
 export const newUid = (prefix = "c") => `${prefix}${++uidCounter}`;
 export const resetUids = () => { uidCounter = 0; };
 
-/** State-based actions (CR 704): lethal damage, deathtouch, life totals. */
-function checkState(s: GameState): GameState {
+const newPermanent = (uid: string, card: string, owner: Player, sick: boolean): Permanent => ({ uid, card, owner, tapped: false, summoningSick: sick, damage: 0, pump: { power: 0, toughness: 0 }, deathtouched: false });
+
+/** State-based actions (CR 704): lethal damage, deathtouch, toughness 0, life totals. */
+export function checkState(s: GameState): GameState {
   let next = s;
   for (const p of s.battlefield) {
     if (isCreature(p) && (p.damage >= toughness(p) || p.deathtouched || toughness(p) <= 0)) {
-      next = { ...next, battlefield: next.battlefield.filter((x) => x.uid !== p.uid) };
+      next = { ...next, battlefield: next.battlefield.filter((x) => x.uid !== p.uid), [p.owner]: { ...next[p.owner], graveyard: [...next[p.owner].graveyard, p.card] } };
       next = log(next, `${def(p.card).name} is destroyed and goes to the graveyard.`);
     }
   }
@@ -163,28 +179,24 @@ function resolveTop(s: GameState): GameState {
   if (!item) return s;
   let next: GameState = { ...s, stack: s.stack.slice(0, -1) };
   const card = def(item.card);
+  const toGrave = (st: GameState): GameState => ({ ...st, [item.caster]: { ...st[item.caster], graveyard: [...st[item.caster].graveyard, item.card] } });
   if (card.kind === "creature") {
-    next = { ...next, battlefield: [...next.battlefield, { uid: item.uid, card: item.card, owner: item.caster, tapped: false, summoningSick: true, damage: 0, pump: { power: 0, toughness: 0 }, deathtouched: false }] };
-    return log(next, `${card.name} resolves and enters the battlefield.`);
+    next = { ...next, battlefield: [...next.battlefield, newPermanent(item.uid, item.card, item.caster, true)] };
+    return log(next, `${card.name} resolves and enters the battlefield${item.caster === "opp" ? " on your opponent's side" : ""}.`);
   }
+  next = toGrave(next);
   const t = item.target;
   if ((card.effect === "counter" || card.effect === "counterNoncreature") && t?.kind === "spell") {
     const victim = next.stack.find((x) => x.uid === t.uid);
     if (!victim) return log(next, `${card.name} has nothing to counter any more, so it does nothing.`);
-    next = { ...next, stack: next.stack.filter((x) => x.uid !== t.uid) };
+    next = { ...next, stack: next.stack.filter((x) => x.uid !== t.uid), [victim.caster]: { ...next[victim.caster], graveyard: [...next[victim.caster].graveyard, victim.card] } };
     return log(next, `${card.name} resolves: ${def(victim.card).name} is countered. It goes to the graveyard without happening.`);
   }
-  if (card.effect === "pump3" && t?.kind === "permanent") {
+  if ((card.effect === "pump3" || card.effect === "shrink2") && t?.kind === "permanent") {
     const p = find(next, t.uid);
     if (!p) return log(next, `${card.name}'s target is gone, so it does nothing.`);
-    next = { ...next, battlefield: next.battlefield.map((x) => (x.uid === p.uid ? { ...x, pump: { power: x.pump.power + 3, toughness: x.pump.toughness + 3 } } : x)) };
-    const after = find(next, t.uid);
-    return log(next, `${card.name} resolves: ${def(p.card).name} is ${after ? power(after) : "?"}/${after ? toughness(after) : "?"} until end of turn.`);
-  }
-  if (card.effect === "shrink2" && t?.kind === "permanent") {
-    const p = find(next, t.uid);
-    if (!p) return log(next, `${card.name}'s target is gone, so it does nothing.`);
-    next = { ...next, battlefield: next.battlefield.map((x) => (x.uid === p.uid ? { ...x, pump: { power: x.pump.power - 2, toughness: x.pump.toughness - 2 } } : x)) };
+    const d = card.effect === "pump3" ? 3 : -2;
+    next = { ...next, battlefield: next.battlefield.map((x) => (x.uid === p.uid ? { ...x, pump: { power: x.pump.power + d, toughness: x.pump.toughness + d } } : x)) };
     const after = find(next, t.uid);
     return checkState(log(next, `${card.name} resolves: ${def(p.card).name} is ${after ? power(after) : "?"}/${after ? toughness(after) : "?"} until end of turn.`));
   }
@@ -193,7 +205,7 @@ function resolveTop(s: GameState): GameState {
 
 function dealCombatDamage(s: GameState, firstStrikeOnly: boolean): GameState {
   let next = s;
-  const defender: Player = s.turn === "you" ? "opp" : "you";
+  const defender: Player = other(s.turn);
   const strikes = (p: Permanent) => (firstStrikeOnly ? has(p, "First strike") : !has(p, "First strike"));
   const dmg: Record<string, number> = {};
   const dt: Record<string, boolean> = {};
@@ -228,7 +240,7 @@ function dealCombatDamage(s: GameState, firstStrikeOnly: boolean): GameState {
       dmg[a.uid] = (dmg[a.uid] ?? 0) + p;
       if (has(b, "Deathtouch") && p > 0) dt[a.uid] = true;
       lines.push(`${def(b.card).name} deals ${p} damage to ${def(a.card).name}.`);
-      if (has(b, "Lifelink")) { /* blocker's controller gains */ next = { ...next, [defender]: { ...next[defender], life: next[defender].life + p } }; lines.push(`Lifelink: ${defender === "you" ? "you gain" : "your opponent gains"} ${p} life.`); }
+      if (has(b, "Lifelink") && p > 0) { next = { ...next, [defender]: { ...next[defender], life: next[defender].life + p } }; lines.push(`Lifelink: ${defender === "you" ? "you gain" : "your opponent gains"} ${p} life.`); }
     }
   }
   if (lines.length === 0) return next;
@@ -240,11 +252,140 @@ function dealCombatDamage(s: GameState, firstStrikeOnly: boolean): GameState {
   return checkState(next);
 }
 
-/* ---------- the reducer ---------- */
+/* ---------- player-generic moves (used by the reducer for the learner and by ai.ts for the opponent) ---------- */
+
+/** Draws cards from the top of the library. Drawing from an empty library loses the game (CR 704.5b). */
+export function drawCards(s: GameState, player: Player, n: number): GameState {
+  let next = s;
+  for (let i = 0; i < n; i++) {
+    const [top, ...rest] = next[player].library;
+    if (!top) {
+      next = log(next, `${who(player)} must draw from an empty library.`);
+      return { ...next, result: player === "you" ? "lose" : "win", log: [...next.log, player === "you" ? "You can't draw, so you lose this game. That's a real rule, and it happens to everyone." : "Your opponent can't draw a card, so you win!"] };
+    }
+    const uid = newUid("h");
+    next = { ...next, cards: { ...next.cards, [uid]: top }, [player]: { ...next[player], library: rest, hand: [...next[player].hand, uid] } };
+  }
+  return n > 0 ? log(next, `${who(player)} draw${player === "you" ? "" : "s"} ${n === 1 ? "a card" : `${n} cards`}.`) : next;
+}
+
+/** Starts a player's turn: untap, clear summoning sickness, draw (CR 502, 504, 302.6). */
+export function beginTurn(s: GameState, player: Player): GameState {
+  const turnNumber = player === "you" ? s.turnNumber + 1 : s.turnNumber;
+  let next: GameState = {
+    ...emptyPools(s),
+    turn: player,
+    step: "main1",
+    turnNumber,
+    attackers: {},
+    selectedAttackers: [],
+    pendingBlocker: null,
+    pendingTarget: null,
+    battlefield: s.battlefield.map((p) => (p.owner === player ? { ...p, tapped: false, summoningSick: false } : p)),
+  };
+  next = { ...next, [player]: { ...next[player], landPlayedThisTurn: false, pool: {} } };
+  next = log(next, player === "you" ? "Your turn. Your cards untap." : "Your opponent's turn. Their cards untap.");
+  // The player who goes first skips the draw on the very first turn of the game (CR 103.8a).
+  const skipDraw = player === "you" && s.turnNumber === 0;
+  if (!skipDraw) next = drawCards(next, player, 1);
+  return next;
+}
+
+export function playLandFor(s: GameState, player: Player, uid: string): GameState {
+  const card = handCard(s, player, uid);
+  if (!card || card.kind !== "land") return s;
+  return log({
+    ...s,
+    [player]: { ...s[player], hand: s[player].hand.filter((u) => u !== uid), landPlayedThisTurn: true },
+    battlefield: [...s.battlefield, newPermanent(uid, card.id, player, false)],
+  }, `${who(player)} play${player === "you" ? "" : "s"} ${card.name}.`);
+}
+
+/** Taps untapped lands until the cost can be paid from the pool. Returns null if it can't be paid. */
+export function tapLandsFor(s: GameState, player: Player, cost: string | undefined): GameState | null {
+  if (canPay(s[player].pool, cost)) return s;
+  if (!canPay(availableMana(s, player), cost)) return null;
+  const need = parseCost(cost);
+  let next = s;
+  const pool = { ...s[player].pool };
+  const tappedNow = new Set<string>();
+  const untapped = () => s.battlefield.filter((p) => p.owner === player && isLand(p) && !p.tapped && !tappedNow.has(p.uid));
+  const tap = (p: Permanent) => {
+    const c = def(p.card).color;
+    pool[c] = (pool[c] ?? 0) + 1;
+    tappedNow.add(p.uid);
+    next = { ...next, battlefield: next.battlefield.map((x) => (x.uid === p.uid ? { ...x, tapped: true } : x)) };
+    next = log(next, `${who(player)} tap${player === "you" ? "" : "s"} ${def(p.card).name} for one ${colorName(c)} mana.`);
+  };
+  // Coloured requirements first, then anything for generic.
+  for (const c of COLORS) {
+    while ((pool[c] ?? 0) < (need[c] ?? 0)) { const l = untapped().find((p) => def(p.card).color === c); if (!l) return null; tap(l); }
+  }
+  const required = COLORS.reduce((n, c) => n + (need[c] ?? 0), 0) + need.generic;
+  while (COLORS.reduce((n, c) => n + (pool[c] ?? 0), 0) < required) { const l = untapped()[0]; if (!l) return null; tap(l); }
+  next = { ...next, [player]: { ...next[player], pool } };
+  return canPay(pool, cost) ? next : null;
+}
+
+/** Casts a card from hand (paying from the pool) onto the stack. The caller has checked legality. */
+export function castFor(s: GameState, player: Player, uid: string, target?: StackItem["target"]): GameState {
+  const card = handCard(s, player, uid);
+  if (!card) return s;
+  const item: StackItem = target ? { uid, card: card.id, caster: player, target } : { uid, card: card.id, caster: player };
+  const next: GameState = {
+    ...s,
+    [player]: { ...s[player], hand: s[player].hand.filter((u) => u !== uid), pool: pay(s[player].pool, card.cost) },
+    stack: [...s.stack, item],
+  };
+  const tgt = target?.kind === "permanent" ? ` targeting ${name(s, target.uid)}` : target?.kind === "spell" ? ` in response, targeting ${name(s, target.uid)}` : "";
+  return log(next, `${who(player)} cast${player === "you" ? "" : "s"} ${card.name}${tgt}. It goes on the stack.`);
+}
+
+export const resolveStackTop = (s: GameState): GameState => resolveTop(s);
+
+/** Locks in the current blocks and moves to the damage step (both players may still cast instants). */
+export function lockBlocks(s: GameState): GameState {
+  const blocks = Object.entries(s.attackers).filter(([, b]) => b);
+  const next: GameState = { ...s, pendingBlocker: null, step: "damage" };
+  return log(next, blocks.length ? `Blocks: ${blocks.map(([a, b]) => `${name(s, b as string)} blocks ${name(s, a)}`).join("; ")}.` : (s.turn === "you" ? "Your opponent doesn't block." : "You don't block."));
+}
+
+/** Deals combat damage (first strike, then regular) and moves to the second main phase. */
+export function dealDamage(s: GameState): GameState {
+  let next = dealCombatDamage(s, true);
+  if (next.result) return next;
+  next = dealCombatDamage(next, false);
+  return { ...emptyPools(next), step: "main2", attackers: next.result ? next.attackers : {} };
+}
+
+/** Ends a player's turn: cleanup (CR 514). */
+export function endTurnFor(s: GameState, player: Player): GameState {
+  let next = emptyPools(s);
+  next = { ...next, battlefield: next.battlefield.map((p) => ({ ...p, damage: 0, pump: { power: 0, toughness: 0 }, deathtouched: false })), step: "end", attackers: {}, selectedAttackers: [], pendingBlocker: null, pendingTarget: null };
+  return log(next, `${who(player)} end${player === "you" ? "" : "s"} ${whose(player)} turn. Damage wears off and until-end-of-turn effects end.`);
+}
+
+/** A player attacks with the given creatures: they tap (unless Vigilance) and the defender chooses blocks. */
+export function attackWith(s: GameState, player: Player, uids: string[]): GameState {
+  const attackers: Record<string, null> = {};
+  for (const u of uids) attackers[u] = null;
+  const next: GameState = {
+    ...emptyPools(s),
+    turn: player,
+    step: "blockers",
+    attackers,
+    selectedAttackers: [],
+    pendingBlocker: null,
+    battlefield: s.battlefield.map((p) => (attackers[p.uid] !== undefined && !has(p, "Vigilance") ? { ...p, tapped: true } : p)),
+  };
+  return log(next, `${who(player)} attack${player === "you" ? "" : "s"} with ${uids.map((u) => name(s, u)).join(" and ")}.${player === "opp" ? " Choose your blockers." : ""}`);
+}
+
+/* ---------- the reducer (the learner's actions) ---------- */
 
 export function reduce(state: GameState, action: Action): GameState {
   const s: GameState = { ...state, refusal: null };
-  if (s.result) return refuse(s, "This game is over. Start the scenario again to keep practising.");
+  if (s.result) return refuse(s, "This game is over. Start again to keep practising.");
   const me: Player = "you";
 
   switch (action.type) {
@@ -255,11 +396,7 @@ export function reduce(state: GameState, action: Action): GameState {
       if (s.turn !== me || (s.step !== "main1" && s.step !== "main2")) return refuse(s, "You can only play a land during your own main phase.");
       if (s.stack.length) return refuse(s, "Something is waiting on the stack. Let it resolve first.");
       if (s.you.landPlayedThisTurn) return refuse(s, "You've already played a land this turn. It's one land per turn.");
-      return log({
-        ...s,
-        you: { ...s.you, hand: s.you.hand.filter((u) => u !== action.uid), landPlayedThisTurn: true },
-        battlefield: [...s.battlefield, { uid: action.uid, card: card.id, owner: me, tapped: false, summoningSick: false, damage: 0, pump: { power: 0, toughness: 0 }, deathtouched: false }],
-      }, `You play ${card.name}.`);
+      return playLandFor(s, me, action.uid);
     }
 
     case "tapForMana": {
@@ -272,7 +409,7 @@ export function reduce(state: GameState, action: Action): GameState {
         ...s,
         battlefield: s.battlefield.map((x) => (x.uid === p.uid ? { ...x, tapped: true } : x)),
         you: { ...s.you, pool: { ...s.you.pool, [color]: (s.you.pool[color] ?? 0) + 1 } },
-      }, `You tap ${def(p.card).name} for one ${color === "W" ? "white" : color === "U" ? "blue" : color === "B" ? "black" : color === "R" ? "red" : "green"} mana.`);
+      }, `You tap ${def(p.card).name} for one ${colorName(color)} mana.`);
     }
 
     case "cast": {
@@ -291,25 +428,16 @@ export function reduce(state: GameState, action: Action): GameState {
       }
       const counters = card.effect === "counter" || card.effect === "counterNoncreature";
       if (card.kind === "instant" && !counters && !s.pendingTarget) {
+        if (!s.battlefield.some(isCreature)) return refuse(s, `${card.name} needs a creature to target, and there are no creatures on the battlefield.`);
         return { ...s, pendingTarget: action.uid };
       }
       if (counters) {
         const target = s.stack[s.stack.length - 1];
         if (!target || target.caster === me) return refuse(s, `${card.name} needs a spell to counter. Cast it in response, while your opponent's spell is on the stack.`);
         if (card.effect === "counterNoncreature" && def(target.card).kind === "creature") return refuse(s, `${card.name} says "noncreature spell", and ${def(target.card).name} is a creature spell. It can't counter that.`);
-        const next: GameState = {
-          ...s,
-          you: { ...s.you, hand: s.you.hand.filter((u) => u !== action.uid), pool: pay(s.you.pool, card.cost) },
-          stack: [...s.stack, { uid: action.uid, card: card.id, caster: me, target: { kind: "spell", uid: target.uid } }],
-        };
-        return log(next, `You cast ${card.name} in response, targeting ${def(target.card).name}. It goes on top of the stack.`);
+        return castFor(s, me, action.uid, { kind: "spell", uid: target.uid });
       }
-      const next: GameState = {
-        ...s,
-        you: { ...s.you, hand: s.you.hand.filter((u) => u !== action.uid), pool: pay(s.you.pool, card.cost) },
-        stack: [...s.stack, { uid: action.uid, card: card.id, caster: me }],
-      };
-      return log(next, `You cast ${card.name}. It goes on the stack.`);
+      return castFor(s, me, action.uid);
     }
 
     case "chooseTarget": {
@@ -317,19 +445,10 @@ export function reduce(state: GameState, action: Action): GameState {
       const card = handCard(s, me, s.pendingTarget);
       if (!card) return { ...s, pendingTarget: null };
       const t = action.target;
-      if (t.kind === "permanent") {
-        const p = find(s, t.uid);
-        if (!p || !isCreature(p)) return refuse(s, `${card.name} needs a creature as its target.`);
-      }
-      if (t.kind === "player") return refuse(s, `${card.name} targets a creature, not a player.`);
-      if (t.kind === "spell") return refuse(s, `${card.name} can't target a spell.`);
-      const next: GameState = {
-        ...s,
-        pendingTarget: null,
-        you: { ...s.you, hand: s.you.hand.filter((u) => u !== s.pendingTarget), pool: pay(s.you.pool, card.cost) },
-        stack: [...s.stack, { uid: s.pendingTarget, card: card.id, caster: me, target: t }],
-      };
-      return log(next, `You cast ${card.name} targeting ${name(s, t.uid)}. It goes on the stack.`);
+      if (t.kind !== "permanent") return refuse(s, `${card.name} targets a creature.`);
+      const p = find(s, t.uid);
+      if (!p || !isCreature(p)) return refuse(s, `${card.name} needs a creature as its target.`);
+      return castFor({ ...s, pendingTarget: null }, me, s.pendingTarget, t);
     }
 
     case "cancelTarget":
@@ -337,7 +456,7 @@ export function reduce(state: GameState, action: Action): GameState {
 
     case "pass": {
       if (!s.stack.length) return refuse(s, "Nothing is on the stack right now.");
-      return log(resolveTop(s), "");
+      return resolveTop(s);
     }
 
     case "goToCombat": {
@@ -360,16 +479,7 @@ export function reduce(state: GameState, action: Action): GameState {
     case "declareAttackers": {
       if (s.step !== "attackers" || s.turn !== me) return refuse(s, "It isn't the declare-attackers step.");
       if (s.selectedAttackers.length === 0) return log({ ...s, step: "main2", attackers: {} }, "You don't attack this turn.");
-      const attackers: Record<string, null> = {};
-      for (const u of s.selectedAttackers) attackers[u] = null;
-      const next: GameState = {
-        ...s,
-        step: "blockers",
-        attackers,
-        selectedAttackers: [],
-        battlefield: s.battlefield.map((p) => (attackers[p.uid] !== undefined && !has(p, "Vigilance") ? { ...p, tapped: true } : p)),
-      };
-      return log(next, `You attack with ${s.selectedAttackers.map((u) => name(s, u)).join(" and ")}.`);
+      return attackWith(s, me, s.selectedAttackers);
     }
 
     case "skipCombat": {
@@ -402,62 +512,52 @@ export function reduce(state: GameState, action: Action): GameState {
 
     case "declareBlockers": {
       if (s.step !== "blockers") return refuse(s, "It isn't the declare-blockers step.");
-      let next: GameState = { ...s, pendingBlocker: null, step: "damage" };
-      const blocks = Object.entries(s.attackers).filter(([, b]) => b);
-      next = log(next, blocks.length ? `Blocks: ${blocks.map(([a, b]) => `${name(s, b as string)} blocks ${name(s, a)}`).join("; ")}.` : (s.turn === me ? "Your opponent doesn't block." : "You don't block."));
-      next = dealCombatDamage(next, true);
-      if (next.result) return next;
-      next = dealCombatDamage(next, false);
-      return { ...next, step: "main2", attackers: next.result ? next.attackers : {} };
+      return lockBlocks(s);
+    }
+
+    case "dealDamage": {
+      if (s.step !== "damage") return refuse(s, "It isn't the combat damage step.");
+      if (s.stack.length) return refuse(s, "Let the stack resolve first.");
+      return dealDamage(s);
     }
 
     case "endTurn": {
       if (s.turn !== me) return refuse(s, "It isn't your turn.");
       if (s.stack.length) return refuse(s, "Let the stack resolve first.");
-      let next = emptyPools(s);
-      // Cleanup: damage wears off, pumps end (CR 514.2).
-      next = { ...next, battlefield: next.battlefield.map((p) => ({ ...p, damage: 0, pump: { power: 0, toughness: 0 }, deathtouched: false })), step: "end" };
-      return log(next, "You end your turn. Damage wears off and until-end-of-turn effects end.");
+      if (s.step === "attackers" || s.step === "blockers" || s.step === "damage") return refuse(s, "Finish combat first.");
+      return endTurnFor(s, me);
     }
   }
 }
 
-/** Starts the learner's turn: untap, clear summoning sickness (CR 502, 302.6). The scenario script calls this. */
-export function beginYourTurn(s: GameState): GameState {
-  const next: GameState = {
-    ...s,
-    turn: "you",
-    step: "main1",
-    attackers: {},
-    selectedAttackers: [],
-    pendingBlocker: null,
-    you: { ...s.you, landPlayedThisTurn: false, pool: {} },
-    battlefield: s.battlefield.map((p) => (p.owner === "you" ? { ...p, tapped: false, summoningSick: false } : p)),
-  };
-  return log(next, "Your turn. Your cards untap.");
-}
+/** Starts the learner's turn (scenario scripts and the match runner call this). */
+export const beginYourTurn = (s: GameState): GameState => beginTurn(s, "you");
+
+const emptyPlayer = (life: number, hand: string[], library: string[]): PlayerState => ({ life, hand, library, graveyard: [], landPlayedThisTurn: false, pool: {} });
 
 /** Builds a starting state from a simple description. */
 export function makeState(init: {
   turn?: Player;
   step?: Step;
-  you?: { life?: number; hand?: string[]; battlefield?: (string | { card: string; tapped?: boolean; sick?: boolean })[] };
-  opp?: { life?: number; hand?: string[]; battlefield?: (string | { card: string; tapped?: boolean; sick?: boolean })[] };
+  turnNumber?: number;
+  you?: { life?: number; hand?: string[]; library?: string[]; battlefield?: (string | { card: string; tapped?: boolean; sick?: boolean })[] };
+  opp?: { life?: number; hand?: string[]; library?: string[]; battlefield?: (string | { card: string; tapped?: boolean; sick?: boolean })[] };
 }): GameState {
   const cards: Record<string, string> = {};
   const hand = (list: string[] | undefined) => (list ?? []).map((c) => { const uid = newUid("h"); cards[uid] = c; return uid; });
   const bf = (owner: Player, list: NonNullable<typeof init.you>["battlefield"]): Permanent[] =>
     (list ?? []).map((item) => {
       const spec = typeof item === "string" ? { card: item } : item;
-      return { uid: newUid("p"), card: spec.card, owner, tapped: !!spec.tapped, summoningSick: !!spec.sick, damage: 0, pump: { power: 0, toughness: 0 }, deathtouched: false };
+      return { ...newPermanent(newUid("p"), spec.card, owner, !!spec.sick), tapped: !!spec.tapped };
     });
   const youHand = hand(init.you?.hand);
   const oppHand = hand(init.opp?.hand);
   return {
     turn: init.turn ?? "you",
     step: init.step ?? "main1",
-    you: { life: init.you?.life ?? 20, hand: youHand, landPlayedThisTurn: false, pool: {} },
-    opp: { life: init.opp?.life ?? 20, hand: oppHand, landPlayedThisTurn: false, pool: {} },
+    turnNumber: init.turnNumber ?? 1,
+    you: emptyPlayer(init.you?.life ?? 20, youHand, init.you?.library ?? []),
+    opp: emptyPlayer(init.opp?.life ?? 20, oppHand, init.opp?.library ?? []),
     battlefield: [...bf("you", init.you?.battlefield), ...bf("opp", init.opp?.battlefield)],
     stack: [],
     cards,
@@ -471,7 +571,7 @@ export function makeState(init: {
   };
 }
 
-/** Puts an opponent's spell on the stack (the scenario script uses this for "respond" practice). */
+/** Puts an opponent's spell on the stack from nowhere (scenario scripts use this for "respond" practice). */
 export function opponentCasts(s: GameState, card: string, target?: StackItem["target"]): GameState {
   const uid = newUid("o");
   const item: StackItem = target ? { uid, card, caster: "opp", target } : { uid, card, caster: "opp" };
@@ -479,16 +579,5 @@ export function opponentCasts(s: GameState, card: string, target?: StackItem["ta
   return log({ ...s, stack: [...s.stack, item] }, `Your opponent casts ${def(card).name}${t}. It's on the stack: you can respond.`);
 }
 
-/** The opponent attacks with the given permanents (scenario script). */
-export function opponentAttacks(s: GameState, uids: string[]): GameState {
-  const attackers: Record<string, null> = {};
-  for (const u of uids) attackers[u] = null;
-  const next: GameState = {
-    ...s,
-    turn: "opp",
-    step: "blockers",
-    attackers,
-    battlefield: s.battlefield.map((p) => (attackers[p.uid] !== undefined && !has(p, "Vigilance") ? { ...p, tapped: true } : p)),
-  };
-  return log(next, `Your opponent attacks with ${uids.map((u) => name(s, u)).join(" and ")}. Choose your blockers.`);
-}
+/** The opponent attacks with the given permanents (scenario scripts and ai.ts). */
+export const opponentAttacks = (s: GameState, uids: string[]): GameState => attackWith(s, "opp", uids);

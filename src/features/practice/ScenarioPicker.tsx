@@ -6,10 +6,11 @@ import { SCENARIOS } from "../../game/scenarios";
 interface Props {
   completed: readonly string[];
   onPick: (id: string) => void;
+  onPlayGame: () => void;
   onBack: () => void;
 }
 
-export const ScenarioPicker = forwardRef<HTMLHeadingElement, Props>(function ScenarioPicker({ completed, onPick, onBack }, headingRef) {
+export const ScenarioPicker = forwardRef<HTMLHeadingElement, Props>(function ScenarioPicker({ completed, onPick, onPlayGame, onBack }, headingRef) {
   return (
     <section aria-labelledby="scenarios-heading" className="grid gap-s4 rounded-lg border border-border bg-surface p-s4">
       <div className="flex flex-wrap items-center justify-between gap-s3">
@@ -31,6 +32,11 @@ export const ScenarioPicker = forwardRef<HTMLHeadingElement, Props>(function Sce
           );
         })}
       </ol>
+      <div className="grid gap-s2 rounded-md border-2 border-accent bg-accent-soft p-s3">
+        <p className="font-bold">Ready for a whole game?</p>
+        <p className="text-sm">Pick a deck and play the computer. The coach suggests a move each step and explains why, and you can undo anything.</p>
+        <div><button type="button" onClick={onPlayGame} className="inline-flex min-h-tap items-center gap-s2 rounded-md bg-accent px-s4 font-bold text-accent-ink"><Icon name="play" /> Play a game</button></div>
+      </div>
     </section>
   );
 });

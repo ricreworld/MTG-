@@ -2,7 +2,7 @@
 //   compact top bar (Outline, Settings) → one step card → sticky bottom bar (Back, Pause, Focus, Next).
 // On wide screens the course outline also shows as a sidebar.
 // Focus Mode hides everything marked data-focus-hide (see index.css).
-import { useEffect, useReducer, useRef, useState, type TouchEvent } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState, type TouchEvent } from "react";
 import { Icon } from "../../components/Icon";
 import { content } from "../../content";
 import { STORAGE_KEYS, readJson, writeJson } from "../../lib/storage";
@@ -11,6 +11,8 @@ import { START, isFirst, isLast, navigate, type NavAction, type Position } from 
 import { StepCard } from "../lesson/StepCard";
 import { PracticeTable } from "../practice/PracticeTable";
 import { ScenarioPicker } from "../practice/ScenarioPicker";
+import { DeckPicker } from "../practice/DeckPicker";
+import { makeMatch, type MatchSetup } from "../../game/match";
 import { SCENARIOS, scenarioById } from "../../game/scenarios";
 import { ModuleChecklist } from "../progress/ModuleChecklist";
 import { ProgressBar } from "../progress/ProgressBar";
@@ -34,7 +36,10 @@ export function AppShell() {
   const [position, setPosition] = useState<Position>(() => positionOf(progress, modules));
   const [view, setView] = useState<View>(() => (hasSavedProgress(progress) ? "welcome" : "lesson"));
   const [scenarioId, setScenarioId] = useState<string | null>(null);
-  const scenario = scenarioId ? scenarioById(scenarioId) : undefined;
+  const [matchSetup, setMatchSetup] = useState<MatchSetup | null>(null);
+  const [pickingDeck, setPickingDeck] = useState(false);
+  const match = useMemo(() => (matchSetup ? makeMatch(matchSetup) : undefined), [matchSetup]);
+  const scenario = match ?? (scenarioId ? scenarioById(scenarioId) : undefined);
   const [announcement, setAnnouncement] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
@@ -127,7 +132,7 @@ export function AppShell() {
             className={`${topButton} lg:hidden ${view === "outline" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
             <Icon name="list" /> Outline
           </button>
-          <button type="button" onClick={() => { setScenarioId(null); toggleView("practice"); }} aria-pressed={view === "practice"}
+          <button type="button" onClick={() => { setScenarioId(null); setMatchSetup(null); setPickingDeck(false); toggleView("practice"); }} aria-pressed={view === "practice"}
             className={`${topButton} ${view === "practice" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
             <Icon name="play" /> Practice
           </button>
@@ -201,16 +206,20 @@ export function AppShell() {
 
           {view === "settings" && <SettingsPanel ref={headingRef} onClose={() => setView("lesson")} />}
 
-          {view === "practice" && !scenario && (
-            <ScenarioPicker ref={headingRef} completed={progress.scenarios} onPick={(id) => setScenarioId(id)} onBack={() => setView("lesson")} />
+          {view === "practice" && !scenario && !pickingDeck && (
+            <ScenarioPicker ref={headingRef} completed={progress.scenarios} onPick={(id) => setScenarioId(id)} onPlayGame={() => setPickingDeck(true)} onBack={() => setView("lesson")} />
+          )}
+          {view === "practice" && !scenario && pickingDeck && (
+            <DeckPicker ref={headingRef} onStart={(yourDeck, oppDeck) => { setPickingDeck(false); setMatchSetup({ yourDeck, oppDeck, seed: Math.floor(Math.random() * 1e9) }); }} onBack={() => setPickingDeck(false)} />
           )}
           {view === "practice" && scenario && (
             <PracticeTable
-              key={scenario.id}
+              key={match ? `match-${matchSetup?.seed}` : scenario.id}
               ref={headingRef}
               scenario={scenario}
-              onComplete={() => dispatchProgress({ type: "completeScenario", scenarioId: scenario.id })}
-              onExit={() => setScenarioId(null)}
+              exitLabel={match ? "Leave the game" : "All scenarios"}
+              onComplete={() => { if (!match) dispatchProgress({ type: "completeScenario", scenarioId: scenario.id }); }}
+              onExit={() => { setScenarioId(null); setMatchSetup(null); setPickingDeck(!!match); }}
               onReadMore={(moduleId) => { const mi = modules.findIndex((m) => m.id === moduleId); if (mi >= 0) goTo(mi, 0); }}
             />
           )}

@@ -33,6 +33,8 @@ export interface Scenario {
   opponentBlocks?: (s: GameState) => Record<string, string>;
   /** A coaching note when a legal action is a weaker choice. Returns null when the move is fine. */
   coach?: (before: GameState, after: GameState, action: Action) => string | null;
+  /** Free play: what the coach suggests before the next decision, and why. */
+  advise?: (s: GameState) => { move: string; why: string } | null;
 }
 
 const bf = (s: GameState, card: string, owner: "you" | "opp" = "you") => s.battlefield.find((p) => p.card === card && p.owner === owner);
@@ -150,6 +152,8 @@ export const scenarioById = (id: string): Scenario | undefined => SCENARIOS.find
 export function step(scenario: Scenario, state: GameState, action: Action): GameState {
   let after = reduce(state, action);
   if (after.refusal) return after;
+  // Scripted scenarios (no computer opponent) have no combat tricks, so blocks lead straight to damage.
+  if (!scenario.opponent && action.type === "declareBlockers" && after.step === "damage" && !after.stack.length) after = reduce(after, { type: "dealDamage" });
   if (action.type === "declareAttackers" && after.turn === "you" && after.step === "blockers") {
     // The scripted opponent chooses its blocks now, so the learner can see them before damage.
     const blocks = scenario.opponentBlocks?.(after) ?? {};

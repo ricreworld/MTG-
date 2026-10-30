@@ -46,7 +46,7 @@ describe("walkthroughs (the 'correct' path completes each scenario)", () => {
     let both = reduce(one, { type: "toggleAttacker", uid: bf(s, "scourge").uid });
     expect(sc.coach?.(both, reduce(both, { type: "declareAttackers" }), { type: "declareAttackers" })).toBeNull();
     both = reduce(both, { type: "declareAttackers" });
-    both = reduce(both, { type: "declareBlockers" }); // scripted: opponent has nothing to block with
+    both = reduce(reduce(both, { type: "declareBlockers" }), { type: "dealDamage" }); // scripted: opponent has nothing to block with
     expect(sc.isComplete(both)).toBe(true);
     const sick = reduce(s, { type: "toggleAttacker", uid: bf(s, "archer").uid });
     expect(sick.refusal).toMatch(/summoning sickness/);
@@ -69,7 +69,7 @@ describe("walkthroughs (the 'correct' path completes each scenario)", () => {
     s = reduce(reduce(s, { type: "pickBlocker", uid: bf(s, "sentry").uid }), { type: "assignBlock", attackerUid: skyhunter });
     s = reduce(reduce(s, { type: "pickBlocker", uid: bf(s, "archer").uid }), { type: "assignBlock", attackerUid: vampire });
     expect(sc.coach?.(s, s, { type: "declareBlockers" })).toBeNull();
-    s = reduce(s, { type: "declareBlockers" });
+    s = reduce(reduce(s, { type: "declareBlockers" }), { type: "dealDamage" });
     expect(s.you.life).toBe(20);
     expect(bf(s, "vampire", "opp")).toBeUndefined();
     expect(bf(s, "skyhunter", "opp")).toBeUndefined();
