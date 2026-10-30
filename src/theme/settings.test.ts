@@ -2,10 +2,11 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_SETTINGS, sanitizeSettings, settingsReducer, settingsToDom } from "./settings";
 
 describe("settings", () => {
-  it("defaults to dark theme, Atkinson, animations off", () => {
+  it("defaults to dark theme, Atkinson, gentle motion on the table", () => {
     expect(DEFAULT_SETTINGS.theme).toBe("dark");
     expect(DEFAULT_SETTINGS.font).toBe("atkinson");
-    expect(DEFAULT_SETTINGS.animations).toBe(false);
+    expect(DEFAULT_SETTINGS.motion).toBe("gentle");
+    expect(DEFAULT_SETTINGS.sound).toBe(false);
   });
 
   it("repairs corrupted saved data instead of crashing", () => {

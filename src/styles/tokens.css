@@ -36,6 +36,15 @@
   --mtg-green: 0 158 115;    --mtg-green-ink: 6 20 15;     /* tree symbol, 5.51:1 */
   --mtg-colorless: 189 184 174; --mtg-colorless-ink: 38 35 30; /* diamond symbol */
 
+  /* ---------- The table: green felt under a warm lamp, on a walnut rail ---------- */
+  --felt: 30 74 58;          /* #1E4A3A */
+  --felt-light: 44 100 78;   /* #2C644E lamp pool */
+  --felt-dark: 19 48 38;     /* #133026 edges */
+  --rail: 88 56 33;          /* #583821 walnut */
+  --rail-light: 141 95 58;   /* #8D5F3A */
+  --lamp: 255 222 166;       /* #FFDEA6 */
+  --felt-ink: 236 240 236;   /* text on felt: 9.1:1 on --felt */
+
   /* ---------- Typography ---------- */
   --font-atkinson: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-lexend: "Lexend", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -100,6 +109,12 @@
   --color-success-soft: 221 238 227;/* #DDEEE3 */
   --color-hint: 44 90 160;          /* #2C5AA0 */
   --color-hint-soft: 226 233 243;   /* #E2E9F3 */
+  --felt: 52 120 92;
+  --felt-light: 70 146 114;
+  --felt-dark: 36 92 70;
+  --rail: 120 80 48;
+  --rail-light: 170 122 80;
+  --felt-ink: 250 252 250;         /* 5.9:1 on --felt */
   color-scheme: light;
 }
 

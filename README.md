@@ -112,3 +112,11 @@ Mana Steps is unofficial Fan Content permitted under the Wizards of the Coast Fa
 paid features. Card names, rules text and art are © Wizards of the Coast LLC. Card data and art crops come
 from Scryfall (https://scryfall.com), which is not affiliated with this project. Everything else in the app
 (lessons, code, frame design, icons) is original.
+
+## The table architecture (Steps 1 to 4 of the game-feel rebuild)
+
+- `src/game/` is the pure rules engine, unchanged by presentation work.
+- `src/table/` is the presentation core, with no React: `machine.ts` (state machine: SETUP, PLAYING, PAUSED, VICTORY, DEFEAT, REVIEW; history for Undo; input locked while cues play), `events.ts` (diff two states into TableEvents), `director.ts` (events to timed cues per motion level, compressed to a per-batch budget), `motion.ts` (Off / Gentle / Full timings and easings), `pool.ts` (fixed object pools), `audio.ts` (opt-in synthesised sound), `debug.ts` (console hooks and frame meter).
+- `src/features/table/` renders it: `TableView.tsx` (felt mat, zones, hand tray, the sticky "Now" bar), `cues.ts` (plays a batch with the Web Animations API: FLIP slides, tap turns, floating numbers, ghosts for destroyed cards, pooled particles and a brief shake on Full only), `DebugPanel.tsx`.
+- A tap while cues play skips to the end of them and then does what was tapped. Screen readers get one sentence per batch.
+- Debug: turn on Settings > Debug panel, or use `window.__manaSteps` in the console (`state()`, `act(action)`, `events()`, `skip()`, `fps()`, `setMotion("full")`).

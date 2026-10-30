@@ -120,11 +120,24 @@ export function SettingsControls() {
         value={settings.wordSpacingStep}
         onChange={(wordSpacingStep) => set({ wordSpacingStep })}
       />
+      <ChoiceGroup
+        legend="Motion on the Practice Table"
+        options={[{ value: "off", label: "Off" }, { value: "gentle", label: "Gentle" }, { value: "full", label: "Full" }] as const}
+        value={settings.motion}
+        onChange={(motion) => set({ motion })}
+      />
+      <p className="text-sm text-text-muted">Gentle: cards slide and settle, numbers float, nothing flashes. Full: adds small bursts and a brief shake on a winning or losing blow. Off: nothing moves. If your device asks for reduced motion, it stays off.</p>
       <Toggle
-        label="Animations"
-        description="Off by default. If your device asks for reduced motion, animations stay off."
-        checked={settings.animations}
-        onChange={(animations) => set({ animations })}
+        label="Sound on the Practice Table"
+        description="Off by default. Soft, short tones for a card played, damage, and the end of a game. No music."
+        checked={settings.sound}
+        onChange={(sound) => set({ sound })}
+      />
+      <Toggle
+        label="Debug panel"
+        description="For testing: shows the table's state machine, the last events, and frame timing."
+        checked={settings.debugPanel}
+        onChange={(debugPanel) => set({ debugPanel })}
       />
       <Toggle
         label="Practice Table does the fiddly bits"

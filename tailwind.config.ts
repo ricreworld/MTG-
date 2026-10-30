@@ -20,6 +20,7 @@ export default {
       focus: rgb("color-focus"),
       success: { DEFAULT: rgb("color-success"), soft: rgb("color-success-soft") },
       hint: { DEFAULT: rgb("color-hint"), soft: rgb("color-hint-soft") },
+      felt: rgb("felt"), "felt-ink": rgb("felt-ink"),
       mtg: {
         white: rgb("mtg-white"), "white-ink": rgb("mtg-white-ink"),
         blue: rgb("mtg-blue"), "blue-ink": rgb("mtg-blue-ink"),

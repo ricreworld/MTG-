@@ -2,6 +2,7 @@
 
 export type Theme = "dark" | "light";
 export type FontChoice = "atkinson" | "lexend" | "opendyslexic";
+export type MotionLevel = "off" | "gentle" | "full";
 
 /** Root font size per step, as a percentage of the browser default (16px). */
 export const FONT_SIZE_STEPS = [100, 112.5, 125, 137.5] as const;
@@ -29,6 +30,9 @@ export interface Settings {
   focusMode: boolean;
   swipeToNavigate: boolean; // off by default, so scrolling never jumps to another step
   autoPlay: boolean;        // on by default: the table pays mana and resolves your own spells for you
+  motion: MotionLevel;      // Practice Table motion: off (default when animations are off), gentle, full
+  sound: boolean;           // Practice Table sound cues, off by default, synthesised (no files)
+  debugPanel: boolean;      // shows the table's debug panel
 }
 
 export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
@@ -38,10 +42,13 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze({
   lineHeightStep: 0,
   letterSpacingStep: 0,
   wordSpacingStep: 0,
-  animations: false,
+  animations: true,
   focusMode: false,
   swipeToNavigate: false,
   autoPlay: true,
+  motion: "gentle",
+  sound: false,
+  debugPanel: false,
 });
 
 export type SettingsAction =
@@ -68,13 +75,19 @@ export function sanitizeSettings(raw: unknown): Settings {
     focusMode: typeof r.focusMode === "boolean" ? r.focusMode : d.focusMode,
     swipeToNavigate: typeof r.swipeToNavigate === "boolean" ? r.swipeToNavigate : d.swipeToNavigate,
     autoPlay: typeof r.autoPlay === "boolean" ? r.autoPlay : d.autoPlay,
+    motion: r.motion === "off" || r.motion === "gentle" || r.motion === "full" ? r.motion : (typeof r.animations === "boolean" ? (r.animations ? "gentle" : "off") : d.motion),
+    sound: typeof r.sound === "boolean" ? r.sound : d.sound,
+    debugPanel: typeof r.debugPanel === "boolean" ? r.debugPanel : d.debugPanel,
   };
 }
 
 export function settingsReducer(state: Settings, action: SettingsAction): Settings {
   switch (action.type) {
-    case "set":
-      return sanitizeSettings({ ...state, ...action.patch });
+    case "set": {
+      const next = sanitizeSettings({ ...state, ...action.patch });
+      // "animations" is the older switch; motion is the source of truth now.
+      return { ...next, animations: next.motion !== "off" };
+    }
     case "toggleTheme":
       return { ...state, theme: state.theme === "dark" ? "light" : "dark" };
     case "toggleFocusMode":
@@ -90,7 +103,7 @@ export function settingsToDom(s: Settings): { attrs: Record<string, string>; var
     attrs: {
       "data-theme": s.theme,
       "data-font": s.font,
-      "data-motion": s.animations ? "on" : "off",
+      "data-motion": s.motion !== "off" ? "on" : "off",
       "data-focus-mode": s.focusMode ? "on" : "off",
     },
     vars: {

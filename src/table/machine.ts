@@ -43,6 +43,7 @@ export class TableMachine {
   private listeners = new Set<Listener>();
   private recent: { events: TableEvent[]; at: number }[] = [];
   private opts: MachineOptions;
+  private cached: Snapshot | null = null; // same reference until something changes (useSyncExternalStore needs that)
 
   constructor(opts: MachineOptions) { this.opts = opts; }
 
@@ -72,8 +73,10 @@ export class TableMachine {
   subscribe(fn: Listener): () => void { this.listeners.add(fn); return () => this.listeners.delete(fn); }
 
   snapshot(): Snapshot {
+    if (this.cached) return this.cached;
     const state = this.state;
-    return { mode: this.mode, state, canUndo: this.history.length > 1, pending: this.pending, feedback: this.feedback, hintIndex: this.hintIndex, motion: this.opts.motion, sound: this.opts.sound };
+    this.cached = { mode: this.mode, state, canUndo: this.history.length > 1, pending: this.pending, feedback: this.feedback, hintIndex: this.hintIndex, motion: this.opts.motion, sound: this.opts.sound };
+    return this.cached;
   }
 
   /** The last 50 event batches, for the debug panel. */
@@ -192,6 +195,7 @@ export class TableMachine {
   }
 
   private emit(): Snapshot {
+    this.cached = null;
     const snap = this.snapshot();
     for (const fn of this.listeners) fn(snap);
     return snap;
