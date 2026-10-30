@@ -9,10 +9,12 @@ interface Props {
   step: Step;
   stepIndex: number;
   glossary: ReadonlyMap<string, GlossaryEntry>;
+  checkPassed: boolean;
+  onCheckCorrect: () => void;
 }
 
 /** The single card the learner works on. The heading receives focus on every step change. */
-export const StepCard = forwardRef<HTMLHeadingElement, Props>(function StepCard({ module, step, stepIndex, glossary }, headingRef) {
+export const StepCard = forwardRef<HTMLHeadingElement, Props>(function StepCard({ module, step, stepIndex, glossary, checkPassed, onCheckCorrect }, headingRef) {
   return (
     <article aria-labelledby={`step-${step.id}`} className="grid gap-s5 rounded-lg border border-border bg-surface p-s4 sm:p-s6 [@media(max-height:500px)]:gap-s4 [@media(max-height:500px)]:p-s4">
       <header className="grid gap-s2">
@@ -25,7 +27,7 @@ export const StepCard = forwardRef<HTMLHeadingElement, Props>(function StepCard(
       </header>
       <Markdown body={step.body} glossary={glossary} />
       <Visual visual={step.visual} />
-      {step.check && <CheckQuestion key={step.id} check={step.check} />}
+      {step.check && <CheckQuestion key={step.id} check={step.check} answeredBefore={checkPassed} onCorrect={onCheckCorrect} />}
       <footer className="border-t border-border pt-s3">
         <p className="text-sm text-text-muted">
           Rule reference: {step.ruleRefs.join(", ")} (Magic Comprehensive Rules)

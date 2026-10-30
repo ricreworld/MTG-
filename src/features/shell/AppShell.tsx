@@ -2,27 +2,34 @@
 //   compact top bar (Outline, Settings) → one step card → sticky bottom bar (Back, Pause, Focus, Next).
 // On wide screens the course outline also shows as a sidebar.
 // Focus Mode hides everything marked data-focus-hide (see index.css).
-import { useEffect, useRef, useState, type TouchEvent } from "react";
+import { useEffect, useReducer, useRef, useState, type TouchEvent } from "react";
 import { Icon } from "../../components/Icon";
 import { content } from "../../content";
+import { STORAGE_KEYS, readJson, writeJson } from "../../lib/storage";
 import { useSettings } from "../../theme/SettingsContext";
 import { START, isFirst, isLast, navigate, type NavAction, type Position } from "../course/navigation";
 import { StepCard } from "../lesson/StepCard";
+import { ModuleChecklist } from "../progress/ModuleChecklist";
+import { ProgressBar } from "../progress/ProgressBar";
+import { WelcomeBack } from "../progress/WelcomeBack";
+import { courseStats, hasSavedProgress, positionOf, progressReducer, sanitizeProgress, stepKey } from "../progress/progress";
 import { BottomBar } from "./BottomBar";
 import { OutlineList } from "./CourseOutline";
 import { SettingsPanel } from "./SettingsPanel";
 import { detectSwipe, type TouchPoint } from "./swipe";
 import { useShortcuts } from "./useShortcuts";
 
-type View = "lesson" | "outline" | "settings" | "paused";
+type View = "lesson" | "outline" | "settings" | "paused" | "welcome" | "finished";
 
 const topButton = "inline-flex min-h-tap items-center gap-s2 rounded-md border-2 px-s3 font-bold";
 
 export function AppShell() {
   const { modules, glossary, errors } = content;
   const { settings, dispatch } = useSettings();
-  const [position, setPosition] = useState<Position>(START);
-  const [view, setView] = useState<View>("lesson");
+  // Saved progress is loaded once, repaired against the current content, then autosaved on every change.
+  const [progress, dispatchProgress] = useReducer(progressReducer, undefined, () => sanitizeProgress(readJson(STORAGE_KEYS.progress), modules));
+  const [position, setPosition] = useState<Position>(() => positionOf(progress, modules));
+  const [view, setView] = useState<View>(() => (hasSavedProgress(progress) ? "welcome" : "lesson"));
   const [announcement, setAnnouncement] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
@@ -31,8 +38,28 @@ export function AppShell() {
   const mod = modules[position.moduleIndex];
   const step = mod?.steps[position.stepIndex];
 
+  useEffect(() => { writeJson(STORAGE_KEYS.progress, progress); }, [progress]);
+
+  // Being on a step in the lesson view marks it as seen (and saves where the learner is).
+  useEffect(() => {
+    if (view === "lesson" && mod && step) dispatchProgress({ type: "open", moduleId: mod.id, stepId: step.id });
+  }, [view, mod, step]);
+
+  const stats = courseStats(progress, modules);
+  const startOver = () => {
+    dispatchProgress({ type: "reset" });
+    setPosition(START);
+    setView("lesson");
+  };
+
+  const atEnd = isLast(modules, position);
   const go = (action: NavAction) => {
     if (view !== "lesson") return;
+    if (action.type === "next" && mod && step) {
+      // Moving on is what completes a step (opening it alone doesn't).
+      dispatchProgress({ type: "complete", moduleId: mod.id, stepId: step.id });
+      if (atEnd) { setView("finished"); return; }
+    }
     setPosition((p) => navigate(modules, p, action));
   };
   const toggleView = (v: View) => setView((cur) => (cur === v ? "lesson" : v));
@@ -48,7 +75,9 @@ export function AppShell() {
       lesson: mod && step ? `${mod.title}, step ${position.stepIndex + 1} of ${mod.steps.length}: ${step.title}` : "",
       outline: "Course outline",
       settings: "Settings",
-      paused: "Paused. Take your time.",
+      paused: "Paused. Your place is saved.",
+      welcome: "Welcome back",
+      finished: "You reached the end of the lessons so far",
     };
     setAnnouncement(text[view]);
     headingRef.current?.focus({ preventScroll: true });
@@ -77,7 +106,7 @@ export function AppShell() {
     if (dir) go({ type: dir });
   };
 
-  const outline = <OutlineList modules={modules} position={position} onGo={goTo} />;
+  const outline = <OutlineList modules={modules} position={position} onGo={goTo} progress={progress} />;
 
   return (
     <div className="flex min-h-[100dvh] flex-col">
@@ -116,6 +145,38 @@ export function AppShell() {
             </div>
           )}
 
+          {view === "welcome" && mod && step && (
+            <WelcomeBack
+              ref={headingRef}
+              where={`Module ${position.moduleIndex + 1}, ${mod.title}: step ${position.stepIndex + 1}, "${step.title}"`}
+              percent={stats.percent}
+              done={stats.done}
+              total={stats.total}
+              onContinue={() => setView("lesson")}
+              onStartOver={startOver}
+            />
+          )}
+
+          {(view === "lesson" || view === "finished") && <ProgressBar {...stats} />}
+
+          {view === "finished" && (
+            <section aria-labelledby="finished-heading" className="grid gap-s4 rounded-lg border border-border bg-surface p-s5">
+              <h2 id="finished-heading" ref={headingRef} tabIndex={-1} className="text-2xl font-bold">You reached the end, for now</h2>
+              <p>That's every lesson available so far. More modules are on the way.</p>
+              {stats.done < stats.total && (
+                <p className="text-text-muted">Some steps don't have their checkmark yet, usually because a quick check question wasn't answered. The outline shows which ones.</p>
+              )}
+              <div className="flex flex-wrap gap-s3">
+                <button type="button" onClick={() => setView("outline")} className="inline-flex min-h-tap items-center gap-s2 rounded-md bg-accent px-s5 font-bold text-accent-ink">
+                  <Icon name="list" /> See the course outline
+                </button>
+                <button type="button" onClick={() => setView("lesson")} className="inline-flex min-h-tap items-center gap-s2 rounded-md border-2 border-border-strong bg-surface px-s5 font-bold">
+                  <Icon name="back" /> Back to the last step
+                </button>
+              </div>
+            </section>
+          )}
+
           {view === "outline" && (
             <section aria-labelledby="outline-heading" className="grid gap-s4 rounded-lg border border-border bg-surface p-s4">
               <div className="flex flex-wrap items-center justify-between gap-s3">
@@ -133,7 +194,7 @@ export function AppShell() {
           {view === "paused" && (
             <section aria-labelledby="paused-heading" className="grid gap-s4 rounded-lg border border-border bg-surface p-s5">
               <h2 id="paused-heading" ref={headingRef} tabIndex={-1} className="text-2xl font-bold">Paused</h2>
-              <p>Take your time. Stretch, get a drink, look away from the screen. Your place is kept, and nothing changes while you're away.</p>
+              <p>Take your time. Stretch, get a drink, look away from the screen. Your place is saved on this device, so you can even close the app and come back later.</p>
               <div>
                 <button type="button" onClick={() => setView("lesson")} className="inline-flex min-h-tap items-center gap-s2 rounded-md bg-accent px-s5 font-bold text-accent-ink">
                   <Icon name="play" /> Resume the lesson
@@ -143,7 +204,23 @@ export function AppShell() {
           )}
 
           {view === "lesson" && mod && step && (
-            <StepCard ref={headingRef} key={`${mod.id}/${step.id}`} module={mod} step={step} stepIndex={position.stepIndex} glossary={glossary} />
+            <>
+              <StepCard
+                ref={headingRef}
+                key={`${mod.id}/${step.id}`}
+                module={mod}
+                step={step}
+                stepIndex={position.stepIndex}
+                glossary={glossary}
+                checkPassed={progress.passed.includes(stepKey(mod.id, step.id))}
+                onCheckCorrect={() => dispatchProgress({ type: "passCheck", moduleId: mod.id, stepId: step.id })}
+              />
+              <ModuleChecklist
+                module={mod}
+                ticked={progress.checklist[mod.id] ?? []}
+                onToggle={(itemId) => dispatchProgress({ type: "toggleChecklist", moduleId: mod.id, itemId })}
+              />
+            </>
           )}
           {view === "lesson" && !step && <p>There are no lessons to show yet.</p>}
         </main>
@@ -156,8 +233,9 @@ export function AppShell() {
       </footer>
 
       <BottomBar
-        canBack={!isFirst(position)}
-        canNext={!isLast(modules, position)}
+        canBack={view === "lesson" && !isFirst(position)}
+        canNext={view === "lesson"}
+        nextLabel={atEnd ? "Finish" : "Next"}
         focusMode={settings.focusMode}
         paused={view === "paused"}
         onBack={() => go({ type: "back" })}

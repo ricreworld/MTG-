@@ -4,9 +4,12 @@ import { useId, useState } from "react";
 import type { Check } from "../../content/schema";
 import { Icon } from "../../components/Icon";
 
-export function CheckQuestion({ check, onCorrect }: { check: Check; onCorrect?: () => void }) {
-  const [choice, setChoice] = useState<string | null>(null);
-  const [result, setResult] = useState<"correct" | "hint" | null>(null);
+export function CheckQuestion({ check, onCorrect, answeredBefore = false }: { check: Check; onCorrect?: () => void; answeredBefore?: boolean }) {
+  // Answered correctly on an earlier visit: show it as done (no need to answer again).
+  // Captured once, so answering now doesn't switch the message to "earlier".
+  const [earlier] = useState(answeredBefore);
+  const [choice, setChoice] = useState<string | null>(earlier ? check.correctOptionId : null);
+  const [result, setResult] = useState<"correct" | "hint" | null>(earlier ? "correct" : null);
   const name = useId();
   const questionId = useId();
 
@@ -59,7 +62,7 @@ export function CheckQuestion({ check, onCorrect }: { check: Check; onCorrect?: 
         {result === "correct" && (
           <p className="flex items-start gap-s3 rounded-md bg-success-soft p-s3">
             <span className="text-success"><Icon name="check" /></span>
-            <span><strong className="text-success">Correct.</strong> Nice work.</span>
+            <span><strong className="text-success">Correct.</strong> {earlier ? "You answered this one earlier." : "Nice work."}</span>
           </p>
         )}
         {result === "hint" && (

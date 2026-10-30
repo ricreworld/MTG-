@@ -25,6 +25,12 @@ Mana Steps is built for phones (iPhone and Android) and installs as a home-scree
 Updates download in the background and apply the next time the app is fully closed and reopened,
 so a lesson is never interrupted. Note: offline support needs the app served over https (or localhost).
 
+## Publish (GitHub Pages)
+
+`.github/workflows/pages.yml` tests, builds and publishes the app on every push.
+One-time setup in the GitHub repo: **Settings → Pages → Source: GitHub Actions**.
+If the first run says the branch isn't allowed, add the branch under **Settings → Environments → github-pages**.
+
 ## Structure
 
 ```
@@ -35,7 +41,7 @@ tailwind.config.ts         Tailwind theme: every value points at a CSS variable
 vite.config.ts             Vite + Vitest config, offline-file generator (relative base path)
 src/
   main.tsx                 Applies saved settings before first paint, then mounts <App>
-  App.tsx                  Phase 1: token preview page (replaced by the app shell in Phase 3)
+  App.tsx                  Mounts the app shell
   index.css                Tailwind layers + global rules (no italics, focus ring, motion off)
   styles/tokens.css        DESIGN TOKENS: colors, type, spacing, radius, motion
   theme/
@@ -71,9 +77,9 @@ legacy/                    The earlier single-file prototype (Planeswalker Quest
 ## Phase plan
 
 1. ✅ Scaffold, file structure, design tokens, Tailwind config, settings context
-2. Content schema (TypeScript + Zod) and a sample module
-3. App shell: wizard layout, navigation bar, settings panel, Focus Mode
-4. Progress engine: save/resume, checklist, progress bar
+2. ✅ Content schema (TypeScript + Zod) and a sample module
+3. ✅ App shell: wizard layout, navigation bar, settings panel, Focus Mode (phone-first, installable, offline)
+4. ✅ Progress engine: save/resume, checklist, progress bar
 5. Full MTG curriculum
 6. Practice Table mini-game (pure reducer + Vitest)
 7. Text-to-speech (Web Speech API)
