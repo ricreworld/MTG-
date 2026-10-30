@@ -96,6 +96,8 @@ section (e.g. `CR 103`) instead of guessing. Verify against the current rules at
 | CR 606.3 | Loyalty abilities: once per turn, main phase, empty stack | medium |
 | CR 608.1 / 608.2 | Resolving spells; instants and sorceries go to the graveyard as they finish resolving | medium |
 | CR 702.1 / 702.2 / 702.7 / 702.9 / 702.10 / 702.19 | Keywords; Deathtouch; First strike; Flying; Haste; Trample | high |
+| CR 702.15 / 702.17 / 702.20 | Lifelink; Reach; Vigilance | medium |
+| CR 105.2 | An object's colour comes from its mana cost (and colour indicators) | medium |
 | CR 704.5g | Creature with lethal damage is destroyed | high |
 | CR 704.6c | 21 combat damage from one commander | medium |
 | CR 903 / 903.4 / 903.5a / 903.5b / 903.7 / 903.8 | Commander; colour identity; 100 cards; singleton; 40 life; commander tax | high |
@@ -105,10 +107,11 @@ section (e.g. `CR 103`) instead of guessing. Verify against the current rules at
 
 | Fact | Where | Source |
 |---|---|---|
-| Standard uses recent sets that rotate out; playable in MTG Arena | Module 10 | Wizards format pages (formats change; check current Standard rules) |
+| Standard uses recent sets that rotate out; playable in MTG Arena | Module 11 | Wizards format pages (formats change; check current Standard rules) |
 | "A good hand usually has 2 to 5 lands" | Module 6 | Common beginner strategy advice, not a rule |
-| Commander deck recipe: 36–38 lands, ~10 ramp, ~10 draw, 7–8 removal, ~5 board wipes | Module 10 | Tyrna, "Commander Stats" (community Google Doc you provided). Guidelines, not rules |
-| Commander is the most popular casual format | Module 10 | Widely reported; soften if you prefer |
+| Commander deck recipe: 36–38 lands, ~10 ramp, ~10 draw, 7–8 removal, ~5 board wipes | Module 11 | Tyrna, "Commander Stats" (community Google Doc you provided). Guidelines, not rules |
+| Commander is the most popular casual format | Module 11 | Widely reported; soften if you prefer |
+| Which abilities belong to which colour (the colour pie) | Module 10 | Mark Rosewater, "Mechanical Color Pie 2017" (Making Magic). Design conventions, not rules; they shift over time |
 
 No real card names, costs or Oracle text are used anywhere. All example cards (Emberclaw Pup, Thornback Rhino,
 Quick Denial) are fictional and follow the card design rules below.
