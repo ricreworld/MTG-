@@ -96,3 +96,5 @@ legacy/                    The earlier single-file prototype (Planeswalker Quest
 6. ✅ Practice Table mini-game (pure reducer + Vitest, 5 guided scenarios with hints and Undo)
 7. Text-to-speech: skipped on purpose (no voice, keep it simple)
 8. ✅ Accessibility audit: axe-core (WCAG 2.2 AA + best practice) reports 0 violations on every screen in both themes; keyboard and screen-reader walkthrough done
+9. ✅ Card frames: every practice card has a name bar, art box with mana cost, type line, text box and power/toughness box, with original SVG art per card (`src/features/practice/CardArt.tsx`)
+10. Decks and free play: pick a ready-made deck, play a full practice game against the computer with the coach (next)
