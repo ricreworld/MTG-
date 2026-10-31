@@ -40,7 +40,7 @@ const durationOf = (e: TableEvent, t: (typeof TIMINGS)["gentle"]): number => {
 
 const easingOf = (e: TableEvent): Easing => (e.kind === "spellCast" || e.kind === "cardMoved" ? "out" : e.kind === "attack" ? "spring" : e.kind === "destroyed" || e.kind === "countered" ? "inOut" : "linear");
 
-export function schedule(events: TableEvent[], level: MotionLevel, state: GameState): CueBatch {
+export function schedule(events: TableEvent[], level: MotionLevel, state: GameState | null, announceText?: string): CueBatch {
   const t = TIMINGS[level];
   const cues: Cue[] = [];
   let cursor = 0;
@@ -68,5 +68,5 @@ export function schedule(events: TableEvent[], level: MotionLevel, state: GameSt
   }
   if (level === "off") { for (const c of cues) { c.at = 0; c.dur = 0; } total = 0; }
   const lethal = events.some((e) => e.kind === "result");
-  return { cues, total, announce: announce(events, state), shake: level === "full" && lethal && t.shake > 0 };
+  return { cues, total, announce: announceText ?? (state ? announce(events, state) : ""), shake: level === "full" && lethal && t.shake > 0 };
 }

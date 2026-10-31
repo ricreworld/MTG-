@@ -338,7 +338,7 @@
     {
       "id": "your-first-commander-deck",
       "title": "Your first Commander deck",
-      "body": "The easiest start is a **preconstructed Commander deck** from a shop: 100 cards, ready to play, built to be about bracket 2.\n\nIf you build your own, pick a commander whose text you understand and like, then follow the deck recipe from the Formats module: roughly 36 to 38 lands, about 10 cards that make extra mana, about 10 that draw cards, and some that remove threats.\n\nThen practise: this app's Commander table lets you try the command zone, the tax and commander damage against the computer.",
+      "body": "The easiest start is a **preconstructed Commander deck** from a shop: 100 cards, ready to play, built to be about bracket 2.\n\nIf you build your own, pick a commander whose text you understand and like, then follow the deck recipe from the Formats module: roughly 36 to 38 lands, about 10 cards that make extra mana, about 10 that draw cards, and some that remove threats.\n\nThen practise: this app's Commander table lets you try the command zone, the tax and commander damage against one computer player, and the four-player Commander table runs the real thing, with three computer players and 100-card decks.",
       "visual": {
         "type": "card",
         "src": "dwynen",

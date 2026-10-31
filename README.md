@@ -115,6 +115,14 @@ from Scryfall (https://scryfall.com), which is not affiliated with this project.
 
 16. ✅ Pictures for every lesson step: 66 original SVG diagrams built from the app's colour tokens (`src/features/lesson/diagrams/`), plus real card images where a real card is the best picture. Lesson motion (step entry, progress bar, check feedback) follows the Motion setting. Art banners on the welcome card and the Practice screen.
 
+17. ✅ Four-player Commander, the real thing: you and three computer players (Mara, Theo, Ines), four honest 100-card singleton decks, 40 life, clockwise turns, a defender chosen per attacker, any number of blockers, elimination, commander damage per commander, and a game that saves itself after every move so it can be picked up later. Everything is driven by real Foundations cards compiled from their Oracle text (see below).
+
+## The compiled card pool (four-player Commander)
+
+`tools/compile-cards.py` reads the Foundations set from Scryfall (`.tmp/fdn/fdn.json`) and turns each card's exact Oracle text into a small structured form (`src/game/cards.generated.json`): keywords, static abilities, triggered abilities, activated abilities and spell effects. A card is included only when every sentence of its text compiles; otherwise it is left out. Nothing is approximated: 225 of the 517 cards made it (129 creatures, 28 instants, 13 sorceries, 13 enchantments, 6 artifacts, 36 lands). `.tmp/compile-report.txt` lists why each other card was left out. `src/game/commander/` runs the pool: `engine.ts` (seats, zones, mana, the ability interpreter, triggers, combat, state-based actions), `ai.ts` (the three computer players, one step at a time so the human can respond or block), `decks.ts` (deterministic deck builder), `coach.ts` (threat order and advice), `save.ts` (one saved game in localStorage). `src/table/cmachine.ts` and `src/features/commander/` are the table.
+
+Simplifications on this table, so a beginner can follow it: triggered abilities resolve at once instead of using the stack; a spell on the stack gets one response; mana is paid automatically from untapped sources; scry, surveil, which creature to sacrifice and discarding to hand size are decided for every player by simple rules of thumb; targets for triggered abilities are chosen by the same rules of thumb; an eliminated player's cards are kept in their graveyard rather than removed from the game. Each one is marked in the code with the Comprehensive Rules section it shortens.
+
 ## The table architecture (Steps 1 to 4 of the game-feel rebuild)
 
 - `src/game/` is the pure rules engine, unchanged by presentation work.

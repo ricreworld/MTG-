@@ -4,18 +4,21 @@ import { def, type Action, type GameState, type Player, type Step } from "../gam
 
 export type Zone = "hand" | "library" | "stack" | "battlefield" | "graveyard" | "command";
 
+/** Who an event belongs to: "you" / "opp" on the two-player table, a seat id on the four-player table. */
+export type Who = string;
+
 export type TableEvent =
-  | { kind: "drew"; player: Player; count: number }
-  | { kind: "spellCast"; uid: string; card: string; caster: Player; target?: string | undefined }
-  | { kind: "cardMoved"; uid: string; card: string; from: Zone; to: Zone; owner: Player }
-  | { kind: "countered"; uid: string; card: string; owner: Player }
-  | { kind: "tapped"; uid: string; card: string; owner: Player; tapped: boolean }
-  | { kind: "attack"; attackers: string[]; by: Player }
+  | { kind: "drew"; player: Who; count: number }
+  | { kind: "spellCast"; uid: string; card: string; caster: Who; target?: string | undefined }
+  | { kind: "cardMoved"; uid: string; card: string; from: Zone; to: Zone; owner: Who }
+  | { kind: "countered"; uid: string; card: string; owner: Who }
+  | { kind: "tapped"; uid: string; card: string; owner: Who; tapped: boolean }
+  | { kind: "attack"; attackers: string[]; by: Who }
   | { kind: "block"; attacker: string; blocker: string }
-  | { kind: "lifeChanged"; player: Player; from: number; to: number }
+  | { kind: "lifeChanged"; player: Who; from: number; to: number }
   | { kind: "creatureDamaged"; uid: string; card: string; amount: number }
-  | { kind: "destroyed"; uid: string; card: string; owner: Player; toCommandZone: boolean }
-  | { kind: "turnChanged"; turn: Player; step: Step }
+  | { kind: "destroyed"; uid: string; card: string; owner: Who; toCommandZone: boolean }
+  | { kind: "turnChanged"; turn: Who; step: Step }
   | { kind: "coach"; text: string; undoable: boolean }
   | { kind: "result"; result: "win" | "lose"; reason: string };
 

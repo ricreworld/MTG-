@@ -10,10 +10,14 @@ import { useSettings } from "../../theme/SettingsContext";
 import { START, isFirst, isLast, navigate, type NavAction, type Position } from "../course/navigation";
 import { StepCard } from "../lesson/StepCard";
 import { PracticeTable } from "../practice/PracticeTable";
+import { clearGame, loadGame } from "../../game/commander/save";
+import type { CState } from "../../game/commander/engine";
 import { ScenarioPicker } from "../practice/ScenarioPicker";
 import { DeckPicker } from "../practice/DeckPicker";
 import { lazy, Suspense } from "react";
 const CardLibrary = lazy(() => import("../library/CardLibrary").then((m) => ({ default: m.CardLibrary })));
+const CommanderSetup = lazy(() => import("../commander/CommanderSetup").then((m) => ({ default: m.CommanderSetup })));
+const CommanderTable = lazy(() => import("../commander/CommanderTable").then((m) => ({ default: m.CommanderTable })));
 import { makeMatch, type MatchSetup } from "../../game/match";
 import { SCENARIOS, scenarioById } from "../../game/scenarios";
 import { ModuleChecklist } from "../progress/ModuleChecklist";
@@ -26,7 +30,7 @@ import { SettingsPanel } from "./SettingsPanel";
 import { detectSwipe, type TouchPoint } from "./swipe";
 import { useShortcuts } from "./useShortcuts";
 
-type View = "lesson" | "outline" | "settings" | "paused" | "welcome" | "finished" | "practice" | "library";
+type View = "lesson" | "outline" | "settings" | "paused" | "welcome" | "finished" | "practice" | "library" | "commander";
 
 const topButton = "inline-flex min-h-tap flex-1 items-center justify-center gap-s2 rounded-md border-2 px-s2 font-bold sm:flex-none sm:px-s3";
 
@@ -40,6 +44,8 @@ export function AppShell() {
   const [scenarioId, setScenarioId] = useState<string | null>(null);
   const [matchSetup, setMatchSetup] = useState<MatchSetup | null>(null);
   const [pickingDeck, setPickingDeck] = useState<null | "standard" | "commander">(null);
+  const [cmdGame, setCmdGame] = useState<{ state: CState; deckId: string } | null>(null);
+  const savedCmd = useMemo(() => (view === "commander" && !cmdGame ? loadGame() : null), [view, cmdGame]);
   const match = useMemo(() => (matchSetup ? makeMatch(matchSetup) : undefined), [matchSetup]);
   const scenario = match ?? (scenarioId ? scenarioById(scenarioId) : undefined);
   const [announcement, setAnnouncement] = useState("");
@@ -92,6 +98,7 @@ export function AppShell() {
       finished: "You reached the end of the lessons so far",
       practice: scenario ? `Practice: ${scenario.title}` : "Practice Table",
       library: "Card library",
+      commander: cmdGame ? "Commander: four players" : "Commander setup",
     };
     setAnnouncement(text[view]);
     headingRef.current?.focus({ preventScroll: true });
@@ -135,7 +142,7 @@ export function AppShell() {
             className={`${topButton} lg:hidden ${view === "outline" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
             <Icon name="list" /> Outline
           </button>
-          <button type="button" onClick={() => { setScenarioId(null); setMatchSetup(null); setPickingDeck(null); toggleView("practice"); }} aria-pressed={view === "practice"}
+          <button type="button" onClick={() => { setScenarioId(null); setMatchSetup(null); setPickingDeck(null); toggleView("practice"); }} aria-pressed={view === "practice" || view === "commander" || view === "library"}
             className={`${topButton} ${view === "practice" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
             <Icon name="play" /> Practice
           </button>
@@ -210,11 +217,21 @@ export function AppShell() {
           {view === "settings" && <SettingsPanel ref={headingRef} onClose={() => setView("lesson")} />}
 
           {view === "practice" && !scenario && !pickingDeck && (
-            <ScenarioPicker ref={headingRef} completed={progress.scenarios} onPick={(id) => setScenarioId(id)} onPlayGame={() => setPickingDeck("standard")} onPlayCommander={() => setPickingDeck("commander")} onLibrary={() => setView("library")} onBack={() => setView("lesson")} />
+            <ScenarioPicker ref={headingRef} completed={progress.scenarios} onPick={(id) => setScenarioId(id)} onPlayGame={() => setPickingDeck("standard")} onPlayCommander={() => setPickingDeck("commander")} onPlayFour={() => { setCmdGame(null); setView("commander"); }} onLibrary={() => setView("library")} onBack={() => setView("lesson")} />
           )}
           {view === "library" && (
             <Suspense fallback={<p className="p-s4">Loading the card library…</p>}>
               <CardLibrary ref={headingRef} onBack={() => setView("practice")} />
+            </Suspense>
+          )}
+          {view === "commander" && !cmdGame && (
+            <Suspense fallback={<p className="p-s4">Loading the Commander table…</p>}>
+              <CommanderSetup ref={headingRef} saved={savedCmd} onContinue={() => { const g = loadGame(); if (g) setCmdGame({ state: g.state, deckId: g.deckId }); }} onStart={(deckId) => { void import("../../game/commander/start").then((m) => setCmdGame({ state: m.startFourPlayer(deckId, Math.floor(Math.random() * 1e9)), deckId })); }} onBack={() => setView("practice")} />
+            </Suspense>
+          )}
+          {view === "commander" && cmdGame && (
+            <Suspense fallback={<p className="p-s4">Loading the Commander table…</p>}>
+              <CommanderTable key={cmdGame.state.seed + cmdGame.deckId} ref={headingRef} initial={cmdGame.state} deckId={cmdGame.deckId} onExit={() => { setCmdGame(null); setView("practice"); }} onNewGame={() => { clearGame(); setCmdGame(null); }} onReadMore={(moduleId) => { const mi = modules.findIndex((m) => m.id === moduleId); if (mi >= 0) goTo(mi, 0); }} />
             </Suspense>
           )}
           {view === "practice" && !scenario && pickingDeck && (
@@ -285,7 +302,7 @@ export function AppShell() {
         </p>
       </footer>
 
-      {view !== "practice" && view !== "library" && <BottomBar
+      {view !== "practice" && view !== "library" && view !== "commander" && <BottomBar
         canBack={view === "lesson" && !isFirst(position)}
         canNext={view === "lesson"}
         nextLabel={atEnd ? "Finish" : "Next"}
