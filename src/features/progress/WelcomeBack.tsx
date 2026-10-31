@@ -1,6 +1,7 @@
 // The one calm "welcome back" card. Start over asks once more before clearing anything.
 import { forwardRef, useState } from "react";
 import { Icon } from "../../components/Icon";
+import { ArtBanner } from "../practice/ArtBanner";
 
 interface Props {
   where: string;
@@ -18,6 +19,7 @@ export const WelcomeBack = forwardRef<HTMLHeadingElement, Props>(function Welcom
   const [confirming, setConfirming] = useState(false);
   return (
     <section aria-labelledby="welcome-heading" className="grid gap-s4 rounded-lg border border-border bg-surface p-s5">
+      <ArtBanner cards={["dwynen", "syralin", "garna", "linden"]} />
       <h2 id="welcome-heading" ref={headingRef} tabIndex={-1} className="text-2xl font-bold">Welcome back</h2>
       <p>Continue where you left off?</p>
       <div className="grid gap-s1 rounded-md bg-surface-2 p-s4">

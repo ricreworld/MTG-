@@ -12,7 +12,7 @@ export const MANA: Record<ManaColor, { name: string; symbolName: string; fill: s
   C: { name: "Colorless", symbolName: "diamond", fill: "bg-mtg-colorless", ink: "text-mtg-colorless-ink" },
 };
 
-function Glyph({ color }: { color: ManaColor }) {
+export function Glyph({ color }: { color: ManaColor }) {
   switch (color) {
     case "W":
       return (

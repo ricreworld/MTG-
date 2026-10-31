@@ -5,26 +5,62 @@
   "summary": "Limited (Draft and Sealed), the Constructed formats (Standard, Pioneer, Modern, Pauper), and where to play each.",
   "estimatedMinutes": 9,
   "checklist": [
-    { "id": "limited-vs-constructed", "label": "I know the difference between Limited and Constructed" },
-    { "id": "draft", "label": "I know how a Booster Draft works" },
-    { "id": "sealed", "label": "I know how Sealed works, and what a Prerelease is" },
-    { "id": "constructed-formats", "label": "I can tell Standard, Pioneer, Modern and Pauper apart" },
-    { "id": "where", "label": "I know where to play each one" }
+    {
+      "id": "limited-vs-constructed",
+      "label": "I know the difference between Limited and Constructed"
+    },
+    {
+      "id": "draft",
+      "label": "I know how a Booster Draft works"
+    },
+    {
+      "id": "sealed",
+      "label": "I know how Sealed works, and what a Prerelease is"
+    },
+    {
+      "id": "constructed-formats",
+      "label": "I can tell Standard, Pioneer, Modern and Pauper apart"
+    },
+    {
+      "id": "where",
+      "label": "I know where to play each one"
+    }
   ],
   "steps": [
     {
       "id": "limited-vs-constructed",
       "title": "Limited or Constructed?",
       "body": "Every way to play Magic is one of two kinds.\n\n- **[[constructed|Constructed]]**: you build your deck at home from cards you own. At least 60 cards, no more than four of each. Standard and Commander are Constructed formats.\n- **[[limited|Limited]]**: you open **booster packs** at the event and build a deck on the spot from what you opened. At least **40 cards**, and you may use every copy you opened.\n\nLimited is the friendliest start: everyone has the same chance, and nobody needs a collection.",
-      "visual": { "type": "placeholder", "src": "Two paths: a built deck brought from home, and a stack of sealed booster packs opened at a table.", "altText": "Constructed versus Limited." },
-      "glossaryTerms": ["constructed", "limited", "booster-pack"],
-      "ruleRefs": ["CR 100.2a", "CR 100.2b", "CR 100.2c"],
+      "visual": {
+        "type": "svg",
+        "src": "limited-vs-constructed",
+        "altText": "Constructed versus Limited."
+      },
+      "glossaryTerms": [
+        "constructed",
+        "limited",
+        "booster-pack"
+      ],
+      "ruleRefs": [
+        "CR 100.2a",
+        "CR 100.2b",
+        "CR 100.2c"
+      ],
       "check": {
         "question": "In a Limited event you open three copies of the same card. How many can go in your deck?",
         "options": [
-          { "id": "three", "text": "All three" },
-          { "id": "one", "text": "Only one" },
-          { "id": "none", "text": "None, duplicates aren't allowed" }
+          {
+            "id": "three",
+            "text": "All three"
+          },
+          {
+            "id": "one",
+            "text": "Only one"
+          },
+          {
+            "id": "none",
+            "text": "None, duplicates aren't allowed"
+          }
         ],
         "correctOptionId": "three",
         "hint": "The four-copy rule is a Constructed rule."
@@ -34,15 +70,33 @@
       "id": "booster-draft",
       "title": "Booster Draft",
       "body": "A [[draft|Draft]] is usually **eight players** around a table, each with **three booster packs**.\n\n1. Everyone opens a pack, picks **one card**, and passes the rest to the left.\n2. Keep picking and passing until the packs are empty.\n3. Open the second pack and pass to the **right**. The third pack goes left again.\n4. Build a 40-card deck from your picks, adding as many basic lands as you need.\n\nYou're choosing your deck one card at a time, while reading what the players next to you are taking.",
-      "visual": { "type": "placeholder", "src": "Eight players around a table passing packs clockwise, with one card kept in front of each.", "altText": "A draft table passing packs." },
-      "glossaryTerms": ["draft", "booster-pack"],
-      "ruleRefs": ["CR 100.2b"],
+      "visual": {
+        "type": "svg",
+        "src": "booster-draft",
+        "altText": "A draft table passing packs."
+      },
+      "glossaryTerms": [
+        "draft",
+        "booster-pack"
+      ],
+      "ruleRefs": [
+        "CR 100.2b"
+      ],
       "check": {
         "question": "In a Draft, after you pick a card, what happens to the rest of the pack?",
         "options": [
-          { "id": "pass", "text": "You pass it to the player next to you" },
-          { "id": "keep", "text": "You keep the whole pack" },
-          { "id": "shuffle", "text": "It goes back into the middle" }
+          {
+            "id": "pass",
+            "text": "You pass it to the player next to you"
+          },
+          {
+            "id": "keep",
+            "text": "You keep the whole pack"
+          },
+          {
+            "id": "shuffle",
+            "text": "It goes back into the middle"
+          }
         ],
         "correctOptionId": "pass",
         "hint": "Pick one, pass the rest."
@@ -52,15 +106,33 @@
       "id": "sealed",
       "title": "Sealed and the Prerelease",
       "body": "In [[sealed|Sealed]] you get **six booster packs**, open them all, and build a 40-card deck from the best cards you find. No passing, no picking: what you open is yours.\n\nThe most common Sealed event is the **[[prerelease|Prerelease]]**: the weekend before a new set comes out, shops run casual Sealed events so everyone can try the new cards. It's the single best first event for a new player: relaxed, and every player is learning the cards too.",
-      "visual": { "type": "placeholder", "src": "Six opened booster packs spread on a table with a 40-card deck being built from them.", "altText": "A Sealed pool." },
-      "glossaryTerms": ["sealed", "prerelease"],
-      "ruleRefs": ["CR 100.2b"],
+      "visual": {
+        "type": "svg",
+        "src": "sealed",
+        "altText": "A Sealed pool."
+      },
+      "glossaryTerms": [
+        "sealed",
+        "prerelease"
+      ],
+      "ruleRefs": [
+        "CR 100.2b"
+      ],
       "check": {
         "question": "What makes a Prerelease a good first event?",
         "options": [
-          { "id": "new", "text": "Everyone is new to the cards, and the deck is built from packs on the day" },
-          { "id": "prizes", "text": "The prizes are the biggest of the year" },
-          { "id": "pro", "text": "Only experienced players attend" }
+          {
+            "id": "new",
+            "text": "Everyone is new to the cards, and the deck is built from packs on the day"
+          },
+          {
+            "id": "prizes",
+            "text": "The prizes are the biggest of the year"
+          },
+          {
+            "id": "pro",
+            "text": "Only experienced players attend"
+          }
         ],
         "correctOptionId": "new",
         "hint": "Nobody has seen the new set before."
@@ -70,15 +142,34 @@
       "id": "building-a-limited-deck",
       "title": "Building a 40-card deck",
       "body": "A Limited deck is small, so the usual shape is:\n\n- **17 lands** and **23 other cards**, in **two colours**.\n- Mostly **creatures**: about 15, with a good spread of costs from 2 to 5.\n- A few **removal spells**: cards that destroy, damage or shrink a creature.\n\nPick your two colours from where your strongest cards are, not from what you planned to play. Shops often lend basic lands for Limited events.",
-      "visual": { "type": "placeholder", "src": "A 40-card deck laid out as 17 lands, 15 creatures and 8 other spells.", "altText": "The usual shape of a Limited deck." },
-      "glossaryTerms": ["limited", "land", "creature"],
-      "ruleRefs": ["CR 100.2b"],
+      "visual": {
+        "type": "svg",
+        "src": "building-a-limited-deck",
+        "altText": "The usual shape of a Limited deck."
+      },
+      "glossaryTerms": [
+        "limited",
+        "land",
+        "creature"
+      ],
+      "ruleRefs": [
+        "CR 100.2b"
+      ],
       "check": {
         "question": "How many lands do most 40-card Limited decks run?",
         "options": [
-          { "id": "seventeen", "text": "About 17" },
-          { "id": "ten", "text": "About 10" },
-          { "id": "twentyfour", "text": "About 24" }
+          {
+            "id": "seventeen",
+            "text": "About 17"
+          },
+          {
+            "id": "ten",
+            "text": "About 10"
+          },
+          {
+            "id": "twentyfour",
+            "text": "About 24"
+          }
         ],
         "correctOptionId": "seventeen",
         "hint": "Just under half the deck."
@@ -88,15 +179,33 @@
       "id": "constructed-formats",
       "title": "Standard, Pioneer, Modern",
       "body": "The main one-against-one Constructed formats differ by **which sets are allowed**:\n\n- **[[standard|Standard]]**: the newest sets only. Older sets [[rotation|rotate]] out each year, so decks change often. Smallest card pool, easiest to start.\n- **Pioneer**: every set since late 2012. No rotation. Decks stay good for years.\n- **Modern**: every set since 2003. No rotation. The biggest pool and the strongest decks.\n\nAll three use 60-card decks, four copies at most, 20 life. Each has a short **banned list** of cards too strong for it.",
-      "visual": { "type": "placeholder", "src": "Three nested circles: Standard inside Pioneer inside Modern, labelled with their starting years.", "altText": "Standard, Pioneer and Modern as growing card pools." },
-      "glossaryTerms": ["standard", "rotation"],
-      "ruleRefs": ["CR 100.2a"],
+      "visual": {
+        "type": "svg",
+        "src": "constructed-formats",
+        "altText": "Standard, Pioneer and Modern as growing card pools."
+      },
+      "glossaryTerms": [
+        "standard",
+        "rotation"
+      ],
+      "ruleRefs": [
+        "CR 100.2a"
+      ],
       "check": {
         "question": "Which format changes most often because old sets leave it?",
         "options": [
-          { "id": "standard", "text": "Standard" },
-          { "id": "pioneer", "text": "Pioneer" },
-          { "id": "modern", "text": "Modern" }
+          {
+            "id": "standard",
+            "text": "Standard"
+          },
+          {
+            "id": "pioneer",
+            "text": "Pioneer"
+          },
+          {
+            "id": "modern",
+            "text": "Modern"
+          }
         ],
         "correctOptionId": "standard",
         "hint": "Only one of them rotates."
@@ -106,15 +215,33 @@
       "id": "pauper",
       "title": "Pauper: commons only",
       "body": "**Pauper** is Constructed with one twist: every card in your deck must have been printed at **common** rarity (the black set symbol).\n\n- 60 cards, four copies at most, 20 life, like Standard.\n- No rotation: any common from Magic's history.\n- Decks are **cheap**, often the price of a single rare from another format, yet the games are sharp.\n\nIf money is the worry, Pauper is the answer. The card library in this app shows each card's rarity.",
-      "visual": { "type": "placeholder", "src": "A stack of common cards with black set symbols next to a small price tag.", "altText": "Pauper: a deck of commons." },
-      "glossaryTerms": ["constructed", "rarity"],
-      "ruleRefs": ["CR 100.2a"],
+      "visual": {
+        "type": "svg",
+        "src": "pauper",
+        "altText": "Pauper: a deck of commons."
+      },
+      "glossaryTerms": [
+        "constructed",
+        "rarity"
+      ],
+      "ruleRefs": [
+        "CR 100.2a"
+      ],
       "check": {
         "question": "Which cards can a Pauper deck use?",
         "options": [
-          { "id": "commons", "text": "Only cards printed at common" },
-          { "id": "cheap", "text": "Any card that costs less than a set price" },
-          { "id": "recent", "text": "Only cards from the newest sets" }
+          {
+            "id": "commons",
+            "text": "Only cards printed at common"
+          },
+          {
+            "id": "cheap",
+            "text": "Any card that costs less than a set price"
+          },
+          {
+            "id": "recent",
+            "text": "Only cards from the newest sets"
+          }
         ],
         "correctOptionId": "commons",
         "hint": "It's about the rarity symbol, not the price."
@@ -124,14 +251,29 @@
       "id": "where-to-play",
       "title": "Where to play each one",
       "body": "- **MTG Arena** (free, phone and computer): Standard, Draft and Sealed with digital packs, plus casual modes. Good for learning alone.\n- **Your local game store**: Prereleases, weekly Draft nights, Standard and Modern events, and Commander tables most evenings. The Wizards store locator lists them.\n- **Kitchen table**: any format you and your friends agree on. Preconstructed decks make this easy.\n\nA calm path: Arena to practise, then a Prerelease, then a Commander night.",
-      "visual": { "type": "placeholder", "src": "Three places: a phone showing Arena, a game shop, and a kitchen table, with arrows from one to the next.", "altText": "Where to play, in a sensible order." },
-      "glossaryTerms": ["format", "prerelease"],
-      "ruleRefs": ["CR 100.1"],
+      "visual": {
+        "type": "svg",
+        "src": "where-to-play",
+        "altText": "Where to play, in a sensible order."
+      },
+      "glossaryTerms": [
+        "format",
+        "prerelease"
+      ],
+      "ruleRefs": [
+        "CR 100.1"
+      ],
       "check": {
         "question": "You want to try Draft without going anywhere. Where can you?",
         "options": [
-          { "id": "arena", "text": "MTG Arena, with digital packs" },
-          { "id": "nowhere", "text": "Nowhere. Draft only happens in shops" }
+          {
+            "id": "arena",
+            "text": "MTG Arena, with digital packs"
+          },
+          {
+            "id": "nowhere",
+            "text": "Nowhere. Draft only happens in shops"
+          }
         ],
         "correctOptionId": "arena",
         "hint": "The official digital game runs Limited events."

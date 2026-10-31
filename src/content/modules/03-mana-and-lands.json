@@ -5,34 +5,79 @@
   "summary": "Lands make mana. One land per turn. Five colours. Reading costs.",
   "estimatedMinutes": 6,
   "checklist": [
-    { "id": "tap-for-mana", "label": "I know how to tap a land for mana" },
-    { "id": "one-land", "label": "I know I can play one land per turn" },
-    { "id": "five-colours", "label": "I know the five colours and their basic lands" },
-    { "id": "read-costs", "label": "I can read a mana cost" },
-    { "id": "mana-empties", "label": "I know unused mana disappears" }
+    {
+      "id": "tap-for-mana",
+      "label": "I know how to tap a land for mana"
+    },
+    {
+      "id": "one-land",
+      "label": "I know I can play one land per turn"
+    },
+    {
+      "id": "five-colours",
+      "label": "I know the five colours and their basic lands"
+    },
+    {
+      "id": "read-costs",
+      "label": "I can read a mana cost"
+    },
+    {
+      "id": "mana-empties",
+      "label": "I know unused mana disappears"
+    }
   ],
   "steps": [
     {
       "id": "lands-make-mana",
       "title": "Lands make mana",
       "body": "[[mana|Mana]] is the energy you spend to cast spells. Most of it comes from [[land|lands]].\n\nTo use a land, you [[tap]] it: turn it sideways. It makes one mana. It stays tapped until your next turn begins, when it [[untap|untaps]].\n\nPlaying a land is free. A land isn't a spell, so it never costs mana.",
-      "visual": { "type": "placeholder", "src": "A land card upright, then the same land turned sideways with one mana symbol floating above it.", "altText": "A land being tapped, turned sideways, to make one mana." },
-      "glossaryTerms": ["mana", "land", "tap", "untap"],
-      "ruleRefs": ["CR 106.1", "CR 305.1", "CR 305.6"]
+      "visual": {
+        "type": "svg",
+        "src": "lands-make-mana",
+        "altText": "A land being tapped, turned sideways, to make one mana."
+      },
+      "glossaryTerms": [
+        "mana",
+        "land",
+        "tap",
+        "untap"
+      ],
+      "ruleRefs": [
+        "CR 106.1",
+        "CR 305.1",
+        "CR 305.6"
+      ]
     },
     {
       "id": "one-land-per-turn",
       "title": "One land per turn",
       "body": "You may play **one land per turn**, and only during your own [[main-phase|main phase]].\n\nThat's why mana grows slowly. If you play a land every turn, you'll have one mana on turn 1, two on turn 2, three on turn 3, and so on.\n\nSo playing a land each turn really matters, especially early on.",
-      "visual": { "type": "placeholder", "src": "Three turns side by side: one land on turn 1, two lands on turn 2, three lands on turn 3.", "altText": "Lands adding up, one per turn, over three turns." },
-      "glossaryTerms": ["main-phase"],
-      "ruleRefs": ["CR 305.2"],
+      "visual": {
+        "type": "svg",
+        "src": "one-land-per-turn",
+        "altText": "Lands adding up, one per turn, over three turns."
+      },
+      "glossaryTerms": [
+        "main-phase"
+      ],
+      "ruleRefs": [
+        "CR 305.2"
+      ],
       "check": {
         "question": "You already played a land this turn. Can you play another one?",
         "options": [
-          { "id": "yes-mana", "text": "Yes, if I have enough mana" },
-          { "id": "no", "text": "No, it's one land per turn" },
-          { "id": "yes-second-main", "text": "Yes, in my second main phase" }
+          {
+            "id": "yes-mana",
+            "text": "Yes, if I have enough mana"
+          },
+          {
+            "id": "no",
+            "text": "No, it's one land per turn"
+          },
+          {
+            "id": "yes-second-main",
+            "text": "Yes, in my second main phase"
+          }
         ],
         "correctOptionId": "no",
         "hint": "The rule counts lands per turn, not per main phase. And lands don't cost mana."
@@ -42,15 +87,31 @@
       "id": "five-colours",
       "title": "The five colours",
       "body": "Magic has five colours of mana. Each basic land makes one of them:\n\n- Plains: white {W}\n- Island: blue {U}\n- Swamp: black {B}\n- Mountain: red {R}\n- Forest: green {G}\n\nBlue uses the letter U because B is taken by black. Some mana is colourless {C}: it has no colour at all.",
-      "visual": { "type": "placeholder", "src": "The five basic lands in a row, each with its mana symbol and colour name underneath.", "altText": "Plains, Island, Swamp, Mountain and Forest, each with its mana symbol." },
+      "visual": {
+        "type": "svg",
+        "src": "five-colours",
+        "altText": "Plains, Island, Swamp, Mountain and Forest, each with its mana symbol."
+      },
       "glossaryTerms": [],
-      "ruleRefs": ["CR 105.1", "CR 305.6"],
+      "ruleRefs": [
+        "CR 105.1",
+        "CR 305.6"
+      ],
       "check": {
         "question": "Which basic land makes blue mana?",
         "options": [
-          { "id": "plains", "text": "Plains" },
-          { "id": "island", "text": "Island" },
-          { "id": "swamp", "text": "Swamp" }
+          {
+            "id": "plains",
+            "text": "Plains"
+          },
+          {
+            "id": "island",
+            "text": "Island"
+          },
+          {
+            "id": "swamp",
+            "text": "Swamp"
+          }
         ],
         "correctOptionId": "island",
         "hint": "Think of water: what's surrounded by blue sea?"
@@ -60,15 +121,34 @@
       "id": "reading-a-cost",
       "title": "Reading a mana cost",
       "body": "A [[mana-cost|mana cost]] mixes two kinds of symbols:\n\n- **Coloured symbols**, like {R}, must be paid with that exact colour.\n- **Numbers**, like {2}, are [[generic-mana|generic mana]]: pay them with any colour.\n\nSo {2}{G}{G} means two green mana, plus two more of any colour: 4 mana in total.",
-      "visual": { "type": "placeholder", "src": "The cost 2, green, green, with arrows: the two green symbols need Forests, the 2 can be any lands.", "altText": "A cost of two generic and two green mana, explained." },
-      "glossaryTerms": ["mana-cost", "generic-mana"],
-      "ruleRefs": ["CR 202.1", "CR 107.4"],
+      "visual": {
+        "type": "svg",
+        "src": "reading-a-cost",
+        "altText": "A cost of two generic and two green mana, explained."
+      },
+      "glossaryTerms": [
+        "mana-cost",
+        "generic-mana"
+      ],
+      "ruleRefs": [
+        "CR 202.1",
+        "CR 107.4"
+      ],
       "check": {
         "question": "A card costs 2 generic mana plus 2 green mana. How much mana is that in total?",
         "options": [
-          { "id": "two", "text": "2" },
-          { "id": "four", "text": "4" },
-          { "id": "six", "text": "6" }
+          {
+            "id": "two",
+            "text": "2"
+          },
+          {
+            "id": "four",
+            "text": "4"
+          },
+          {
+            "id": "six",
+            "text": "6"
+          }
         ],
         "correctOptionId": "four",
         "hint": "Add the number to the count of coloured symbols."
@@ -78,15 +158,32 @@
       "id": "use-it-or-lose-it",
       "title": "Use it or lose it",
       "body": "When you tap a land, its mana goes into your [[mana-pool|mana pool]] until you spend it.\n\nUnused mana **disappears at the end of each step and phase**. You can't save it for later.\n\nTip: tap only the lands you need, right when you cast a spell.",
-      "visual": { "type": "placeholder", "src": "Three tapped lands, two mana spent on a spell, and the third mana fading away.", "altText": "Leftover mana fading away at the end of the step." },
-      "glossaryTerms": ["mana-pool"],
-      "ruleRefs": ["CR 106.4"],
+      "visual": {
+        "type": "svg",
+        "src": "use-it-or-lose-it",
+        "altText": "Leftover mana fading away at the end of the step."
+      },
+      "glossaryTerms": [
+        "mana-pool"
+      ],
+      "ruleRefs": [
+        "CR 106.4"
+      ],
       "check": {
         "question": "You tapped three lands but only spent two mana. What happens to the third?",
         "options": [
-          { "id": "saved", "text": "It's saved for my next turn" },
-          { "id": "gone", "text": "It disappears at the end of the step or phase" },
-          { "id": "becomes-land", "text": "It turns back into a land" }
+          {
+            "id": "saved",
+            "text": "It's saved for my next turn"
+          },
+          {
+            "id": "gone",
+            "text": "It disappears at the end of the step or phase"
+          },
+          {
+            "id": "becomes-land",
+            "text": "It turns back into a land"
+          }
         ],
         "correctOptionId": "gone",
         "hint": "Look at the bold sentence in the middle of this step."

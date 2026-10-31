@@ -5,26 +5,62 @@
   "summary": "The most popular way to play: four players, 100-card decks, and a legendary creature that leads your deck.",
   "estimatedMinutes": 12,
   "checklist": [
-    { "id": "deck-rules", "label": "I know the Commander deck rules: 100 cards, one of each, colour identity" },
-    { "id": "command-zone", "label": "I know how the command zone and commander tax work" },
-    { "id": "ways-to-lose", "label": "I know the three ways to lose in Commander" },
-    { "id": "four-players", "label": "I know how a four-player turn and attack work" },
-    { "id": "table-talk", "label": "I know what to agree with the table before a game" }
+    {
+      "id": "deck-rules",
+      "label": "I know the Commander deck rules: 100 cards, one of each, colour identity"
+    },
+    {
+      "id": "command-zone",
+      "label": "I know how the command zone and commander tax work"
+    },
+    {
+      "id": "ways-to-lose",
+      "label": "I know the three ways to lose in Commander"
+    },
+    {
+      "id": "four-players",
+      "label": "I know how a four-player turn and attack work"
+    },
+    {
+      "id": "table-talk",
+      "label": "I know what to agree with the table before a game"
+    }
   ],
   "steps": [
     {
       "id": "what-is-commander",
       "title": "What is Commander?",
       "body": "[[commander|Commander]] is a casual format, usually for **four players**, each playing against all the others. Games are longer and more social than one-against-one.\n\nThe big differences from the game you learned:\n\n- Everyone starts at **40 life**, not 20.\n- Your deck has **exactly 100 cards**, and only **one copy** of each card, except basic lands.\n- One card, your **commander**, leads the deck and starts the game outside your library.\n\nThe core rules you already know (turns, mana, combat, the stack) are the same.",
-      "visual": { "type": "placeholder", "src": "Four players around a table, each with a deck and a commander card face up in front of them.", "altText": "A four-player Commander table." },
-      "glossaryTerms": ["commander", "singleton"],
-      "ruleRefs": ["CR 903.1", "CR 903.5a", "CR 903.5b", "CR 903.7"],
+      "visual": {
+        "type": "svg",
+        "src": "what-is-commander",
+        "altText": "A four-player Commander table."
+      },
+      "glossaryTerms": [
+        "commander",
+        "singleton"
+      ],
+      "ruleRefs": [
+        "CR 903.1",
+        "CR 903.5a",
+        "CR 903.5b",
+        "CR 903.7"
+      ],
       "check": {
         "question": "How many cards are in a Commander deck, counting the commander?",
         "options": [
-          { "id": "sixty", "text": "At least 60" },
-          { "id": "hundred", "text": "Exactly 100" },
-          { "id": "any", "text": "Any number" }
+          {
+            "id": "sixty",
+            "text": "At least 60"
+          },
+          {
+            "id": "hundred",
+            "text": "Exactly 100"
+          },
+          {
+            "id": "any",
+            "text": "Any number"
+          }
         ],
         "correctOptionId": "hundred",
         "hint": "Commander decks are big and exact."
@@ -34,15 +70,36 @@
       "id": "your-commander",
       "title": "Your commander",
       "body": "Your commander is a **legendary creature** you choose. It starts the game in the [[command-zone|command zone]], a special area in front of you, face up.\n\nIt also sets your deck's colours. Every card in your deck must fit your commander's [[color-identity|colour identity]]: the colours of all the mana symbols on the commander, including in its rules text.\n\nFor example, this commander is white, so its deck can only have white cards and colourless cards.",
-      "visual": { "type": "card", "src": "syralin", "altText": "Syr Alin, the Lion's Claw: a legendary white creature that can lead a Commander deck." },
-      "glossaryTerms": ["command-zone", "color-identity", "legendary"],
-      "ruleRefs": ["CR 903.3a", "CR 903.4", "CR 903.6"],
+      "visual": {
+        "type": "card",
+        "src": "syralin",
+        "altText": "Syr Alin, the Lion's Claw: a legendary white creature that can lead a Commander deck."
+      },
+      "glossaryTerms": [
+        "command-zone",
+        "color-identity",
+        "legendary"
+      ],
+      "ruleRefs": [
+        "CR 903.3a",
+        "CR 903.4",
+        "CR 903.6"
+      ],
       "check": {
         "question": "A commander costs {2}{G}{G} and its text mentions {U}. Which colours can its deck use?",
         "options": [
-          { "id": "green", "text": "Green only" },
-          { "id": "green-blue", "text": "Green and blue" },
-          { "id": "all", "text": "Any colours" }
+          {
+            "id": "green",
+            "text": "Green only"
+          },
+          {
+            "id": "green-blue",
+            "text": "Green and blue"
+          },
+          {
+            "id": "all",
+            "text": "Any colours"
+          }
         ],
         "correctOptionId": "green-blue",
         "hint": "Colour identity counts every mana symbol on the card, even in the text box."
@@ -52,15 +109,33 @@
       "id": "casting-your-commander",
       "title": "Casting your commander",
       "body": "You can cast your commander from the command zone whenever you could normally cast a creature. It's always available: it never sits stuck in your library.\n\nThe catch is the [[commander-tax|commander tax]]. Each time you cast it from the command zone, it costs **{2} more** for every time you've cast it from there before.\n\nSyr Alin costs {3}{W}{W}. The second time from the command zone it costs {5}{W}{W}. The third time, {7}{W}{W}.",
-      "visual": { "type": "placeholder", "src": "Three casts of the same commander with rising costs: 5 mana, then 7, then 9.", "altText": "Commander tax rising by two each time." },
-      "glossaryTerms": ["commander-tax"],
-      "ruleRefs": ["CR 903.6", "CR 903.8"],
+      "visual": {
+        "type": "svg",
+        "src": "casting-your-commander",
+        "altText": "Commander tax rising by two each time."
+      },
+      "glossaryTerms": [
+        "commander-tax"
+      ],
+      "ruleRefs": [
+        "CR 903.6",
+        "CR 903.8"
+      ],
       "check": {
         "question": "Your commander costs {1}{R}. You've cast it from the command zone twice already. What does it cost now?",
         "options": [
-          { "id": "two", "text": "{1}{R}, the same as always" },
-          { "id": "four", "text": "{3}{R}" },
-          { "id": "six", "text": "{5}{R}" }
+          {
+            "id": "two",
+            "text": "{1}{R}, the same as always"
+          },
+          {
+            "id": "four",
+            "text": "{3}{R}"
+          },
+          {
+            "id": "six",
+            "text": "{5}{R}"
+          }
         ],
         "correctOptionId": "six",
         "hint": "Two earlier casts, two extra mana each."
@@ -70,15 +145,34 @@
       "id": "commander-comes-back",
       "title": "Your commander comes back",
       "body": "When your commander would go to your graveyard or into exile, you may put it back into the **command zone** instead. The same is true if it would go to your hand or library.\n\nSo your commander is never really gone. It comes back, ready to be cast again, with a bigger tax each time.\n\nIf you keep it in the graveyard instead, you can bring it back with cards that return creatures, with no tax.",
-      "visual": { "type": "placeholder", "src": "A commander being destroyed, then an arrow returning it to the command zone instead of the graveyard.", "altText": "A commander going back to the command zone." },
-      "glossaryTerms": ["command-zone", "graveyard", "exile"],
-      "ruleRefs": ["CR 903.9a"],
+      "visual": {
+        "type": "svg",
+        "src": "commander-comes-back",
+        "altText": "A commander going back to the command zone."
+      },
+      "glossaryTerms": [
+        "command-zone",
+        "graveyard",
+        "exile"
+      ],
+      "ruleRefs": [
+        "CR 903.9a"
+      ],
       "check": {
         "question": "Your commander is destroyed. Where can it go?",
         "options": [
-          { "id": "grave-only", "text": "Only the graveyard" },
-          { "id": "choice", "text": "The graveyard, or the command zone if you choose" },
-          { "id": "exile", "text": "Exile, for the rest of the game" }
+          {
+            "id": "grave-only",
+            "text": "Only the graveyard"
+          },
+          {
+            "id": "choice",
+            "text": "The graveyard, or the command zone if you choose"
+          },
+          {
+            "id": "exile",
+            "text": "Exile, for the rest of the game"
+          }
         ],
         "correctOptionId": "choice",
         "hint": "It's your choice, and most players choose the command zone."
@@ -88,14 +182,32 @@
       "id": "ways-to-lose",
       "title": "Three ways to lose",
       "body": "In Commander you lose when:\n\n- Your **life total is 0** or less.\n- You have to draw from an **empty library**.\n- One commander has dealt you **21 or more combat damage** over the game. This is [[commander-damage|commander damage]], and it's counted separately for each commander.\n\nThat third rule matters: 40 life is a lot, but a big commander attacking you every turn can win in a few hits. Keep a note of how much damage each commander has dealt you.",
-      "visual": { "type": "placeholder", "src": "A life total of 40 next to a smaller counter reading 21, labelled commander damage.", "altText": "Life and commander damage tracked side by side." },
-      "glossaryTerms": ["commander-damage", "life-total", "library"],
-      "ruleRefs": ["CR 704.5a", "CR 704.5b", "CR 903.10a"],
+      "visual": {
+        "type": "svg",
+        "src": "ways-to-lose",
+        "altText": "Life and commander damage tracked side by side."
+      },
+      "glossaryTerms": [
+        "commander-damage",
+        "life-total",
+        "library"
+      ],
+      "ruleRefs": [
+        "CR 704.5a",
+        "CR 704.5b",
+        "CR 903.10a"
+      ],
       "check": {
         "question": "You are at 30 life. The same commander has hit you for 7, then 8, then 6 combat damage. What happens?",
         "options": [
-          { "id": "fine", "text": "Nothing special. You still have 9 life" },
-          { "id": "lose", "text": "You lose: that's 21 commander damage" }
+          {
+            "id": "fine",
+            "text": "Nothing special. You still have 9 life"
+          },
+          {
+            "id": "lose",
+            "text": "You lose: that's 21 commander damage"
+          }
         ],
         "correctOptionId": "lose",
         "hint": "Add the three hits from that one commander."
@@ -105,14 +217,31 @@
       "id": "four-player-turns",
       "title": "Turns and attacks with four players",
       "body": "Turns go **clockwise** around the table. Nobody skips the draw on their first turn in a four-player game.\n\nWhen you attack, you choose **which opponent** each creature attacks. You can send some creatures at one player and some at another.\n\nWhen a player loses, their cards leave the game, and the others carry on. The last player standing wins.",
-      "visual": { "type": "placeholder", "src": "Four seats with an arrow showing turn order, and two attackers pointing at two different opponents.", "altText": "Turn order and splitting attackers between opponents." },
-      "glossaryTerms": ["attack", "opponent"],
-      "ruleRefs": ["CR 103.8c", "CR 800.4a", "CR 802.2"],
+      "visual": {
+        "type": "svg",
+        "src": "four-player-turns",
+        "altText": "Turn order and splitting attackers between opponents."
+      },
+      "glossaryTerms": [
+        "attack",
+        "opponent"
+      ],
+      "ruleRefs": [
+        "CR 103.8c",
+        "CR 800.4a",
+        "CR 802.2"
+      ],
       "check": {
         "question": "You have three creatures. Can they attack three different opponents in one turn?",
         "options": [
-          { "id": "yes", "text": "Yes, you choose a defender for each attacker" },
-          { "id": "no", "text": "No, all attackers must go at the same player" }
+          {
+            "id": "yes",
+            "text": "Yes, you choose a defender for each attacker"
+          },
+          {
+            "id": "no",
+            "text": "No, all attackers must go at the same player"
+          }
         ],
         "correctOptionId": "yes",
         "hint": "Each attacking creature gets its own target player."
@@ -122,15 +251,33 @@
       "id": "opening-hand",
       "title": "Your opening hand",
       "body": "You draw seven cards. If you don't like them, you can take a [[mulligan]]: shuffle, draw seven again, then put one card on the bottom of your library for each mulligan taken.\n\nIn a four-player Commander game, the official Commander rules make your **first mulligan free**: no card goes to the bottom.\n\nA good Commander hand has **3 to 5 lands**. With 100 cards, you can't count on drawing lands later.",
-      "visual": { "type": "placeholder", "src": "A seven-card hand with four lands highlighted and a tick mark.", "altText": "A keepable hand with four lands." },
-      "glossaryTerms": ["mulligan", "land"],
-      "ruleRefs": ["CR 103.5"],
+      "visual": {
+        "type": "svg",
+        "src": "opening-hand",
+        "altText": "A keepable hand with four lands."
+      },
+      "glossaryTerms": [
+        "mulligan",
+        "land"
+      ],
+      "ruleRefs": [
+        "CR 103.5"
+      ],
       "check": {
         "question": "In a four-player Commander game you take one mulligan. How many cards go to the bottom?",
         "options": [
-          { "id": "zero", "text": "None, the first one is free" },
-          { "id": "one", "text": "One" },
-          { "id": "seven", "text": "All seven" }
+          {
+            "id": "zero",
+            "text": "None, the first one is free"
+          },
+          {
+            "id": "one",
+            "text": "One"
+          },
+          {
+            "id": "seven",
+            "text": "All seven"
+          }
         ],
         "correctOptionId": "zero",
         "hint": "This is a Commander rule, not a core rule."
@@ -140,23 +287,49 @@
       "id": "table-talk",
       "title": "Table talk and threats",
       "body": "With three opponents, **who you attack** matters as much as what you play.\n\n- Attack the player who is **closest to winning**, not the one who happens to sit next to you.\n- If you look too strong too early, the whole table turns on you. Build up calmly.\n- Talking is allowed and normal. \"That deck is scary, shall we deal with it?\" is part of the game.\n\nThese are habits good players share, not rules.",
-      "visual": { "type": "placeholder", "src": "Four players, one with many creatures and an arrow from the other three pointing at them.", "altText": "The table focusing on the biggest threat." },
-      "glossaryTerms": ["rule-zero"],
-      "ruleRefs": ["CR 903.1"]
+      "visual": {
+        "type": "svg",
+        "src": "table-talk",
+        "altText": "The table focusing on the biggest threat."
+      },
+      "glossaryTerms": [
+        "rule-zero"
+      ],
+      "ruleRefs": [
+        "CR 903.1"
+      ]
     },
     {
       "id": "before-the-game",
       "title": "Before the game: Rule 0 and brackets",
       "body": "Commander games are best when everyone wants the same kind of game. Before you start, the table has a quick **[[rule-zero|Rule 0]]** chat: what kind of decks, how fast, any house rules.\n\nTo help, Wizards published five **[[bracket|brackets]]** that describe a deck's power:\n\n1. **Exhibition**: showing off an idea, winning matters less\n2. **Core**: the level of a starter deck\n3. **Upgraded**: tuned, still casual\n4. **Optimized**: anything legal goes\n5. **cEDH**: full competition\n\nAs a beginner, say \"bracket 1 or 2\" and you'll find your people.",
-      "visual": { "type": "placeholder", "src": "A ladder with five rungs labelled Exhibition, Core, Upgraded, Optimized and cEDH.", "altText": "The five Commander brackets as a ladder." },
-      "glossaryTerms": ["rule-zero", "bracket"],
-      "ruleRefs": ["CR 903.1"],
+      "visual": {
+        "type": "svg",
+        "src": "before-the-game",
+        "altText": "The five Commander brackets as a ladder."
+      },
+      "glossaryTerms": [
+        "rule-zero",
+        "bracket"
+      ],
+      "ruleRefs": [
+        "CR 903.1"
+      ],
       "check": {
         "question": "What's the best thing to say when you sit down with a new deck as a beginner?",
         "options": [
-          { "id": "bracket", "text": "\"My deck is about bracket 2. What are you playing?\"" },
-          { "id": "nothing", "text": "Nothing, just start the game" },
-          { "id": "strongest", "text": "\"I'm playing my strongest deck, no matter what you have\"" }
+          {
+            "id": "bracket",
+            "text": "\"My deck is about bracket 2. What are you playing?\""
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing, just start the game"
+          },
+          {
+            "id": "strongest",
+            "text": "\"I'm playing my strongest deck, no matter what you have\""
+          }
         ],
         "correctOptionId": "bracket",
         "hint": "A short chat before the game sets everyone's expectations."
@@ -166,9 +339,18 @@
       "id": "your-first-commander-deck",
       "title": "Your first Commander deck",
       "body": "The easiest start is a **preconstructed Commander deck** from a shop: 100 cards, ready to play, built to be about bracket 2.\n\nIf you build your own, pick a commander whose text you understand and like, then follow the deck recipe from the Formats module: roughly 36 to 38 lands, about 10 cards that make extra mana, about 10 that draw cards, and some that remove threats.\n\nThen practise: this app's Commander table lets you try the command zone, the tax and commander damage against the computer.",
-      "visual": { "type": "card", "src": "dwynen", "altText": "Dwynen, Gilt-Leaf Daen: a green legendary Elf that can lead an Elf deck." },
-      "glossaryTerms": ["commander", "deck"],
-      "ruleRefs": ["CR 903.5a"]
+      "visual": {
+        "type": "card",
+        "src": "dwynen",
+        "altText": "Dwynen, Gilt-Leaf Daen: a green legendary Elf that can lead an Elf deck."
+      },
+      "glossaryTerms": [
+        "commander",
+        "deck"
+      ],
+      "ruleRefs": [
+        "CR 903.5a"
+      ]
     }
   ]
 }

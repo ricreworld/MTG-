@@ -32,8 +32,8 @@
       "title": "What's a format?",
       "body": "A [[format]] decides which cards and decks are allowed. The core rules stay the same.\n\nThis course taught one-against-one play, the way most people learn. Two popular formats build on it:\n\n- **Standard**: two players, recent cards.\n- **Commander**: usually four players, big decks with one copy of each card.\n\nWith friends, you can also play with any rules you all agree on.",
       "visual": {
-        "type": "placeholder",
-        "src": "Two tables: a two-player Standard game, and a four-player Commander game.",
+        "type": "svg",
+        "src": "what-is-a-format",
         "altText": "A two-player table and a four-player table."
       },
       "glossaryTerms": [
@@ -48,8 +48,8 @@
       "title": "Standard",
       "body": "[[standard|Standard]] uses only cards from recent sets. Older sets rotate out over time, so the card pool stays fresh.\n\n- At least **60 cards** in your deck.\n- No more than **four copies** of any card, except basic lands.\n- Both players start at **20 life**.\n\nIt's a good first format, and you can play it in MTG Arena, the official digital game.",
       "visual": {
-        "type": "placeholder",
-        "src": "A 60-card deck with four copies of one card highlighted.",
+        "type": "svg",
+        "src": "standard",
         "altText": "A 60-card deck with up to four copies of a card."
       },
       "glossaryTerms": [
@@ -83,8 +83,8 @@
       "title": "Commander basics",
       "body": "[[commander|Commander]] is the most popular casual format. Usually four players play, each against the others.\n\n- Your deck has exactly **100 cards**, including your commander: a legendary creature that leads the deck.\n- Only **one copy** of each card, except basic lands.\n- Every card must match your commander's [[color-identity|colour identity]].\n- Everyone starts at **40 life**.",
       "visual": {
-        "type": "placeholder",
-        "src": "A legendary creature card standing apart from a 99-card deck, with life counters at 40.",
+        "type": "svg",
+        "src": "commander-basics",
         "altText": "A commander beside its 99-card deck, and 40 life."
       },
       "glossaryTerms": [
@@ -122,8 +122,8 @@
       "title": "Commander's special rules",
       "body": "Your commander starts in the **command zone**, not in your library. You can cast it from there whenever you could cast that creature.\n\n- If it would go to your graveyard or into exile, you may put it back in the command zone instead.\n- Each time you cast it again from the command zone, it costs {2} more.\n- A player dealt **21 combat damage** by the same commander loses.",
       "visual": {
-        "type": "placeholder",
-        "src": "A commander returning to the command zone, with a +2 cost reminder next to it.",
+        "type": "svg",
+        "src": "commander-rules",
         "altText": "A commander going back to the command zone, costing 2 more next time."
       },
       "glossaryTerms": [],
@@ -158,8 +158,8 @@
       "title": "A Commander deck recipe",
       "body": "A rough guide many players use for a 100-card Commander deck, from Tyrna's \"Commander Stats\" community summary:\n\n- **36 to 38** lands\n- **About 10** cards that make extra mana (ramp)\n- **About 10** cards that draw extra cards\n- **7 or 8** cards that remove one threat, and **about 5** that clear the whole board\n- The rest support your deck's plan\n\nThese are starting points, not rules.",
       "visual": {
-        "type": "placeholder",
-        "src": "A bar chart of a 100-card deck: lands, ramp, card draw, removal, board wipes and plan cards.",
+        "type": "svg",
+        "src": "commander-deck-recipe",
         "altText": "A 100-card deck split into lands, ramp, draw, removal and plan cards."
       },
       "glossaryTerms": [],
@@ -172,8 +172,8 @@
       "title": "Where to go next",
       "body": "You know the core rules now. Ways to keep learning:\n\n- **Practise** at the Practice Table in this app, with friends, or in MTG Arena, the official digital game.\n- **Visit a local game store.** Many run beginner nights. The Wizards of the Coast store locator lists them.\n- **Start with a preconstructed deck**: ready to play, no building needed.\n\nMistakes are normal. Every player started where you are.",
       "visual": {
-        "type": "placeholder",
-        "src": "A phone showing the Practice Table, a friendly game store table, and a boxed starter deck.",
+        "type": "svg",
+        "src": "where-next",
         "altText": "Three ways to keep playing: the app, a game store, a starter deck."
       },
       "glossaryTerms": [],

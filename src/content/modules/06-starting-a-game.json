@@ -5,32 +5,67 @@
   "summary": "Shuffle, draw seven, mulligan if needed. The first player skips their first draw.",
   "estimatedMinutes": 4,
   "checklist": [
-    { "id": "setup", "label": "I know how to set up a game" },
-    { "id": "mulligan", "label": "I know how a mulligan works" },
-    { "id": "first-draw", "label": "I know the first player skips their first draw" }
+    {
+      "id": "setup",
+      "label": "I know how to set up a game"
+    },
+    {
+      "id": "mulligan",
+      "label": "I know how a mulligan works"
+    },
+    {
+      "id": "first-draw",
+      "label": "I know the first player skips their first draw"
+    }
   ],
   "steps": [
     {
       "id": "setting-up",
       "title": "Setting up",
       "body": "Before the first turn:\n\n- Each player shuffles their [[deck]]. It becomes their [[library]].\n- Each player starts at **20 life**.\n- Decide who goes first. Often a coin flip or dice roll picks a player, who then chooses.\n- Each player draws **seven cards**.",
-      "visual": { "type": "placeholder", "src": "Two players shuffling, two life counters at 20, a coin flip, and seven cards being drawn.", "altText": "The four set-up steps: shuffle, 20 life, choose who goes first, draw seven." },
-      "glossaryTerms": ["deck", "library"],
-      "ruleRefs": ["CR 103"]
+      "visual": {
+        "type": "svg",
+        "src": "setting-up",
+        "altText": "The four set-up steps: shuffle, 20 life, choose who goes first, draw seven."
+      },
+      "glossaryTerms": [
+        "deck",
+        "library"
+      ],
+      "ruleRefs": [
+        "CR 103"
+      ]
     },
     {
       "id": "mulligans",
       "title": "Mulligans",
       "body": "Not happy with your opening seven? You can [[mulligan]].\n\nShuffle your hand back into your library and draw a fresh seven. Then put **one card** from that hand on the bottom of your library for **each** mulligan you took.\n\nYou may mulligan more than once, but your hand gets smaller each time. A good hand usually has 2 to 5 lands.",
-      "visual": { "type": "placeholder", "src": "A hand with only one land being shuffled away, a new hand of seven drawn, and one card going to the bottom of the library.", "altText": "A mulligan: new seven cards, then one card to the bottom." },
-      "glossaryTerms": ["mulligan"],
-      "ruleRefs": ["CR 103.5"],
+      "visual": {
+        "type": "svg",
+        "src": "mulligans",
+        "altText": "A mulligan: new seven cards, then one card to the bottom."
+      },
+      "glossaryTerms": [
+        "mulligan"
+      ],
+      "ruleRefs": [
+        "CR 103.5"
+      ],
       "check": {
         "question": "You mulligan twice, then keep. How many cards do you put on the bottom of your library?",
         "options": [
-          { "id": "one", "text": "1" },
-          { "id": "two", "text": "2" },
-          { "id": "seven", "text": "7" }
+          {
+            "id": "one",
+            "text": "1"
+          },
+          {
+            "id": "two",
+            "text": "2"
+          },
+          {
+            "id": "seven",
+            "text": "7"
+          }
         ],
         "correctOptionId": "two",
         "hint": "One card for each mulligan you took."
@@ -40,14 +75,27 @@
       "id": "first-turn",
       "title": "The first turn",
       "body": "The player who goes first **skips the draw on their first turn**. This balances out the advantage of going first.\n\nAfter that, every player draws one card at the start of each of their turns, in the draw step.",
-      "visual": { "type": "placeholder", "src": "Turn 1: the first player's draw step is crossed out. Turn 2: the other player draws a card.", "altText": "The first player skipping their first draw." },
+      "visual": {
+        "type": "svg",
+        "src": "first-turn",
+        "altText": "The first player skipping their first draw."
+      },
       "glossaryTerms": [],
-      "ruleRefs": ["CR 103", "CR 504.1"],
+      "ruleRefs": [
+        "CR 103",
+        "CR 504.1"
+      ],
       "check": {
         "question": "You go first. Do you draw a card on your first turn?",
         "options": [
-          { "id": "yes", "text": "Yes" },
-          { "id": "no", "text": "No" }
+          {
+            "id": "yes",
+            "text": "Yes"
+          },
+          {
+            "id": "no",
+            "text": "No"
+          }
         ],
         "correctOptionId": "no",
         "hint": "Going first is an advantage, so something balances it out."

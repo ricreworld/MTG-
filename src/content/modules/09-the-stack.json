@@ -28,8 +28,8 @@
       "title": "The stack",
       "body": "When you cast a spell, it doesn't happen right away. It goes on the [[stack]] and waits.\n\nWhile it waits, every player gets a chance to respond, for example with an [[instant]]. A response goes on top of the stack.\n\nThe stack is just a pile: the **last** thing added is the **first** to happen.",
       "visual": {
-        "type": "placeholder",
-        "src": "Two spell cards stacked on top of each other in the middle of the table, with the top one marked Happens first.",
+        "type": "svg",
+        "src": "the-stack",
         "altText": "A pile of spells; the top one happens first."
       },
       "glossaryTerms": [
@@ -46,8 +46,8 @@
       "title": "Priority",
       "body": "[[priority|Priority]] means it's your moment to act. Only the player with priority can cast a spell.\n\nAfter a spell is cast, priority passes around the table. Each player can respond or pass.\n\nWhen **all players pass in a row**, the top item on the stack [[resolve|resolves]]: it happens. Then players get priority again.",
       "visual": {
-        "type": "placeholder",
-        "src": "An arrow passing back and forth between two players, ending with both saying Pass and the top spell resolving.",
+        "type": "svg",
+        "src": "priority",
         "altText": "Priority passing between players until both pass."
       },
       "glossaryTerms": [
@@ -64,8 +64,8 @@
       "title": "Responding with an instant",
       "body": "An example with real cards:\n\n- You cast **Bear Cub**, a creature. It goes on the stack.\n- Your opponent responds with **Cancel**, an instant that says \"Counter target spell.\" It goes on top.\n- Both of you pass. Cancel resolves first and [[counter-spell|counters]] your Bear Cub.\n\nThe Cub never reaches the battlefield. It goes to your graveyard.",
       "visual": {
-        "type": "placeholder",
-        "src": "Bear Cub on the stack, Cancel placed on top of it, then the Cub going to the graveyard.",
+        "type": "svg",
+        "src": "responding",
         "altText": "A counterspell resolving on top of a creature spell."
       },
       "glossaryTerms": [
@@ -100,8 +100,8 @@
       "title": "Why the stack matters",
       "body": "The stack lets players react. With instants you can:\n\n- Save your creature before a removal spell resolves.\n- Make your attacker bigger after your opponent has blocked.\n- Cancel a big spell with a counterspell.\n\nAs a beginner, just remember: **newest first**. Instants are how you respond.",
       "visual": {
-        "type": "placeholder",
-        "src": "Three small scenes: saving a creature, pumping an attacker after blocks, and countering a spell.",
+        "type": "svg",
+        "src": "why-it-matters",
         "altText": "Three ways to use instants in response."
       },
       "glossaryTerms": [],

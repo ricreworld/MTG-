@@ -2,6 +2,7 @@
 import { forwardRef } from "react";
 import { Icon } from "../../components/Icon";
 import { SCENARIOS } from "../../game/scenarios";
+import { ArtBanner } from "./ArtBanner";
 
 interface Props {
   completed: readonly string[];
@@ -19,6 +20,7 @@ export const ScenarioPicker = forwardRef<HTMLHeadingElement, Props>(function Sce
         <h2 id="scenarios-heading" ref={headingRef} tabIndex={-1} className="text-2xl font-bold">Practice Table</h2>
         <button type="button" onClick={onBack} className="inline-flex min-h-tap items-center gap-s2 rounded-md border-2 border-border-strong bg-surface px-s3 font-bold"><Icon name="back" /> Lessons</button>
       </div>
+      <ArtBanner cards={["sentry", "serra", "scourge", "nighthawk", "skyhunter"]} />
       <p>Short, guided practice with real Foundations cards. Each scenario has a goal, a Hint button and Undo. You can't lose here: a mistake just gets a hint.</p>
       <ol className="grid gap-s2">
         {SCENARIOS.map((sc, i) => {

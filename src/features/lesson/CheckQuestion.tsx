@@ -60,13 +60,13 @@ export function CheckQuestion({ check, onCorrect, answeredBefore = false }: { ch
       )}
       <div aria-live="polite">
         {result === "correct" && (
-          <p className="flex items-start gap-s3 rounded-md bg-success-soft p-s3">
+          <p className="ms-settle flex items-start gap-s3 rounded-md bg-success-soft p-s3">
             <span className="text-success"><Icon name="check" /></span>
             <span><strong className="text-success">Correct.</strong> {earlier ? "You answered this one earlier." : "Nice work."}</span>
           </p>
         )}
         {result === "hint" && (
-          <p className="flex items-start gap-s3 rounded-md bg-hint-soft p-s3">
+          <p className="ms-settle flex items-start gap-s3 rounded-md bg-hint-soft p-s3">
             <span className="text-hint"><Icon name="info" /></span>
             <span><strong className="text-hint">Not quite. Here's a hint:</strong> {check.hint} Try again whenever you're ready.</span>
           </p>

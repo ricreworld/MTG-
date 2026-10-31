@@ -83,8 +83,8 @@
       "title": "The type line",
       "body": "Under the picture is the [[type-line|type line]]. Brazen Scourge's says **Creature — Gremlin**.\n\n- **Creature** is its [[card-type|card type]]. It tells you what the card is and when you can play it.\n- **Gremlin** is its subtype. Subtypes only matter when another card mentions them.\n\nYou'll meet every card type in Module 4.",
       "visual": {
-        "type": "placeholder",
-        "src": "The middle of the card, showing the words Creature — Gremlin.",
+        "type": "svg",
+        "src": "type-line",
         "altText": "A type line reading Creature, Gremlin."
       },
       "glossaryTerms": [
@@ -101,8 +101,8 @@
       "title": "The text box",
       "body": "The text box says what the card does. Brazen Scourge's says **Haste**.\n\nHaste is a [[keyword]]: one word that stands for a longer rule. You'll learn the common keywords in Module 8.\n\nSome cards also have flavour text, printed in a different style. It's a little bit of story and never changes how the card plays.",
       "visual": {
-        "type": "placeholder",
-        "src": "The card's text box with the keyword Haste, and a short line of flavour text below it.",
+        "type": "svg",
+        "src": "text-box",
         "altText": "A text box with the keyword Haste and some flavour text."
       },
       "glossaryTerms": [
@@ -137,8 +137,8 @@
       "title": "Power and toughness",
       "body": "A creature has two numbers in its bottom-right corner. Brazen Scourge shows **3/3**.\n\n- **Power** (the first 3): the [[damage]] it deals in combat.\n- **Toughness** (the second 3): how much damage destroys it in one turn.\n\nSo the Scourge hits for 3, and 3 damage is enough to destroy it.",
       "visual": {
-        "type": "placeholder",
-        "src": "The bottom-right corner of the card, showing 3/3.",
+        "type": "svg",
+        "src": "power-and-toughness",
         "altText": "Power and toughness reading 3 slash 3."
       },
       "glossaryTerms": [

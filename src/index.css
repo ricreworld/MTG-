@@ -78,3 +78,11 @@
 .on-felt { background: rgb(var(--color-surface) / 0.92); color: rgb(var(--color-text)); }
 .card-shadow { filter: drop-shadow(0 6px 10px rgb(0 0 0 / 0.45)); }
 @keyframes ms-pulse { 0% { box-shadow: 0 0 0 0 rgb(var(--color-accent) / 0.55); } 100% { box-shadow: 0 0 0 14px rgb(var(--color-accent) / 0); } }
+
+/* ---------- Lesson motion (gentle; disabled entirely by data-motion="off" above) ---------- */
+@keyframes ms-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes ms-settle { from { transform: scale(0.98); opacity: 0.6; } to { transform: scale(1); opacity: 1; } }
+.ms-enter { animation: ms-rise 260ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.ms-settle { animation: ms-settle 220ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.ms-bar { transition: width 420ms cubic-bezier(0.22, 1, 0.36, 1); }
+.diagram text { font-family: inherit; }

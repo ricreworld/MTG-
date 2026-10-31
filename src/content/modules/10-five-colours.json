@@ -5,34 +5,79 @@
   "summary": "Each colour has a personality and its own set of abilities: the colour pie.",
   "estimatedMinutes": 7,
   "checklist": [
-    { "id": "colour-pie", "label": "I know what the colour pie means" },
-    { "id": "white-blue", "label": "I know what white and blue are good at" },
-    { "id": "black-red", "label": "I know what black and red are good at" },
-    { "id": "green", "label": "I know what green is good at" },
-    { "id": "mixing", "label": "I know I can mix colours" }
+    {
+      "id": "colour-pie",
+      "label": "I know what the colour pie means"
+    },
+    {
+      "id": "white-blue",
+      "label": "I know what white and blue are good at"
+    },
+    {
+      "id": "black-red",
+      "label": "I know what black and red are good at"
+    },
+    {
+      "id": "green",
+      "label": "I know what green is good at"
+    },
+    {
+      "id": "mixing",
+      "label": "I know I can mix colours"
+    }
   ],
   "steps": [
     {
       "id": "what-is-the-colour-pie",
       "title": "What's the colour pie?",
       "body": "Each of Magic's five colours has a **personality**, and its own set of things it's good at. Players call this the [[color-pie|colour pie]].\n\nThe pie is why a green card can have Reach but a blue card almost never does. Once you know it, you can guess what a card does from its colour.\n\nThe pie is a design habit, not a rule. It shifts a little over the years.",
-      "visual": { "type": "placeholder", "src": "A circle split into five slices, white, blue, black, red and green, each with its mana symbol.", "altText": "A five-slice pie: white, blue, black, red, green." },
-      "glossaryTerms": ["color-pie"],
-      "ruleRefs": ["CR 105.1"]
+      "visual": {
+        "type": "svg",
+        "src": "what-is-the-colour-pie",
+        "altText": "A five-slice pie: white, blue, black, red, green."
+      },
+      "glossaryTerms": [
+        "color-pie"
+      ],
+      "ruleRefs": [
+        "CR 105.1"
+      ]
     },
     {
       "id": "white",
       "title": "White {W}: order and protection",
       "body": "White values **order, community and fairness**. It wins with a team of small creatures that work together.\n\nWhite is usually good at:\n\n- Small, efficient creatures and creature tokens\n- Gaining life, and [[lifelink|Lifelink]]\n- [[first-strike|First strike]] and [[vigilance|Vigilance]]\n- Protecting its creatures, and removing threats by exiling them\n\nIts basic land is the Plains.",
-      "visual": { "type": "placeholder", "src": "A row of small white soldier creatures standing together, with a sun mana symbol above.", "altText": "White's style: a team of small creatures under a sun symbol." },
-      "glossaryTerms": ["lifelink", "first-strike", "vigilance"],
-      "ruleRefs": ["CR 105.1", "CR 702.15", "CR 702.7", "CR 702.20"],
+      "visual": {
+        "type": "svg",
+        "src": "white",
+        "altText": "White's style: a team of small creatures under a sun symbol."
+      },
+      "glossaryTerms": [
+        "lifelink",
+        "first-strike",
+        "vigilance"
+      ],
+      "ruleRefs": [
+        "CR 105.1",
+        "CR 702.15",
+        "CR 702.7",
+        "CR 702.20"
+      ],
       "check": {
         "question": "Which of these is a typical white ability?",
         "options": [
-          { "id": "lifelink", "text": "Lifelink" },
-          { "id": "counter", "text": "Countering spells" },
-          { "id": "haste", "text": "Haste" }
+          {
+            "id": "lifelink",
+            "text": "Lifelink"
+          },
+          {
+            "id": "counter",
+            "text": "Countering spells"
+          },
+          {
+            "id": "haste",
+            "text": "Haste"
+          }
         ],
         "correctOptionId": "lifelink",
         "hint": "White likes to gain life and protect its team."
@@ -42,15 +87,34 @@
       "id": "blue",
       "title": "Blue {U}: knowledge and control",
       "body": "Blue values **knowledge, planning and trickery**. It wins by knowing more and reacting at the right moment.\n\nBlue is usually good at:\n\n- [[flying|Flying]] creatures\n- [[counter-spell|Countering]] spells\n- Drawing extra cards\n- Returning creatures to their owner's hand (\"bounce\")\n- Tapping down an opponent's creatures\n\nIts basic land is the Island.",
-      "visual": { "type": "placeholder", "src": "A flying drake above waves, with a counterspell card held ready and a water-drop mana symbol.", "altText": "Blue's style: a flyer and a counterspell under a water-drop symbol." },
-      "glossaryTerms": ["flying", "counter-spell"],
-      "ruleRefs": ["CR 105.1", "CR 702.9"],
+      "visual": {
+        "type": "svg",
+        "src": "blue",
+        "altText": "Blue's style: a flyer and a counterspell under a water-drop symbol."
+      },
+      "glossaryTerms": [
+        "flying",
+        "counter-spell"
+      ],
+      "ruleRefs": [
+        "CR 105.1",
+        "CR 702.9"
+      ],
       "check": {
         "question": "Your opponent keeps two Islands untapped and passes the turn. What might they be holding?",
         "options": [
-          { "id": "counterspell", "text": "A counterspell, ready for your next spell" },
-          { "id": "big-creature", "text": "A big creature with Trample" },
-          { "id": "nothing", "text": "Nothing. Blue decks never keep mana open" }
+          {
+            "id": "counterspell",
+            "text": "A counterspell, ready for your next spell"
+          },
+          {
+            "id": "big-creature",
+            "text": "A big creature with Trample"
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing. Blue decks never keep mana open"
+          }
         ],
         "correctOptionId": "counterspell",
         "hint": "Countering spells is one of blue's main abilities, and it needs mana kept ready."
@@ -60,23 +124,50 @@
       "id": "black",
       "title": "Black {B}: power at any price",
       "body": "Black values **power and ambition**, and will pay any price for them, including its own life and creatures.\n\nBlack is usually good at:\n\n- Destroying creatures\n- Making opponents discard cards\n- [[deathtouch|Deathtouch]]\n- Draining life: opponents lose it, black gains it\n- Bringing creatures back from the graveyard\n\nIts basic land is the Swamp.",
-      "visual": { "type": "placeholder", "src": "A creature being destroyed by a dark spell, a creature rising from a graveyard, and a skull mana symbol.", "altText": "Black's style: removal and a creature returning from the graveyard, under a skull symbol." },
-      "glossaryTerms": ["deathtouch"],
-      "ruleRefs": ["CR 105.1", "CR 702.2"]
+      "visual": {
+        "type": "svg",
+        "src": "black",
+        "altText": "Black's style: removal and a creature returning from the graveyard, under a skull symbol."
+      },
+      "glossaryTerms": [
+        "deathtouch"
+      ],
+      "ruleRefs": [
+        "CR 105.1",
+        "CR 702.2"
+      ]
     },
     {
       "id": "red",
       "title": "Red {R}: speed and fire",
       "body": "Red values **freedom, emotion and action**. It wants to win fast, before the opponent gets set up.\n\nRed is usually good at:\n\n- [[haste|Haste]] creatures that attack right away\n- Direct damage to creatures or players (\"burn\")\n- Destroying artifacts\n- Taking control of a creature until end of turn\n\nIts basic land is the Mountain.",
-      "visual": { "type": "placeholder", "src": "A fast red creature charging forward and a bolt of fire hitting an opponent, with a flame mana symbol.", "altText": "Red's style: a charging creature and a burn spell under a flame symbol." },
-      "glossaryTerms": ["haste"],
-      "ruleRefs": ["CR 105.1", "CR 702.10"],
+      "visual": {
+        "type": "svg",
+        "src": "red",
+        "altText": "Red's style: a charging creature and a burn spell under a flame symbol."
+      },
+      "glossaryTerms": [
+        "haste"
+      ],
+      "ruleRefs": [
+        "CR 105.1",
+        "CR 702.10"
+      ],
       "check": {
         "question": "A creature can attack the same turn it's cast. Which colour is this most typical of?",
         "options": [
-          { "id": "red", "text": "Red" },
-          { "id": "blue", "text": "Blue" },
-          { "id": "white", "text": "White" }
+          {
+            "id": "red",
+            "text": "Red"
+          },
+          {
+            "id": "blue",
+            "text": "Blue"
+          },
+          {
+            "id": "white",
+            "text": "White"
+          }
         ],
         "correctOptionId": "red",
         "hint": "Think of the keyword Haste, and which colour wants to win fast."
@@ -86,15 +177,35 @@
       "id": "green",
       "title": "Green {G}: growth and nature",
       "body": "Green values **nature, growth and strength**. It wins by growing bigger than everyone else.\n\nGreen is usually good at:\n\n- The biggest creatures, often with [[trample|Trample]]\n- [[reach|Reach]], so its creatures can block flyers\n- Making extra mana early (\"ramp\")\n- Destroying artifacts and enchantments\n- Letting its creatures fight each other's\n\nIts basic land is the Forest.",
-      "visual": { "type": "placeholder", "src": "A huge green beast beside a small mana-making elf, with a tree mana symbol.", "altText": "Green's style: a big creature and extra mana under a tree symbol." },
-      "glossaryTerms": ["trample", "reach"],
-      "ruleRefs": ["CR 105.1", "CR 702.19", "CR 702.17"],
+      "visual": {
+        "type": "svg",
+        "src": "green",
+        "altText": "Green's style: a big creature and extra mana under a tree symbol."
+      },
+      "glossaryTerms": [
+        "trample",
+        "reach"
+      ],
+      "ruleRefs": [
+        "CR 105.1",
+        "CR 702.19",
+        "CR 702.17"
+      ],
       "check": {
         "question": "An opponent's creature has Flying. Which green ability lets your creature block it?",
         "options": [
-          { "id": "reach", "text": "Reach" },
-          { "id": "trample", "text": "Trample" },
-          { "id": "ramp", "text": "Ramp" }
+          {
+            "id": "reach",
+            "text": "Reach"
+          },
+          {
+            "id": "trample",
+            "text": "Trample"
+          },
+          {
+            "id": "ramp",
+            "text": "Ramp"
+          }
         ],
         "correctOptionId": "reach",
         "hint": "Look at the second point in the list."
@@ -104,14 +215,27 @@
       "id": "mixing-colours",
       "title": "Mixing colours",
       "body": "You can build a deck with **any colours you like**. Each colour needs its own lands, so one or two colours is easiest at first.\n\nOn the pie, each colour sits between two **allies** that share its values, and across from two **enemies** that pull the other way. Green and red are allies; green and blue are enemies.\n\nPicking a colour is a bit like picking a personality. Which one sounds like you?",
-      "visual": { "type": "placeholder", "src": "The five-colour pie with solid lines joining neighbouring allies and dashed lines joining enemies across the circle.", "altText": "The colour pie with ally and enemy lines drawn." },
+      "visual": {
+        "type": "svg",
+        "src": "mixing-colours",
+        "altText": "The colour pie with ally and enemy lines drawn."
+      },
       "glossaryTerms": [],
-      "ruleRefs": ["CR 105.1", "CR 105.2"],
+      "ruleRefs": [
+        "CR 105.1",
+        "CR 105.2"
+      ],
       "check": {
         "question": "Can a deck use more than one colour?",
         "options": [
-          { "id": "yes", "text": "Yes, but each colour needs its own lands" },
-          { "id": "no", "text": "No, decks are always one colour" }
+          {
+            "id": "yes",
+            "text": "Yes, but each colour needs its own lands"
+          },
+          {
+            "id": "no",
+            "text": "No, decks are always one colour"
+          }
         ],
         "correctOptionId": "yes",
         "hint": "Look at the first sentence of this step."

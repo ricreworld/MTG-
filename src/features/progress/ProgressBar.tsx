@@ -14,7 +14,7 @@ export function ProgressBar({ done, total, percent }: { done: number; total: num
         aria-valuetext={`${percent} percent, ${done} of ${total} steps done`}
         className="h-s3 overflow-hidden rounded-full border border-border-strong bg-surface-2"
       >
-        <div className="h-full rounded-full bg-success" style={{ width: `${percent}%` }} />
+        <div className="ms-bar h-full rounded-full bg-success" style={{ width: `${percent}%` }} />
       </div>
     </div>
   );

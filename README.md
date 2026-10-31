@@ -113,6 +113,8 @@ paid features. Card names, rules text and art are © Wizards of the Coast LLC. C
 from Scryfall (https://scryfall.com), which is not affiliated with this project. Everything else in the app
 (lessons, code, frame design, icons) is original.
 
+16. ✅ Pictures for every lesson step: 66 original SVG diagrams built from the app's colour tokens (`src/features/lesson/diagrams/`), plus real card images where a real card is the best picture. Lesson motion (step entry, progress bar, check feedback) follows the Motion setting. Art banners on the welcome card and the Practice screen.
+
 ## The table architecture (Steps 1 to 4 of the game-feel rebuild)
 
 - `src/game/` is the pure rules engine, unchanged by presentation work.
