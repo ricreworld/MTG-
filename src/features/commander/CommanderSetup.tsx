@@ -11,6 +11,7 @@ import { checkDeck, parseList, stars, type LibraryCard } from "../../game/deckch
 import { CommanderCard } from "./CommanderCard";
 import { DeckCheck } from "./DeckCheck";
 import { DeckImport } from "./DeckImport";
+import { DeckGuideView } from "./DeckGuideView";
 import type { MyDeck } from "../../game/commander/mydecks";
 
 const LIB: LibraryCard[] = CARD_LIST.map(toLibraryCard);
@@ -54,10 +55,12 @@ export const CommanderSetup = forwardRef<HTMLHeadingElement, Props>(function Com
   const [pick, setPick] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   const [importing, setImporting] = useState(!!prefill);
+  const [guide, setGuide] = useState(false);
   const btn = "inline-flex min-h-tap items-center gap-s2 rounded-md px-s4 font-bold";
   if (checking) return <DeckCheck onBack={() => setChecking(false)} onReadMore={onReadMore} />;
   if (importing) return <DeckImport onBack={() => { setImporting(false); onPrefillUsed?.(); }} onPlay={onStartCustom} prefill={prefill ?? null} />;
   const picked = pick ? [...FULL_DECKS, ...CDECKS].find((d) => d.id === pick) : undefined;
+  if (guide && picked) return <DeckGuideView deckId={picked.id} name={picked.name} commander={picked.commander} cards={picked.cards} onBack={() => setGuide(false)} onPlay={() => onStart(picked.id)} />;
   return (
     <section aria-labelledby="cmd-setup-heading" className="grid gap-s4 rounded-lg border border-border bg-surface p-s4">
       <div className="flex flex-wrap items-center justify-between gap-s3">
@@ -86,6 +89,7 @@ export const CommanderSetup = forwardRef<HTMLHeadingElement, Props>(function Com
             <p><strong>Middle:</strong> {picked.primer.mid}</p>
             <p><strong>Late:</strong> {picked.primer.late}</p>
             <p><strong>Common mistakes:</strong> {picked.primer.misplays}</p>
+            <div><button type="button" onClick={() => setGuide(true)} className={`${btn} border-2 border-border-strong bg-surface`}><Icon name="book" /> Full guide: how to play {picked.name}</button></div>
           </div>
         )}
       </div>

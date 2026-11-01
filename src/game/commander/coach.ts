@@ -1,12 +1,21 @@
 // The coach at the four-player table: who is the threat, what to do now, and why. Plain language, one idea.
 import { manaValue } from "./cards";
 import { canAttack, canPlayLand, castable, commanderCost, canAfford, def, isCreature, isMain, opponentsOf, player, power, threat, toughness, type CState, type Seat } from "./engine";
+import { planAdvice, planOf } from "./primer";
 
 export interface Advice { move: string; why: string }
 
 export function threatOrder(s: CState): Seat[] { return [...opponentsOf(s, s.human)].sort((a, b) => threat(s, b) - threat(s, a)); }
 
 export function advise(s: CState): Advice | null {
+  const base = adviseBase(s);
+  if (!base) return null;
+  // One deck-specific line in the "why", when the deck's plan has something to say in a main phase.
+  if (s.turn === s.human && isMain(s) && !s.stack.length && !s.pending) { const extra = planAdvice(planOf(s, s.human), s, s.human); if (extra) return { ...base, why: `${base.why} ${extra}` }; }
+  return base;
+}
+
+function adviseBase(s: CState): Advice | null {
   const me = s.human;
   if (s.winner || player(s, me).out) return null;
   const pl = player(s, me);

@@ -35,7 +35,9 @@ export const toLibraryCard = (d: CDef): LibraryCard => ({
 });
 
 /** What the commander cares about: subtypes, keywords, and ability shapes. Each hit is one point of contact. */
-interface Vocabulary { subtypes: string[]; keywords: string[]; textHits: RegExp[]; kinds: string[]; bigPower?: boolean; lands?: boolean }
+export interface Vocabulary { subtypes: string[]; keywords: string[]; textHits: RegExp[]; kinds: string[]; bigPower?: boolean; lands?: boolean }
+
+export const contactsWith = (d: CDef, v: Vocabulary): number => contacts(d, v);
 
 function contacts(d: CDef, v: Vocabulary): number {
   let n = 0;

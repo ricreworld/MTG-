@@ -9,6 +9,8 @@ import { CommanderMachine, type CSnapshot } from "../../table/cmachine";
 import { useSettings } from "../../theme/SettingsContext";
 import { EffectsLayer, playBatch, type Ghost } from "../table/cues";
 import { CommanderCard } from "./CommanderCard";
+import { deckGoals, planOf } from "../../game/commander/primer";
+import { loadGoals, saveGoals } from "./DeckGuideView";
 
 const PHASES: { step: Step; label: string }[] = [
   { step: "main1", label: "Main 1" }, { step: "attackers", label: "Attack" }, { step: "blockers", label: "Block" }, { step: "main2", label: "Main 2" }, { step: "end", label: "End" },
@@ -71,6 +73,13 @@ export const CommanderTable = forwardRef<HTMLHeadingElement, Props>(function Com
   const my = player(state, me);
   const myTurn = state.turn === me;
   const advice = useMemo(() => advise(state), [state]);
+  // Deck goals: checked after every state change, remembered on this device per deck.
+  const goals = useMemo(() => deckGoals(planOf(state, state.human), def(state, player(state, state.human).commandZone.card)), [state.human, initial]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [goalsDone, setGoalsDone] = useState<string[]>(() => loadGoals(deckId));
+  useEffect(() => {
+    const fresh = goals.filter((g) => !goalsDone.includes(g.id) && g.check(state, state.human)).map((g) => g.id);
+    if (fresh.length) { const next = [...goalsDone, ...fresh]; setGoalsDone(next); saveGoals(deckId, next); }
+  }, [state, goals, goalsDone, deckId]);
   const seatsClockwise = state.seats.slice(state.seats.indexOf(me) + 1).concat(state.seats.slice(0, state.seats.indexOf(me)));
   const mine = state.battlefield.filter((p) => p.controller === me);
   const creatures = (list: Perm[]) => list.filter((p) => isCreature(state, p));
@@ -380,6 +389,10 @@ export const CommanderTable = forwardRef<HTMLHeadingElement, Props>(function Com
         <button type="button" onClick={() => onReadMore("commander")} className={secondary}><Icon name="book" /> Read the Commander lesson</button>
         <span className="text-sm text-text-muted">Saved on this device after every move.</span>
       </div>
+      <details className="rounded-lg border border-border bg-surface p-s3" open={goalsDone.length < goals.length}>
+        <summary className="min-h-tap cursor-pointer content-center font-bold">Deck goals ({goalsDone.length} of {goals.length})</summary>
+        <ul className="mt-s2 grid gap-s1 text-sm">{goals.map((g) => <li key={g.id} className="flex items-center gap-s2"><span className={goalsDone.includes(g.id) ? "text-success" : "text-text-muted"}><Icon name={goalsDone.includes(g.id) ? "check" : "info"} size={1} /></span>{g.label}</li>)}</ul>
+      </details>
       <details className="rounded-lg border border-border bg-surface p-s3">
         <summary className="min-h-tap cursor-pointer content-center font-bold">Full game log</summary>
         <ol className="mt-s2 grid gap-s1 text-sm">{state.log.slice(-200).map((l, i) => <li key={i}>{l}</li>)}</ol>

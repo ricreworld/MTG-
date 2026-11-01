@@ -4,6 +4,7 @@ import { Icon } from "../../components/Icon";
 import { CCARDS } from "../../game/commander/cards";
 import { importDeck, loadMyDecks, myDeckText, saveMyDecks, type ImportResult, type MyDeck } from "../../game/commander/mydecks";
 import { CommanderCard } from "./CommanderCard";
+import { DeckGuideView } from "./DeckGuideView";
 
 interface Props { onBack: () => void; onPlay: (deck: MyDeck) => void; prefill?: { decklist: string; name: string } | null }
 
@@ -14,6 +15,7 @@ export function DeckImport({ onBack, onPlay, prefill }: Props) {
   const [commander, setCommander] = useState("");
   const [result, setResult] = useState<ImportResult | null>(() => (prefill ? importDeck(prefill.decklist, prefill.name) : null));
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [guideFor, setGuideFor] = useState<MyDeck | null>(null);
   const btn = "inline-flex min-h-tap items-center gap-s2 rounded-md px-s4 font-bold";
   const primary = `${btn} bg-accent text-accent-ink`;
   const secondary = `${btn} border-2 border-border-strong bg-surface`;
@@ -26,6 +28,7 @@ export function DeckImport({ onBack, onPlay, prefill }: Props) {
     const t = lines.join("\n"); setText(t); setResult(importDeck(t, name, commander));
   };
 
+  if (guideFor) return <DeckGuideView deckId={guideFor.id} name={guideFor.name} commander={guideFor.commander} cards={guideFor.cards} onBack={() => setGuideFor(null)} onPlay={() => onPlay(guideFor)} />;
   return (
     <section aria-labelledby="mydecks-heading" className="grid gap-s4 rounded-lg border border-border bg-surface p-s4">
       <div className="flex flex-wrap items-center justify-between gap-s3">
@@ -44,6 +47,7 @@ export function DeckImport({ onBack, onPlay, prefill }: Props) {
               </div>
               <div className="flex flex-wrap gap-s2">
                 <button type="button" onClick={() => onPlay(d)} className={primary}><Icon name="play" /> Play this deck</button>
+                <button type="button" onClick={() => setGuideFor(d)} className={secondary}><Icon name="book" /> How to play it</button>
                 <button type="button" onClick={() => { setText(myDeckText(d)); setName(d.name); setCommander(""); setResult(null); }} className={secondary}>Edit the list</button>
                 {confirmDelete === d.id ? <><button type="button" onClick={() => remove(d.id)} className={primary}>Yes, delete</button><button type="button" onClick={() => setConfirmDelete(null)} className={secondary}>Keep</button></> : <button type="button" onClick={() => setConfirmDelete(d.id)} className={secondary}>Delete</button>}
               </div>
