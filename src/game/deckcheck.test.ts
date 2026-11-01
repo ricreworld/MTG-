@@ -1,10 +1,11 @@
 // The deck doctor: role reading from Oracle text, the shape targets, the bracket determination and the strict rating.
 import { describe, expect, it } from "vitest";
 import library from "../content/foundations.json";
-import { CDECKS, deckListText } from "./commander/decks";
+import { CARD_LIST } from "./commander/cards";
+import { CDECKS, deckListText, toLibraryCard } from "./commander/decks";
 import { checkDeck, classify, determineBracket, parseList, type LibraryCard } from "./deckcheck";
 
-const LIB = library as LibraryCard[];
+const LIB: LibraryCard[] = [...CARD_LIST.map(toLibraryCard), ...(library as LibraryCard[])];
 const card = (name: string): LibraryCard => { const c = LIB.find((x) => x.name === name); if (!c) throw new Error(name); return c; };
 
 describe("deck doctor", () => {

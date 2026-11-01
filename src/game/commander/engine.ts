@@ -17,7 +17,7 @@ import { CCARDS, COLORS, COLOR_WORD, hasFlash, isAura, isEquipment, keywordsOf, 
 
 export type Seat = string;
 export type Step = "main1" | "attackers" | "blockers" | "damage" | "main2" | "end";
-export type Pool = Partial<Record<Color, number>>;
+export type Pool = Partial<Record<Color | "C", number>>;
 
 export interface Perm {
   uid: string;
@@ -41,6 +41,10 @@ export interface Perm {
   /** Cards this permanent exiled "until it leaves the battlefield". */
   exiled?: { card: string; owner: Seat }[];
   enteredTurn: number;
+  /** "As this enters, choose a creature type / card type." */
+  chosen?: string;
+  /** Abilities that already triggered this turn (for "triggers only once each turn"). */
+  firedThisTurn?: string[];
 }
 
 export type Target = { kind: "perm"; uid: string } | { kind: "player"; seat: Seat } | { kind: "spell"; uid: string };
@@ -53,6 +57,8 @@ export interface Spell {
   targets: Target[];
   /** Set when the spell targets an aura's host or an equipment, for display. */
   responses?: number;
+  /** Modal spells: the chosen modes, in order. */
+  modes?: number[];
 }
 
 export type PendingSource = { kind: "hand"; uid: string } | { kind: "commander" } | { kind: "ability"; uid: string; index: number };
@@ -66,6 +72,8 @@ export interface Pending {
   /** How many more targets this spec may take. */
   max: number;
   optional: boolean;
+  /** Modal spells: pick modes first. */
+  modes?: { texts: string[]; n: number; picked: number[] };
 }
 
 export interface PlayerS {
@@ -87,6 +95,7 @@ export interface PlayerS {
   lostLifeThisTurn: boolean;
   attackedThisTurn: boolean;
   drewFromEmpty?: boolean;
+  lifeGainedThisTurn?: number;
 }
 
 export interface CState {
@@ -107,6 +116,8 @@ export interface CState {
   blocksDone: Seat[];
   pending: Pending | null;
   creatureDiedThisTurn: boolean;
+  /** The monarch (CR 724), if anyone is. */
+  monarch?: Seat | null;
   log: string[];
   refusal: string | null;
   winner: Seat | null;
@@ -120,6 +131,8 @@ export type Action =
   | { type: "castCommander" }
   | { type: "activate"; uid: string; index: number }
   | { type: "chooseTarget"; target: Target }
+  | { type: "chooseMode"; index: number }
+  | { type: "cycle"; uid: string }
   | { type: "doneTargets" }
   | { type: "cancelTarget" }
   | { type: "pass" }
@@ -176,6 +189,26 @@ export const kindOf = (s: CState, p: Perm) => pdef(s, p).kind;
 export const isCreature = (s: CState, p: Perm) => kindOf(s, p) === "creature";
 export const isLand = (s: CState, p: Perm) => kindOf(s, p) === "land";
 export const keywords = (s: CState, p: Perm): string[] => [...keywordsOf(pdef(s, p)), ...p.bonus.keywords, ...p.granted];
+/** The qualities a permanent has protection from: subtypes ("Demons"), colours ("white"), card types ("creature"). */
+export function protections(s: CState, p: Perm): string[] {
+  const out: string[] = [];
+  for (const a of pdef(s, p).abilities) if (a.kind === "protection") out.push(...(a.from ?? []).map((q) => q.replace(/^the chosen card type$/, p.chosen ?? "")));
+  for (const src of s.battlefield) if (src.controller === p.controller && isCreature(s, p)) for (const a of statics(s, src)) if (a.op === "protectionChosen" && src.chosen) out.push(src.chosen);
+  return out.filter(Boolean);
+}
+/** Does a source have one of these qualities? Subtype plural ("Demons"), colour word, or card type. */
+export function sourceHasQuality(s: CState, source: { card: string } | null, quality: string): boolean {
+  if (!source) return false;
+  const d = def(s, source.card);
+  const q = quality.toLowerCase();
+  const colourLetter = (Object.entries(COLOR_WORD).find(([, w]) => w === q)?.[0] ?? "") as string;
+  if (colourLetter) return d.colors.includes(colourLetter);
+  if (["creature", "artifact", "enchantment", "instant", "sorcery", "land", "planeswalker"].includes(q)) return d.type.toLowerCase().includes(q);
+  const sub = q.replace(/s$/, "");
+  return subtypesOf(d).some((x) => x.toLowerCase() === sub);
+}
+export const protectedFrom = (s: CState, p: Perm, source: { card: string } | null): boolean => protections(s, p).some((q) => sourceHasQuality(s, source, q));
+export const playerProtectedFrom = (s: CState, seat: Seat, source: { card: string } | null): boolean => s.battlefield.some((src) => src.controller === seat && src.chosen && statics(s, src).some((a) => a.op === "protectionChosen") && sourceHasQuality(s, source, src.chosen!));
 export const has = (s: CState, p: Perm, kw: string): boolean => keywords(s, p).includes(kw);
 export const power = (s: CState, p: Perm): number => (pdef(s, p).power ?? 0) + p.counters + p.pump.p + p.bonus.p;
 export const toughness = (s: CState, p: Perm): number => (pdef(s, p).toughness ?? 0) + p.counters + p.pump.t + p.bonus.t;
@@ -195,6 +228,15 @@ export const isMain = (s: CState) => s.step === "main1" || s.step === "main2";
 
 /* ------------------------------------------------------------------ statics (CR 611.3) */
 
+/** Conditions on static abilities: "life>=25", "lifeAboveStart>=7", "yourTurn". */
+function staticCond(s: CState, holder: Perm, c: string): boolean {
+  const pl = player(s, holder.controller);
+  let m = /^life>=(\d+)$/.exec(c); if (m) return pl.life >= Number(m[1]);
+  m = /^lifeAboveStart>=(\d+)$/.exec(c); if (m) return pl.life - 40 >= Number(m[1]);
+  if (c === "yourTurn") return s.turn === holder.controller;
+  return false;
+}
+
 export function refresh(s: CState): CState {
   const battlefield = s.battlefield.map((p) => {
     const bonus: Perm["bonus"] = { p: 0, t: 0, keywords: [], pacified: false, cantBlock: false, mustAttack: false, blockOnlyFlyers: false, evasion: null };
@@ -205,8 +247,18 @@ export function refresh(s: CState): CState {
           case "anthem": case "grantAll": {
             if (!creature || src.controller !== p.controller) break;
             if (a.filter?.other && src.uid === p.uid) break;
-            if (a.filter?.subtype && !hasSubtype(s, p, a.filter.subtype)) break;
+            if (a.filter?.subtype && a.filter.subtype !== "chosen" && !hasSubtype(s, p, a.filter.subtype)) break;
+            if (a.filter?.subtype === "chosen" && !(src.chosen && hasSubtype(s, p, src.chosen))) break;
+            if (a.filter?.flying && !keywordsOf(pdef(s, p)).includes("Flying") && !p.granted.includes("Flying")) break;
+            if (a.cond && !staticCond(s, src, a.cond)) break;
             bonus.p += a.p ?? 0; bonus.t += a.t ?? 0; bonus.keywords.push(...(a.keywords ?? []));
+            break;
+          }
+          case "lieutenant": {
+            if (!creature || src.controller !== p.controller) break;
+            if (!s.battlefield.some((x) => x.controller === src.controller && x.isCommander)) break;
+            if (src.uid === p.uid) { bonus.p += a.p ?? 0; bonus.t += a.t ?? 0; }
+            bonus.keywords.push(...(a.keywords ?? []));
             break;
           }
           case "auraStatic": case "equipStatic": {
@@ -230,6 +282,7 @@ export function refresh(s: CState): CState {
           else if (c === "an artifact") ok = others.some((x) => kindOf(s, x) === "artifact");
           else if (c === "an equipment") ok = others.some((x) => isEquipment(pdef(s, x)));
           else if (c === "a creature with power 4 or greater") ok = others.some((x) => isCreature(s, x) && (pdef(s, x).power ?? 0) + x.counters >= 4);
+          else ok = staticCond(s, p, c);
           if (ok) { bonus.p += a.p ?? 0; bonus.t += a.t ?? 0; }
           break;
         }
@@ -244,6 +297,7 @@ export function refresh(s: CState): CState {
         case "mustAttack": bonus.mustAttack = true; break;
         case "blockOnlyFlyers": bonus.blockOnlyFlyers = true; break;
         case "evasion": bonus.evasion = a.what ?? null; break;
+        case "evasionPower": bonus.evasion = `powerAtLeast${a.n ?? 0}`; break;
         default: break;
       }
     }
@@ -254,7 +308,7 @@ export function refresh(s: CState): CState {
 
 /* ------------------------------------------------------------------ mana */
 
-interface ManaSource { perm: Perm; colors: Color[]; n: number; sacrifice: boolean }
+interface ManaSource { perm: Perm; colors: (Color | "C")[]; n: number; sacrifice: boolean }
 
 function manaSources(s: CState, seat: Seat): ManaSource[] {
   const out: ManaSource[] = [];
@@ -269,7 +323,10 @@ function manaSources(s: CState, seat: Seat): ManaSource[] {
       if (!eff || eff.op !== "addMana" || (a.effects?.length ?? 0) !== 1) continue;
       const n = eff.per ? s.battlefield.filter((x) => x.controller === seat && isCreature(s, x) && hasSubtype(s, x, eff.per!)).length : eff.n ?? 1;
       if (n <= 0) continue;
-      out.push({ perm: p, colors: (eff.colors ?? []) as Color[], n, sacrifice: !!cost.sacrificeSelf });
+      let colors = (eff.colors ?? []) as (Color | "C")[];
+      if (colors[0] === ("identity" as string)) colors = (def(s, player(s, seat).commandZone.card).colors.split("") as Color[]);
+      if (!colors.length) continue;
+      out.push({ perm: p, colors, n, sacrifice: !!cost.sacrificeSelf });
     }
   }
   // Mono-colour lands first, then duals, then anything that has to be sacrificed (Treasure).
@@ -285,9 +342,13 @@ export function availableMana(s: CState, seat: Seat): Pool & { total: number } {
 }
 
 function costAfterReductions(s: CState, seat: Seat, card: CDef, cost: string): string {
-  if (card.kind !== "instant" && card.kind !== "sorcery") return cost;
   let less = 0;
-  for (const p of s.battlefield) if (p.controller === seat) for (const a of statics(s, p)) if (a.op === "costLess" && a.what === "instantSorcery") less += a.n ?? 0;
+  for (const p of s.battlefield) if (p.controller === seat) for (const a of statics(s, p)) {
+    if (a.op !== "costLess") continue;
+    if (a.what === "instantSorcery" && (card.kind === "instant" || card.kind === "sorcery")) less += a.n ?? 0;
+    else if (a.what === "subtype" && a.subtype && subtypesOf(card).includes(a.subtype)) less += a.n ?? 0;
+    else if (a.what === "chosenType" && p.chosen && card.kind === "creature" && subtypesOf(card).includes(p.chosen)) less += a.n ?? 0;
+  }
   if (!less) return cost;
   const c = parseCost(cost);
   const generic = Math.max(0, c.generic - less);
@@ -302,10 +363,10 @@ export function pay(s: CState, seat: Seat, cost: string): CState | null {
   const sources = manaSources(s, seat);
   const used = new Set<string>();
   const tapFor = (color: Color | null): boolean => {
-    const src = sources.find((x) => !used.has(x.perm.uid) && (color === null || x.colors.includes(color)));
+    const src = sources.find((x) => !used.has(x.perm.uid) && (color === null ? true : x.colors.includes(color)));
     if (!src) return false;
     used.add(src.perm.uid);
-    const c: Color = color ?? src.colors[0] ?? "G";
+    const c: Color | "C" = color ?? src.colors[0] ?? "C";
     pool[c] = (pool[c] ?? 0) + src.n;
     st = setPerm(st, src.perm.uid, (p) => ({ ...p, tapped: true }));
     if (src.sacrifice) st = leave(st, src.perm.uid, "graveyard", `${pdef(s, src.perm).name} is sacrificed for mana.`);
@@ -316,12 +377,13 @@ export function pay(s: CState, seat: Seat, cost: string): CState | null {
     pool[c] = (pool[c] ?? 0) - (need[c] ?? 0);
   }
   let generic = need.generic;
-  for (const c of COLORS) while (generic > 0 && (pool[c] ?? 0) > 0) { pool[c] = (pool[c] ?? 0) - 1; generic--; }
+  const spend = () => { for (const c of ["C", ...COLORS] as (Color | "C")[]) while (generic > 0 && (pool[c] ?? 0) > 0) { pool[c] = (pool[c] ?? 0) - 1; generic--; } };
+  spend();
   while (generic > 0) {
     if (!tapFor(null)) return null;
-    for (const c of COLORS) while (generic > 0 && (pool[c] ?? 0) > 0) { pool[c] = (pool[c] ?? 0) - 1; generic--; }
+    spend();
   }
-  for (const c of Object.keys(pool) as Color[]) if (!pool[c]) delete pool[c];
+  for (const c of Object.keys(pool) as (Color | "C")[]) if (!pool[c]) delete pool[c];
   return setPlayer(st, seat, { pool });
 }
 export const canAfford = (s: CState, seat: Seat, cost: string): boolean => pay(s, seat, cost) !== null;
@@ -349,9 +411,11 @@ export function enter(s: CState, card: string, controller: Seat, opts: { uid?: s
   const d = def(st, card);
   let p = newPerm(uid, card, controller, st.turnNumber);
   if (opts.isCommander) p = { ...p, isCommander: true };
-  const entersTapped = d.abilities.some((a) => a.kind === "entersTapped") || (d.kind === "creature" && opponentsOf(st, controller).some((o) => hasStatic(st, o, "oppEnterTapped")));
+  const entersTapped = d.abilities.some((a) => a.kind === "entersTapped" && (!a.unless || !st.battlefield.some((x) => x.controller === controller && hasSubtype(st, x, a.unless!)))) || (d.kind === "creature" && opponentsOf(st, controller).some((o) => hasStatic(st, o, "oppEnterTapped")));
   if (opts.tapped || entersTapped) p = { ...p, tapped: true };
   if (opts.attachTo !== undefined) p = { ...p, attachedTo: opts.attachTo };
+  const choose = d.abilities.find((a) => a.kind === "chooseType");
+  if (choose) { const chosen = choose.what === "cardType" ? "creature" : commonestSubtype(st, controller); p = { ...p, chosen }; st = log(st, `${d.name}: ${nameOf(st, controller)} choose${verb(st, controller, "", "s")} ${chosen}.`); }
   st = refresh({ ...st, battlefield: [...st.battlefield, p] });
   const entered = find(st, uid)!;
   // Triggers on the card itself and on everything else that watches creatures entering.
@@ -362,6 +426,15 @@ export function enter(s: CState, card: string, controller: Seat, opts: { uid?: s
   }
   if (d.kind === "land") { st = fire(st, "landfall", { perm: entered, seat: controller }); st = fire(st, "gateEnters", { perm: entered, seat: controller }); }
   return checkState(st);
+}
+
+/** The creature type a player's deck has most of (used when a card says "choose a creature type"). */
+function commonestSubtype(s: CState, seat: Seat): string {
+  const pl = player(s, seat);
+  const count = new Map<string, number>();
+  const cards = [...pl.library, ...pl.hand.map((u) => s.cards[u] ?? ""), ...s.battlefield.filter((p) => p.controller === seat).map((p) => p.card), pl.commandZone.card];
+  for (const c of cards) { const d = c ? def(s, c) : null; if (d?.kind === "creature") for (const sub of subtypesOf(d)) count.set(sub, (count.get(sub) ?? 0) + 1); }
+  return [...count].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "Human";
 }
 
 /** Removes a permanent from the battlefield: to a graveyard, exile, hand or the command zone. Handles commanders, tokens, attachments and "until it leaves" exiles. */
@@ -425,10 +498,14 @@ export function drawCards(s: CState, seat: Seat, n: number): CState {
 
 function gainLife(s: CState, seat: Seat, n: number): CState {
   if (n <= 0 || player(s, seat).out) return s;
+  // "Your opponents can't gain life" / "If an opponent would gain life, that player loses that much life instead."
+  const foes = opponentsOf(s, seat);
+  if (foes.some((o) => hasStatic(s, o, "oppCantGainLife"))) return log(s, `${nameOf(s, seat)} can't gain life.`);
+  if (foes.some((o) => hasStatic(s, o, "oppLifeGainToLoss"))) return loseLife(log(s, `${nameOf(s, seat)} would gain ${n} life, but lose${verb(s, seat, "", "s")} it instead.`), seat, n);
   const extra = hasStatic(s, seat, "lifeGainPlusOne") ? 1 : 0;
   const total = n + extra;
   const pl = player(s, seat);
-  let st = setPlayer(s, seat, { life: pl.life + total });
+  let st = setPlayer(s, seat, { life: pl.life + total, lifeGainedThisTurn: (pl.lifeGainedThisTurn ?? 0) + total });
   st = log(st, `${nameOf(st, seat)} ${verb(st, seat, "gain", "gains")} ${total} life (now ${pl.life + total}).`);
   const first = !pl.gainedLifeThisTurn;
   st = setPlayer(st, seat, { gainedLifeThisTurn: true });
@@ -448,6 +525,7 @@ function loseLife(s: CState, seat: Seat, n: number): CState {
 }
 
 function damagePlayer(s: CState, seat: Seat, n: number, source: Perm | null): CState {
+  if (source && playerProtectedFrom(s, seat, source)) return log(s, `${nameOf(s, seat)} ${verb(s, seat, "have", "has")} protection from ${pdef(s, source).name}: the damage is prevented.`);
   let st = loseLife(s, seat, n);
   if (source && has(s, source, "Lifelink") && n > 0) st = gainLife(st, source.controller, n);
   return st;
@@ -456,6 +534,7 @@ function damagePlayer(s: CState, seat: Seat, n: number, source: Perm | null): CS
 function damageCreature(s: CState, uid: string, n: number, source: Perm | null): CState {
   const p = find(s, uid);
   if (!p || n <= 0) return s;
+  if (source && protectedFrom(s, p, source)) return log(s, `${pdef(s, p).name} has protection from ${pdef(s, source).name}: the damage is prevented.`);
   let st = setPerm(s, uid, (x) => ({ ...x, damage: x.damage + n, deathtouched: x.deathtouched || (!!source && has(s, source, "Deathtouch")) }));
   if (source && has(s, source, "Lifelink")) st = gainLife(st, source.controller, n);
   return st;
@@ -483,7 +562,8 @@ function tokenDef(e: Effect): CDef {
 
 /* ------------------------------------------------------------------ targets */
 
-const hexproofBlocks = (s: CState, p: Perm, from: Seat, sourceColors: string): boolean => {
+const hexproofBlocks = (s: CState, p: Perm, from: Seat, sourceColors: string, sourceCard?: string): boolean => {
+  if (sourceCard && protectedFrom(s, p, { card: sourceCard })) return true;
   if (p.controller === from) return false;
   if (has(s, p, "Hexproof")) return true;
   for (const k of keywords(s, p)) { const m = /^Hexproof from (\w+)$/.exec(k); if (m) { const letter = Object.entries(COLOR_WORD).find(([, w]) => w === m[1])?.[0]; if (letter && sourceColors.includes(letter)) return true; } }
@@ -496,7 +576,7 @@ export function targetSpecs(effects: Effect[] | undefined): { spec: string; opti
   for (const e of effects ?? []) {
     if (e.op === "seq") { out.push(...targetSpecs(e.effects)); continue; }
     for (const t of [e.target, e.target2]) {
-      if (!t || ["self", "equipped", "that", "self_player", "eachOpponent", "eachPlayer"].includes(t)) continue;
+      if (!t || ["self", "equipped", "that", "self_player", "eachOpponent", "eachPlayer", "eachCreatureYou"].includes(t)) continue;
       out.push({ spec: t, optional: !!e.optional || t === "creatureOptional" || t.startsWith("upTo"), max: t === "upToTwoOtherCreaturesYou" ? 2 : 1 });
     }
     if (e.who === "player" || e.who === "opponent") out.push({ spec: e.who, optional: !!e.optional, max: 1 });
@@ -504,9 +584,9 @@ export function targetSpecs(effects: Effect[] | undefined): { spec: string; opti
   return out;
 }
 
-export function candidates(s: CState, spec: string, from: Seat, sourceUid: string | null, sourceColors: string): Target[] {
-  const perms = (pred: (p: Perm) => boolean): Target[] => s.battlefield.filter((p) => pred(p) && !hexproofBlocks(s, p, from, sourceColors)).map((p) => ({ kind: "perm" as const, uid: p.uid }));
-  const seats = (list: Seat[]): Target[] => list.filter((x) => x === from || !hasStatic(s, x, "playerHexproof")).map((seat) => ({ kind: "player" as const, seat }));
+export function candidates(s: CState, spec: string, from: Seat, sourceUid: string | null, sourceColors: string, sourceCard?: string): Target[] {
+  const perms = (pred: (p: Perm) => boolean): Target[] => s.battlefield.filter((p) => pred(p) && !hexproofBlocks(s, p, from, sourceColors, sourceCard)).map((p) => ({ kind: "perm" as const, uid: p.uid }));
+  const seats = (list: Seat[]): Target[] => list.filter((x) => x === from || !hasStatic(s, x, "playerHexproof")).filter((x) => !sourceCard || !playerProtectedFrom(s, x, { card: sourceCard })).map((seat) => ({ kind: "player" as const, seat }));
   const cre = (p: Perm) => isCreature(s, p);
   const other = (p: Perm) => p.uid !== sourceUid;
   const inCombat = (p: Perm) => s.attackers[p.uid] !== undefined || Object.values(s.attackers).some((a) => a.blockers.includes(p.uid));
@@ -517,6 +597,10 @@ export function candidates(s: CState, spec: string, from: Seat, sourceUid: strin
     case "otherAttackingCreatureYou": return perms((p) => cre(p) && p.controller === from && other(p) && s.attackers[p.uid] !== undefined);
     case "creatureOpp": return perms((p) => cre(p) && p.controller !== from);
     case "creatureCombat": return perms((p) => cre(p) && inCombat(p));
+    case "creatureAttacking": return perms((p) => cre(p) && s.attackers[p.uid] !== undefined);
+    case "artifact": return perms((p) => kindOf(s, p) === "artifact");
+    case "artifactOrCreature": return perms((p) => kindOf(s, p) === "artifact" || cre(p));
+    case "otherNonlandPermanent": return perms((p) => !isLand(s, p) && other(p));
     case "creatureTapped": return perms((p) => cre(p) && p.tapped);
     case "flyer": return perms((p) => cre(p) && has(s, p, "Flying"));
     case "any": return [...perms(cre), ...seats(active(s))];
@@ -555,7 +639,7 @@ export function autoTargets(s: CState, effects: Effect[], from: Seat, sourceUid:
   const helpful = (op: string) => ["pump", "counters", "grant", "untap", "gainLife", "draw", "reanimate", "regrow"].includes(op);
   const flat = (list: Effect[]): Effect[] => list.flatMap((e) => (e.op === "seq" ? flat(e.effects ?? []) : [e]));
   for (const e of flat(effects)) {
-    for (const spec of [e.target, e.target2].filter((t): t is string => !!t && !["self", "equipped", "that", "self_player", "eachOpponent", "eachPlayer"].includes(t))) {
+    for (const spec of [e.target, e.target2].filter((t): t is string => !!t && !["self", "equipped", "that", "self_player", "eachOpponent", "eachPlayer", "eachCreatureYou"].includes(t))) {
       let list = candidates(s, spec, from, sourceUid, sourceColors).filter((t) => condOk(s, t, e.cond));
       if (spec !== "any" || e.op !== "damage") list = list.filter((t) => t.kind !== "player" || e.op !== "damage" || true);
       const mine = list.filter((t) => t.kind === "perm" && find(s, t.uid)?.controller === from);
@@ -612,7 +696,15 @@ export function threat(s: CState, seat: Seat): number {
 
 /* ------------------------------------------------------------------ the interpreter */
 
-interface Ctx { source: Perm | null; sourceCard: string; controller: Seat; targets: Target[]; that?: Target; sacrificed?: Perm; wasAttacking?: boolean; destroyedCount?: number }
+/** Puts +1/+1 counters on a permanent and fires "whenever you put counters on this" (once per turn where the card says so). */
+function placeCounters(s: CState, uid: string, n: number): CState {
+  let st = setPerm(s, uid, (x) => ({ ...x, counters: x.counters + n }));
+  const p = find(st, uid);
+  if (p) st = fire(st, "countersOnSelf", { perm: p, seat: p.controller, amount: n });
+  return st;
+}
+
+interface Ctx { source: Perm | null; sourceCard: string; controller: Seat; targets: Target[]; that?: Target; sacrificed?: Perm; wasAttacking?: boolean; destroyedCount?: number; amount?: number; thatPower?: number; thatToughness?: number; thatController?: Seat }
 
 const condition = (s: CState, c: string | undefined, ctx: Ctx): boolean => {
   if (!c) return true;
@@ -628,7 +720,14 @@ const condition = (s: CState, c: string | undefined, ctx: Ctx): boolean => {
     case "you attacked this turn": return player(s, ctx.controller).attackedThisTurn;
     case "a creature died this turn": return s.creatureDiedThisTurn;
     case "an opponent lost life this turn": return opponentsOf(s, ctx.controller).some((o) => player(s, o).lostLifeThisTurn);
-    default: return true;
+    case "that player controls more lands than you": { const t = ctx.that; const seat = t?.kind === "player" ? t.seat : t?.kind === "perm" ? find(s, t.uid)?.controller : undefined; if (!seat) return false; const lands = (x: Seat) => s.battlefield.filter((p) => p.controller === x && isLand(s, p)).length; return lands(seat) > lands(ctx.controller); }
+    default: {
+      let m = /^you gained (\d+) or more life this turn$/.exec(c);
+      if (m) return (player(s, ctx.controller).lifeGainedThisTurn ?? 0) >= Number(m[1]);
+      m = /^you control an? (\w+)$/.exec(c);
+      if (m) { const sub = m[1]!; if (sub === "artifact" || sub === "enchantment") return mine.some((p) => kindOf(s, p) === sub); if (sub === "equipment") return mine.some((p) => isEquipment(pdef(s, p))); return mine.some((p) => isCreature(s, p) && hasSubtype(s, p, sub)); }
+      return true;
+    }
   }
 };
 
@@ -638,13 +737,15 @@ const takeTarget = (ctx: Ctx, spec: string | undefined): Target | null => {
   if (spec === "equipped") return ctx.source?.attachedTo ? { kind: "perm", uid: ctx.source.attachedTo } : null;
   if (spec === "that") return ctx.that ?? null;
   if (spec === "self_player") return { kind: "player", seat: ctx.controller };
-  if (spec === "eachOpponent" || spec === "eachPlayer") return null;
+  if (spec === "eachOpponent" || spec === "eachPlayer" || spec === "eachCreatureYou") return null;
   const t = ctx.targets.shift();
   if (t) ctx.that = t;
   return t ?? null;
 };
+/** Remembers a targeted permanent's power, toughness and controller before it leaves, for "its controller gains life equal to its power". */
+const remember = (s: CState, ctx: Ctx, p: Perm) => { ctx.thatPower = power(s, p); ctx.thatToughness = toughness(s, p); ctx.thatController = p.controller; };
 
-const filterPerms = (s: CState, filter: string | undefined, ctx: Ctx): Perm[] => {
+const filterPerms = (s: CState, filter: string | undefined, ctx: Ctx, e_subtype?: string): Perm[] => {
   const me = ctx.controller;
   switch (filter) {
     case "creaturesYou": return s.battlefield.filter((p) => p.controller === me && isCreature(s, p));
@@ -654,6 +755,7 @@ const filterPerms = (s: CState, filter: string | undefined, ctx: Ctx): Perm[] =>
     case "attacking": return s.battlefield.filter((p) => s.attackers[p.uid] !== undefined);
     case "permanentsYou": return s.battlefield.filter((p) => p.controller === me);
     case "counteredCreaturesYou": return s.battlefield.filter((p) => p.controller === me && isCreature(s, p) && p.counters > 0);
+    case "subtypeYou": return s.battlefield.filter((p) => p.controller === me && isCreature(s, p) && hasSubtype(s, p, e_subtype ?? ""));
     default: return s.battlefield.filter((p) => isCreature(s, p));
   }
 };
@@ -664,7 +766,7 @@ const whoSeats = (s: CState, who: string | undefined, ctx: Ctx): Seat[] => {
     case "eachPlayer": return active(s);
     case "player": case "opponent": { const t = ctx.targets.shift(); return t?.kind === "player" ? [t.seat] : []; }
     case "that": return ctx.that?.kind === "player" ? [ctx.that.seat] : ctx.that?.kind === "perm" ? [find(s, ctx.that.uid)?.controller ?? ctx.controller] : [];
-    case "thatController": return ctx.that?.kind === "perm" ? [find(s, ctx.that.uid)?.controller ?? ctx.controller] : ctx.that?.kind === "player" ? [ctx.that.seat] : [ctx.controller];
+    case "thatController": return ctx.that?.kind === "perm" ? [find(s, ctx.that.uid)?.controller ?? ctx.thatController ?? ctx.controller] : ctx.that?.kind === "player" ? [ctx.that.seat] : [ctx.thatController ?? ctx.controller];
     default: return [ctx.controller];
   }
 };
@@ -677,6 +779,8 @@ const wantsOptional = (s: CState, e: Effect, ctx: Ctx): boolean => {
   if (e.op === "sacrificeAnother") { const others = s.battlefield.filter((p) => p.controller === me && isCreature(s, p) && p.uid !== ctx.source?.uid); const cheapest = [...others].sort((a, b) => power(s, a) + toughness(s, a) - power(s, b) - toughness(s, b))[0]; return !!cheapest && others.length >= 2 && power(s, cheapest) + toughness(s, cheapest) <= 3; }
   if (e.op === "sacrificeLand") return s.battlefield.filter((p) => p.controller === me && isLand(s, p)).length >= 3;
   if (e.op === "discard") return player(s, me).hand.length >= 2;
+  if (e.op === "pay") return !!e.then && canAfford(s, me, e.cost ?? "");
+  if (e.op === "putLandFromHand") return player(s, me).hand.some((u) => def(s, s.cards[u] ?? "").kind === "land");
   if (e.target && e.target !== "self") return ctx.targets.length > 0;
   return true;
 };
@@ -723,12 +827,15 @@ function runOne(s: CState, e: Effect, ctx: Ctx): CState {
     case "grantAll": { const list = filterPerms(st, e.filter, ctx); for (const p of list) st = setPerm(st, p.uid, (x) => ({ ...x, granted: [...x.granted, ...(e.keywords ?? [])] })); return list.length ? log(st, `${srcName}: ${list.length} permanent${list.length === 1 ? "" : "s"} gain ${(e.keywords ?? []).join(", ").toLowerCase()} until end of turn.`) : st; }
     case "counters": {
       if (e.target === "upToTwoOtherCreaturesYou") { let did = 0; while (ctx.targets.length && did < 2) { const p = permTarget(e.target); if (p) { st = setPerm(st, p.uid, (x) => ({ ...x, counters: x.counters + (e.n ?? 1) })); did++; st = log(st, `${pdef(st, p).name} gets a +1/+1 counter.`); } } return st; }
+      if (e.target === "eachCreatureYou") { const list = filterPerms(st, "creaturesYou", ctx); for (const p of list) st = placeCounters(st, p.uid, e.n ?? 1); return list.length ? log(st, `${srcName}: each of ${poss(st, me)} creatures gets ${(e.n ?? 1) === 1 ? "a +1/+1 counter" : `${e.n} +1/+1 counters`}.`) : st; }
       const p = permTarget(e.target); if (!p) return st;
-      st = setPerm(st, p.uid, (x) => ({ ...x, counters: x.counters + (e.n ?? 1) }));
+      const n = e.per === "lifeGained" ? ctx.amount ?? 0 : e.n ?? 1;
+      if (n <= 0) return st;
+      st = placeCounters(st, p.uid, n);
       const after = find(st, p.uid)!;
-      return log(st, `${pdef(st, p).name} gets ${(e.n ?? 1) === 1 ? "a +1/+1 counter" : `${e.n} +1/+1 counters`} (now ${power(st, after)}/${toughness(st, after)}).`);
+      return log(st, `${pdef(st, p).name} gets ${n === 1 ? "a +1/+1 counter" : `${n} +1/+1 counters`} (now ${power(st, after)}/${toughness(st, after)}).`);
     }
-    case "countersAll": { const list = filterPerms(st, e.filter, ctx); for (const p of list) st = setPerm(st, p.uid, (x) => ({ ...x, counters: x.counters + (e.n ?? 1) })); return list.length ? log(st, `${srcName}: each of ${poss(st, me)} ${list.length} creature${list.length === 1 ? "" : "s"} gets a +1/+1 counter.`) : st; }
+    case "countersAll": { const list = filterPerms(st, e.filter, ctx, e.subtype); for (const p of list) st = placeCounters(st, p.uid, e.n ?? 1); return list.length ? log(st, `${srcName}: each of ${poss(st, me)} ${list.length} creature${list.length === 1 ? "" : "s"} gets a +1/+1 counter.`) : st; }
     case "damage": {
       const n = e.n ?? 0;
       if (e.target === "eachOpponent") { for (const o of opponentsOf(st, me)) { st = log(st, `${srcName} deals ${n} damage to ${nameOf(st, o).toLowerCase() === "you" ? "you" : nameOf(st, o)}.`); st = damagePlayer(st, o, n, src); } return checkState(st); }
@@ -743,12 +850,14 @@ function runOne(s: CState, e: Effect, ctx: Ctx): CState {
       const p = permTarget(e.target); if (!p) return st;
       if (e.cond && !condOk(st, { kind: "perm", uid: p.uid }, e.cond)) return st;
       if (has(st, p, "Indestructible")) return log(st, `${pdef(st, p).name} is indestructible, so ${srcName} can't destroy it.`);
+      remember(st, ctx, p);
       ctx.destroyedCount = (ctx.destroyedCount ?? 0) + 1;
       return checkState(die(st, p.uid, `${srcName} destroys ${pdef(st, p).name}.`));
     }
     case "wipe": {
-      const list = st.battlefield.filter((p) => isCreature(st, p));
-      st = log(st, `${srcName}: every creature is destroyed.`);
+      const what = e.what ?? "creatures";
+      const list = st.battlefield.filter((p) => what === "artifacts" ? kindOf(st, p) === "artifact" : what === "enchantments" ? kindOf(st, p) === "enchantment" : what === "tappedCreatures" ? isCreature(st, p) && p.tapped : isCreature(st, p) && (e.maxMv === undefined || manaValue(pdef(st, p).cost) <= e.maxMv) && (e.minMv === undefined || manaValue(pdef(st, p).cost) >= e.minMv));
+      st = log(st, `${srcName}: ${what === "artifacts" ? "every artifact" : what === "enchantments" ? "every enchantment" : what === "tappedCreatures" ? "every tapped creature" : e.maxMv !== undefined ? `every creature with mana value ${e.maxMv} or less` : e.minMv !== undefined ? `every creature with mana value ${e.minMv} or greater` : "every creature"} is destroyed.`);
       let count = 0;
       for (const p of list) { if (has(st, p, "Indestructible")) { st = log(st, `${pdef(st, p).name} is indestructible and stays.`); continue; } count++; st = die(st, p.uid, `${pdef(st, p).name} is destroyed.`); }
       ctx.destroyedCount = count;
@@ -757,7 +866,52 @@ function runOne(s: CState, e: Effect, ctx: Ctx): CState {
     case "exile": {
       const p = permTarget(e.target); if (!p) return st;
       if (e.cond && !condOk(st, { kind: "perm", uid: p.uid }, e.cond)) return st;
+      remember(st, ctx, p);
       return checkState(leave(st, p.uid, "exile", `${srcName} exiles ${pdef(st, p).name}.`));
+    }
+    case "noop": return st;
+    case "pay": { const paid = pay(st, me, e.cost ?? ""); if (!paid) return st; return log(paid, `${nameOf(st, me)} ${verb(st, me, "pay", "pays")} {${e.cost}} for ${srcName}.`); }
+    case "monarch": { st = { ...st, monarch: me }; return log(st, `${nameOf(st, me)} ${verb(st, me, "become", "becomes")} the monarch: a card at the end of each of ${poss(st, me)} turns, until someone deals combat damage to ${me === st.human ? "you" : "them"}.`); }
+    case "investigate": {
+      const n = e.per === "opponentsWithMoreCards" ? opponentsOf(st, me).filter((o) => player(st, o).hand.length > player(st, me).hand.length).length : e.n ?? 1;
+      const clue: CDef = { id: "token:clue", name: "Clue", kind: "artifact", type: "Token Artifact — Clue", cost: "", colors: "", text: "{2}, Sacrifice this artifact: Draw a card.", artist: "", num: "", rarity: "token", legendary: false, token: true, abilities: [{ kind: "activated", cost: { mana: "2", sacrificeSelf: true }, effects: [{ op: "draw", who: "you", n: 1 }] }] };
+      if (!st.tokens[clue.id]) st = { ...st, tokens: { ...st.tokens, [clue.id]: clue } };
+      if (n <= 0) return st;
+      st = log(st, `${srcName}: ${nameOf(st, me)} investigate${verb(st, me, "", "s")}${n > 1 ? ` ${n} times` : ""} (a Clue token: {2}, sacrifice it: draw a card).`);
+      for (let i = 0; i < n; i++) st = enter(st, clue.id, me, { isToken: true });
+      return st;
+    }
+    case "putLandFromHand": {
+      const pl = player(st, me);
+      const uid = pl.hand.find((u) => def(st, st.cards[u] ?? "").kind === "land");
+      if (!uid) return st;
+      const card = st.cards[uid]!;
+      st = setPlayer(st, me, { hand: pl.hand.filter((u) => u !== uid) });
+      st = log(st, `${srcName}: ${nameOf(st, me)} put${verb(st, me, "", "s")} ${def(st, card).name} from hand onto the battlefield.`);
+      return enter(st, card, me, { uid });
+    }
+    case "topToHandIf": {
+      const pl = player(st, me);
+      const top = pl.library[0];
+      if (!top) return st;
+      const chosen = ctx.source?.chosen;
+      const d = def(st, top);
+      if (d.kind === "creature" && chosen && subtypesOf(d).includes(chosen)) {
+        const [n2, uid] = nextUid(st, "h");
+        st = setPlayer(n2, me, { library: pl.library.slice(1), hand: [...pl.hand, uid] });
+        st = { ...st, cards: { ...st.cards, [uid]: top } };
+        return log(st, `${srcName}: the top card is ${d.name}, a ${chosen}, so ${nameOf(st, me)} put${verb(st, me, "", "s")} it into ${poss(st, me)} hand.`);
+      }
+      return log(st, `${srcName}: the top card isn't a ${chosen ?? "creature of the chosen type"}, so it stays.`);
+    }
+    case "regrowSelf": {
+      const pl = player(st, me);
+      const idx = pl.graveyard.lastIndexOf(ctx.sourceCard);
+      if (idx < 0) return st;
+      const [n2, uid] = nextUid(st, "h");
+      st = setPlayer(n2, me, { graveyard: pl.graveyard.filter((_, i) => i !== idx), hand: [...pl.hand, uid] });
+      st = { ...st, cards: { ...st.cards, [uid]: ctx.sourceCard } };
+      return log(st, `${srcName} returns from the graveyard to ${poss(st, me)} hand.`);
     }
     case "exileUntilLeaves": {
       const p = permTarget(e.target); if (!p || !src) return st;
@@ -787,6 +941,8 @@ function runOne(s: CState, e: Effect, ctx: Ctx): CState {
       else if (e.per === "gates") n = (e.n ?? 1) * st.battlefield.filter((p) => p.controller === me && hasSubtype(st, p, "Gate")).length;
       else if (e.per === "sacrificedToughness") n = ctx.sacrificed ? toughness(s, ctx.sacrificed) : 0;
       else if (e.per === "destroyedThisWay") n = ctx.destroyedCount ?? 0;
+      else if (e.per === "thatPower") n = ctx.thatPower ?? 0;
+      else if (e.per === "thatToughness") n = ctx.thatToughness ?? 0;
       for (const seat of whoSeats(st, e.who, ctx)) st = gainLife(st, seat, n);
       return st;
     }
@@ -805,10 +961,15 @@ function runOne(s: CState, e: Effect, ctx: Ctx): CState {
     case "surveil": return surveil(st, me, e.n ?? 1, srcName);
     case "mill": { for (const seat of whoSeats(st, e.who, ctx)) { const pl = player(st, seat); const n = Math.min(e.n ?? 1, pl.library.length); st = setPlayer(st, seat, { library: pl.library.slice(n), graveyard: [...pl.graveyard, ...pl.library.slice(0, n)] }); st = log(st, `${nameOf(st, seat)} mill${verb(st, seat, "", "s")} ${n} card${n === 1 ? "" : "s"} (library to graveyard).`); } return st; }
     case "token": {
-      const d = tokenDef(e);
-      if (!st.tokens[d.id]) st = { ...st, tokens: { ...st.tokens, [d.id]: d } };
+      let spec: Effect = e;
+      if (e.monarchAlt && st.monarch === me) spec = { ...e, ...e.monarchAlt };
       const owners = e.who === "thatController" ? whoSeats(st, "thatController", ctx) : [me];
       for (const owner of owners) {
+        let d = tokenDef(spec);
+        // "If one or more creature tokens would be created under your control, that many 4/4 Angels are created instead."
+        const rep = d.kind === "creature" ? st.battlefield.find((p) => p.controller === owner && statics(st, p).some((a) => a.op === "tokenReplace")) : undefined;
+        if (rep) { const a = statics(st, rep).find((x) => x.op === "tokenReplace")!; d = tokenDef({ op: "token", n: e.n ?? 1, p: a.p ?? 0, t: a.t ?? 0, color: a.color ?? "white", subtype: a.subtype ?? "Angel", keywords: a.keywords ?? [] }); }
+        if (!st.tokens[d.id]) st = { ...st, tokens: { ...st.tokens, [d.id]: d } };
         const n = e.n ?? 1;
         st = log(st, `${srcName}: ${nameOf(st, owner)} ${verb(st, owner, "create", "creates")} ${n === 1 ? "a" : n} ${d.kind === "creature" ? `${d.power}/${d.toughness} ${d.name} creature token${n === 1 ? "" : "s"}` : `${d.name} token${n === 1 ? "" : "s"}`}.`);
         for (let i = 0; i < n; i++) st = enter(st, d.id, owner, { isToken: true });
@@ -850,6 +1011,7 @@ function runOne(s: CState, e: Effect, ctx: Ctx): CState {
     case "rampTapped": {
       const want = Math.min(e.n ?? 1, 2);
       let got = 0;
+      if (e.who === "thatController") { const seat = whoSeats(st, "thatController", ctx)[0]; if (seat && seat !== me) { const sub: Ctx = { ...ctx, controller: seat, source: null, targets: [] }; const { who: _w, ...rest } = e; void _w; return run(st, [rest], sub); } }
       const needColors = [...new Set(st.battlefield.filter((p) => p.controller === me).flatMap((p) => pdef(st, p).colors.split("")))];
       const identity = def(st, player(st, me).commandZone.card).colors;
       for (let k = 0; k < want; k++) {
@@ -857,7 +1019,8 @@ function runOne(s: CState, e: Effect, ctx: Ctx): CState {
         const lib = player(st, me).library;
         const basics = lib.filter((c) => def(st, c).type.startsWith("Basic Land"));
         const missing = basics.find((c) => { const col = def(st, c).abilities[0]?.effects?.[0]?.colors?.[0] ?? ""; return identity.includes(col) && !needColors.includes(col); });
-        const pick = missing ?? basics[0];
+        const sameAs = e.sameType && got > 0 ? st.battlefield.filter((p) => p.controller === me).slice(-1)[0] : undefined;
+        const pick = sameAs ? basics.find((c) => def(st, c).type === pdef(st, sameAs).type) : missing ?? basics[0];
         if (!pick) break;
         const idx = lib.indexOf(pick);
         st = setPlayer(st, me, { library: lib.filter((_, i) => i !== idx) });
@@ -871,7 +1034,7 @@ function runOne(s: CState, e: Effect, ctx: Ctx): CState {
     }
     case "addMana": {
       const pool = { ...player(st, me).pool };
-      const c = (e.colors?.[0] ?? "G") as Color;
+      const c = ((e.colors?.[0] === ("identity" as string) ? def(st, player(st, me).commandZone.card).colors[0] : e.colors?.[0]) ?? "C") as Color | "C";
       pool[c] = (pool[c] ?? 0) + (e.n ?? 1);
       return setPlayer(st, me, { pool });
     }
@@ -900,14 +1063,19 @@ function runOne(s: CState, e: Effect, ctx: Ctx): CState {
       return checkState(leave(st, v.uid, "graveyard", `${nameOf(st, me)} sacrifice${verb(st, me, "", "s")} ${pdef(st, v).name} to ${srcName}.`));
     }
     case "fetchLandToHand": {
-      const pl = player(st, me);
-      const pick = pl.library.find((c) => def(st, c).kind === "land" && (!e.basic || def(st, c).type.startsWith("Basic Land")));
-      if (!pick) return log(st, `${srcName}: no land to find.`);
-      const idx = pl.library.indexOf(pick);
-      const [n2, uid] = nextUid(st, "h");
-      st = setPlayer(n2, me, { library: pl.library.filter((_, i) => i !== idx), hand: [...pl.hand, uid] });
-      st = { ...st, cards: { ...st.cards, [uid]: pick } };
-      st = log(st, `${srcName}: ${nameOf(st, me)} search${verb(st, me, "", "es")} the library for ${def(st, pick).name} and put${verb(st, me, "", "s")} it into ${poss(st, me)} hand.`);
+      let found = 0;
+      for (let k = 0; k < (e.n ?? 1); k++) {
+        const pl = player(st, me);
+        const pick = pl.library.find((c) => def(st, c).kind === "land" && (!e.basic || def(st, c).type.startsWith("Basic Land")) && (!e.basicType || def(st, c).type.includes(e.basicType)));
+        if (!pick) break;
+        const idx = pl.library.indexOf(pick);
+        const [n2, uid] = nextUid(st, "h");
+        st = setPlayer(n2, me, { library: pl.library.filter((_, i) => i !== idx), hand: [...pl.hand, uid] });
+        st = { ...st, cards: { ...st.cards, [uid]: pick } };
+        st = log(st, `${srcName}: ${nameOf(st, me)} search${verb(st, me, "", "es")} the library for ${def(st, pick).name} and put${verb(st, me, "", "s")} it into ${poss(st, me)} hand.`);
+        found++;
+      }
+      if (!found) return log(st, `${srcName}: no land to find.`);
       const [n3, shuffled] = shuffleIn(st, player(st, me).library);
       return setPlayer(n3, me, { library: shuffled });
     }
@@ -957,7 +1125,7 @@ function surveil(s: CState, seat: Seat, n: number, why: string): CState {
 
 /* ------------------------------------------------------------------ triggers (CR 603) */
 
-interface TriggerCtx { perm?: Perm; seat?: Seat; amount?: number; wasAttacking?: boolean; attackers?: string[]; spellKind?: string; defender?: Seat }
+interface TriggerCtx { perm?: Perm; seat?: Seat; amount?: number; wasAttacking?: boolean; attackers?: string[]; spellKind?: string; spellColors?: string; defender?: Seat; defenders?: Seat[] }
 
 function matches(s: CState, holder: Perm, a: Ability, when: string, c: TriggerCtx): boolean {
   const w = a.when ?? "";
@@ -968,7 +1136,7 @@ function matches(s: CState, holder: Perm, a: Ability, when: string, c: TriggerCt
     case "creatureEnters": {
       if (!c.perm || self) return false;
       if (w === "anotherCreatureEnters" || w === "creatureYouEnters") return c.perm.controller === holder.controller;
-      if (w === "anotherSubtypeEnters") return c.perm.controller === holder.controller && hasSubtype(s, c.perm, a.subtype ?? "creature");
+      if (w === "anotherSubtypeEnters") return c.perm.controller === holder.controller && (hasSubtype(s, c.perm, a.subtype ?? "creature") || (!!a.subtype2 && hasSubtype(s, c.perm, a.subtype2)));
       if (w === "smallCreatureEnters") return c.perm.controller === holder.controller && power(s, c.perm) <= 2;
       if (w === "oppCreatureEnters") return c.perm.controller !== holder.controller;
       if (w === "bigCreatureEnters") return c.perm.controller === holder.controller && power(s, c.perm) >= 4;
@@ -977,23 +1145,28 @@ function matches(s: CState, holder: Perm, a: Ability, when: string, c: TriggerCt
     case "gateEnters": return w === "gateEnters" && !!c.perm && c.perm.controller === holder.controller && hasSubtype(s, c.perm, "Gate");
     case "targetedByYourSpell": return self && w === "targetedByYourSpell";
     case "nontokenCreatureEnters": return w === "selfOrAnotherSubtypeEnters" && !!c.perm && c.perm.controller === holder.controller && (self || hasSubtype(s, c.perm, a.subtype ?? "creature"));
+    case "subtypeYouEnters": return w === "subtypeYouEnters" && !!c.perm && c.perm.controller === holder.controller && hasSubtype(s, c.perm, a.subtype ?? "");
+    case "countersOnSelf": return self && w === "countersOnSelf:once" && !(holder.firedThisTurn ?? []).includes(w);
+    case "eachEndStep": return w === "eachEndStep";
+    case "oppLandEnters": return w === "oppLandEnters" && !!c.perm && c.perm.controller !== holder.controller;
     case "dies": {
       if (!c.perm) return false;
       const token = !!def(s, c.perm.card).token;
       if (w === "anotherNontokenCreatureDies") return !self && !token;
       if (self) return w === "dies" || w === "etbOrDies" || w === "selfOrAnotherDies";
       if (c.perm.controller !== holder.controller) return false;
-      return w === "selfOrAnotherDies" || w === "creatureYouDies" || (w === "nontokenCreatureYouDies" && !token);
+      return w === "selfOrAnotherDies" || w === "creatureYouDies" || w === "anotherCreatureYouDies" || (w === "nontokenCreatureYouDies" && !token) || (w === "subtypeYouDies" && hasSubtype(s, c.perm, a.subtype ?? ""));
     }
     case "landfall": return w === "landfall" && mineEvent;
     case "attacks": return self && (w === "attacks" || w === "etbOrAttacks" || (w === "attacks:power4" && s.battlefield.some((p) => p.controller === holder.controller && isCreature(s, p) && power(s, p) >= 4)));
-    case "youAttack": return mineEvent && (w === "youAttack" || (w === "youAttack3" && (c.attackers?.length ?? 0) >= 3));
+    case "youAttack": return mineEvent && (w === "youAttack" || (w === "youAttack3" && (c.attackers?.length ?? 0) >= 3) || (w === "youAttack2" && (c.attackers?.length ?? 0) >= 2));
+    case "otherAttacks2": return !mineEvent && w === "otherAttacks2NotMe" && (c.attackers?.length ?? 0) >= 2 && !(c.defenders ?? []).includes(holder.controller);
     case "creatureAttacks": return w === "whiteCreatureAttacks" && !!c.perm && c.perm.controller === holder.controller && colorsOf(s, c.perm).includes("W");
     case "lifeGain": return w === "lifeGain" && mineEvent;
     case "firstLifeGain": return w === "firstLifeGain" && mineEvent;
     case "drawCard": return w === "drawCard" && mineEvent;
     case "upkeep": case "endStep": case "beginCombat": return mineEvent && (w === when || (when === "endStep" && w === "endStep:raid" && player(s, holder.controller).attackedThisTurn));
-    case "cast": return mineEvent && ((w === "castSpell") || (w === "castCreature" && c.spellKind === "creature") || (w === "castNoncreature" && c.spellKind !== "creature") || (w === "castInstantSorcery" && (c.spellKind === "instant" || c.spellKind === "sorcery")));
+    case "cast": return mineEvent && ((w === "castSpell") || (w === "castCreature" && c.spellKind === "creature") || (w === "castNoncreature" && c.spellKind !== "creature") || (w === "castInstantSorcery" && (c.spellKind === "instant" || c.spellKind === "sorcery")) || (w === "castWhiteSpell" && (c.spellColors ?? "").includes("W")));
     case "combatDamageToPlayer": return self && w === "combatDamageToPlayer";
     case "blocked": return self && w === "blocked";
     case "blocks": return self && w === "blocks";
@@ -1012,6 +1185,8 @@ export function fire(s: CState, when: string, c: TriggerCtx): CState {
     for (const a of triggers(st, holder)) {
       if (!matches(st, holder, a, when, c)) continue;
       if (a.when === "mirrorLifeLoss") continue;
+      if (a.when === "otherAttacks2NotMe") { if (c.seat) { st = log(st, `${pdef(st, holder).name} triggers: ${nameOf(st, c.seat)} attacked with two or more creatures and none came at ${holder.controller === st.human ? "you" : nameOf(st, holder.controller)}.`); st = drawCards(st, c.seat, 1); } continue; }
+      if (a.when === "countersOnSelf:once") st = setPerm(st, holder.uid, (x) => ({ ...x, firedThisTurn: [...(x.firedThisTurn ?? []), a.when!] }));
       const d = pdef(st, holder);
       const specs = targetSpecs(a.effects);
       let targets: Target[] = [];
@@ -1021,7 +1196,8 @@ export function fire(s: CState, when: string, c: TriggerCtx): CState {
         targets = t;
       }
       st = log(st, `${d.name} triggers${c.perm && c.perm.uid !== holder.uid ? ` (${pdef(st, c.perm).name})` : ""}.`);
-      const ctx: Ctx = { source: find(st, holder.uid) ?? holder, sourceCard: holder.card, controller: holder.controller, targets, wasAttacking: c.wasAttacking ?? false };
+      const ctx: Ctx = { source: find(st, holder.uid) ?? holder, sourceCard: holder.card, controller: holder.controller, targets, wasAttacking: c.wasAttacking ?? false, ...(c.amount !== undefined ? { amount: c.amount } : {}) };
+      if (c.perm && c.perm.uid !== holder.uid) { ctx.that = { kind: "perm", uid: c.perm.uid }; ctx.thatToughness = toughness(st, c.perm); ctx.thatPower = power(st, c.perm); ctx.thatController = c.perm.controller; }
       st = run(st, a.effects ?? [], ctx);
       if (st.winner) return st;
     }
@@ -1087,7 +1263,8 @@ export function eliminate(s: CState, seat: Seat, reason: string): CState {
 
 export function beginTurn(s: CState, seat: Seat): CState {
   let st: CState = { ...s, turn: seat, step: "main1", turnNumber: s.turnNumber + 1, attackers: {}, selectedAttackers: [], pendingBlocker: null, blocksDone: [], pending: null, creatureDiedThisTurn: false };
-  st = { ...st, players: Object.fromEntries(Object.entries(st.players).map(([k, p]) => [k, { ...p, pool: {}, gainedLifeThisTurn: false, lostLifeThisTurn: false, attackedThisTurn: false }])) };
+  st = { ...st, players: Object.fromEntries(Object.entries(st.players).map(([k, p]) => [k, { ...p, pool: {}, gainedLifeThisTurn: false, lostLifeThisTurn: false, attackedThisTurn: false, lifeGainedThisTurn: 0 }])) };
+  st = { ...st, battlefield: st.battlefield.map((p) => (p.firedThisTurn?.length ? { ...p, firedThisTurn: [] } : p)) };
   st = setPlayer(st, seat, { landsPlayed: 0 });
   st = { ...st, battlefield: st.battlefield.map((p) => (p.controller === seat ? { ...p, tapped: false, summoningSick: false } : p)) };
   st = log(st, `— Turn ${st.turnNumber}: ${seat === st.human ? "your turn" : `${player(st, seat).name}'s turn`}. ${seat === st.human ? "Your" : "Their"} permanents untap.`);
@@ -1107,6 +1284,8 @@ function cleanup(s: CState): CState {
 export function endTurnFor(s: CState, seat: Seat): CState {
   let st: CState = { ...s, step: "end", attackers: {}, selectedAttackers: [], pendingBlocker: null, pending: null };
   st = fire(st, "endStep", { seat });
+  st = fire(st, "eachEndStep", { seat });
+  if (st.monarch === seat && !player(st, seat).out) { st = log(st, `${nameOf(st, seat)} ${verb(st, seat, "are", "is")} the monarch and draw${verb(st, seat, "", "s")} a card.`); st = drawCards(st, seat, 1); }
   st = checkState(st);
   if (st.winner) return st;
   st = cleanup(st);
@@ -1127,7 +1306,7 @@ export function playLandFor(s: CState, seat: Seat, uid: string): CState {
 export const canPlayLand = (s: CState, seat: Seat): boolean => s.turn === seat && isMain(s) && !s.stack.length && player(s, seat).landsPlayed < (hasStatic(s, seat, "extraLand") ? 2 : 1);
 
 /** Casts a spell: pays, moves it to the stack, fires cast triggers. Targets must already be chosen. */
-export function castFor(s: CState, seat: Seat, source: { kind: "hand"; uid: string } | { kind: "commander" }, targets: Target[]): CState | null {
+export function castFor(s: CState, seat: Seat, source: { kind: "hand"; uid: string } | { kind: "commander" }, targets: Target[], modes?: number[]): CState | null {
   const pl = player(s, seat);
   const card = source.kind === "hand" ? s.cards[source.uid] ?? "" : pl.commandZone.card;
   const d = def(s, card);
@@ -1150,11 +1329,11 @@ export function castFor(s: CState, seat: Seat, source: { kind: "hand"; uid: stri
   let uid: string;
   if (source.kind === "hand") { uid = source.uid; st = setPlayer(st, seat, { hand: player(st, seat).hand.filter((u) => u !== uid) }); }
   else { [st, uid] = nextUid(st, "c"); st = setPlayer(st, seat, { commandZone: { ...player(st, seat).commandZone, inZone: false, casts: player(st, seat).commandZone.casts + 1 } }); }
-  const spell: Spell = { uid, card, caster: seat, targets, ...(source.kind === "commander" ? { fromCommandZone: true } : {}) };
+  const spell: Spell = { uid, card, caster: seat, targets, ...(source.kind === "commander" ? { fromCommandZone: true } : {}), ...(modes ? { modes } : {}) };
   st = { ...st, stack: [...st.stack, spell] };
   const tnames = targets.map((t) => (t.kind === "player" ? (t.seat === st.human ? "you" : nameOf(st, t.seat)) : t.kind === "perm" ? def(st, find(st, t.uid)?.card ?? "").name : def(st, st.stack.find((x) => x.uid === t.uid)?.card ?? "").name));
   st = log(st, `${nameOf(st, seat)} cast${verb(st, seat, "", "s")} ${d.name}${source.kind === "commander" ? " from the command zone" : ""}${cost ? ` for {${cost}}` : ""}${tnames.length ? `, targeting ${tnames.join(" and ")}` : ""}.`);
-  st = fire(st, "cast", { seat, spellKind: d.kind });
+  st = fire(st, "cast", { seat, spellKind: d.kind, spellColors: d.colors });
   for (const t of targets) if (t.kind === "perm") { const tp = find(st, t.uid); if (tp && tp.controller === seat) st = fire(st, "targetedByYourSpell", { perm: tp, seat }); }
   // Prowess: "Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn."
   if (d.kind !== "creature") for (const p of st.battlefield) if (p.controller === seat && has(st, p, "Prowess")) { st = setPerm(st, p.uid, (x) => ({ ...x, pump: { p: x.pump.p + 1, t: x.pump.t + 1 } })); st = log(st, `Prowess: ${pdef(st, p).name} gets +1/+1 until end of turn.`); }
@@ -1181,9 +1360,11 @@ export function resolveTop(s: CState): CState {
   }
   // Instants and sorceries.
   const spellAbility = d.abilities.find((a) => a.kind === "spell");
+  const modal = d.abilities.find((a) => a.kind === "modal");
   st = setPlayer(st, item.caster, { graveyard: [...player(st, item.caster).graveyard, item.card] });
   st = log(st, `${d.name} resolves.`);
   if (spellAbility) st = run(st, spellAbility.effects ?? [], ctx);
+  if (modal) for (const i of item.modes ?? []) { const effects = modal.choices?.[i]; if (effects) st = run(st, effects, ctx); }
   return checkState(st);
 }
 
@@ -1245,9 +1426,12 @@ export const canAttack = (s: CState, p: Perm): boolean => p.controller === s.tur
 export function canBlock(s: CState, blocker: Perm, attacker: Perm): boolean {
   if (!isCreature(s, blocker) || blocker.tapped || blocker.bonus.pacified || blocker.bonus.cantBlock || blocker.cantBlockEOT) return false;
   if (has(s, attacker, "Unblockable")) return false;
+  if (protectedFrom(s, attacker, blocker)) return false;
   if (has(s, attacker, "Flying") && !has(s, blocker, "Flying") && !has(s, blocker, "Reach")) return false;
   if (blocker.bonus.blockOnlyFlyers && !has(s, attacker, "Flying")) return false;
   if (attacker.bonus.evasion === "power2" && power(s, blocker) <= 2) return false;
+  const big = /^powerAtLeast(\d+)$/.exec(attacker.bonus.evasion ?? "");
+  if (big && power(s, blocker) >= Number(big[1])) return false;
   return true;
 }
 
@@ -1274,7 +1458,8 @@ export function attackWith(s: CState, attackers: Record<string, Seat>): CState {
   const byDefender = new Map<Seat, string[]>();
   for (const uid of list) byDefender.set(rec[uid]!.defender, [...(byDefender.get(rec[uid]!.defender) ?? []), pdef(st, find(st, uid)!).name]);
   for (const [dfd, names] of byDefender) st = log(st, `${nameOf(st, st.turn)} attack${verb(st, st.turn, "", "s")} ${dfd === st.human ? "you" : nameOf(st, dfd)} with ${names.join(", ")}.`);
-  st = fire(st, "youAttack", { seat: st.turn, attackers: list });
+  st = fire(st, "youAttack", { seat: st.turn, attackers: list, defenders: [...byDefender.keys()] });
+  st = fire(st, "otherAttacks2", { seat: st.turn, attackers: list, defenders: [...byDefender.keys()] });
   for (const uid of list) { const p = find(st, uid); if (!p) continue; st = fire(st, "attacks", { perm: p, seat: st.turn }); st = fire(st, "creatureAttacks", { perm: p, seat: st.turn }); }
   return checkState(st);
 }
@@ -1338,6 +1523,7 @@ function combatDamage(s: CState, firstStrikeOnly: boolean): CState {
       st = setPlayer(st, hit.seat, { commanderDamage: { ...pl.commanderDamage, [hit.from.card]: total } });
       st = log(st, `Commander damage from ${pdef(st, hit.from).name} to ${hit.seat === st.human ? "you" : nameOf(st, hit.seat)}: ${total} of 21.`);
     }
+    if (st.monarch === hit.seat && hit.from.controller !== hit.seat) { st = { ...st, monarch: hit.from.controller }; st = log(st, `${nameOf(st, hit.from.controller)} ${verb(st, hit.from.controller, "take", "takes")} the monarchy from ${nameOf(st, hit.seat)}.`); }
     st = fire(st, "combatDamageToPlayer", { perm: hit.from, seat: hit.from.controller, defender: hit.seat });
   }
   return checkState(st);
@@ -1400,7 +1586,7 @@ function finishTargeting(s: CState, pend: Pending): CState {
     const r = activateFor(st, me, pend.source.uid, pend.source.index, targets);
     return r ?? refuse(st, `${pend.cardName} can't be activated right now.`);
   }
-  const r = castFor(st, me, pend.source, targets);
+  const r = castFor(st, me, pend.source, targets, pend.modes?.picked);
   return r ?? refuse(st, `You can't pay for ${pend.cardName} right now.`);
 }
 
@@ -1414,6 +1600,19 @@ export function reduce(state: CState, action: Action): CState {
   if (s.pending) {
     const pend = s.pending;
     if (action.type === "cancelTarget") return log({ ...s, pending: null }, `You put ${pend.cardName} back.`);
+    if (pend.modes && pend.modes.picked.length < pend.modes.n) {
+      if (action.type !== "chooseMode") return refuse(s, `Choose ${pend.modes.n === 1 ? "a mode" : `${pend.modes.n} modes`} for ${pend.cardName} first, or cancel it.`);
+      if (action.index < 0 || action.index >= pend.modes.texts.length || pend.modes.picked.includes(action.index)) return refuse(s, "That isn't one of the modes.");
+      const picked = [...pend.modes.picked, action.index];
+      if (picked.length < pend.modes.n) return { ...s, pending: { ...pend, modes: { ...pend.modes, picked } } };
+      const d = sourceDef(s, pend.source);
+      const modal = d.abilities.find((a) => a.kind === "modal");
+      const effects = picked.flatMap((i) => modal?.choices?.[i] ?? []);
+      const next = startTargeting({ ...s, pending: null }, pend.source, pend.cardName, effects, d.colors, null);
+      if (next.refusal) return next;
+      if (next.pending) return { ...next, pending: { ...next.pending, modes: { ...pend.modes, picked } } };
+      return castFor({ ...s, pending: null }, me, pend.source as { kind: "hand"; uid: string }, [], picked) ?? refuse(s, `You can't pay for ${pend.cardName} right now.`);
+    }
     if (action.type === "chooseTarget") {
       if (!pend.candidates.some((c) => JSON.stringify(c) === JSON.stringify(action.target))) return refuse(s, `${pend.cardName} can't target that.`);
       if (pend.chosen.some((c) => JSON.stringify(c) === JSON.stringify(action.target))) return refuse(s, "You've already chosen that target.");
@@ -1455,10 +1654,27 @@ export function reduce(state: CState, action: Action): CState {
       const sorcerySpeed = d.kind !== "instant" && !hasFlash(d);
       if (sorcerySpeed && !(myTurn && isMain(s) && !s.stack.length)) return refuse(s, `${d.name} can only be cast in your own main phase, when nothing is on the stack.`);
       if (!canAfford(s, me, costAfterReductions(s, me, d, d.cost))) return refuse(s, `You don't have enough mana for ${d.name} (it costs {${d.cost}}).`);
+      const modal = d.abilities.find((a) => a.kind === "modal");
+      if (modal) {
+        const texts = d.text.split("\n").filter((l) => l.startsWith("•")).map((l) => l.replace(/^•\s*/, ""));
+        return { ...s, pending: { source: { kind: "hand", uid: action.uid }, cardName: d.name, specs: [], chosen: [], candidates: [], max: 1, optional: false, modes: { texts, n: modal.n ?? 1, picked: [] } } };
+      }
       const effects = isAura(d) ? [{ op: "attach", target: "creature" }] : d.abilities.find((a) => a.kind === "spell")?.effects;
       const pend = startTargeting(s, { kind: "hand", uid: action.uid }, d.name, effects, d.colors, null);
       if (pend.refusal || pend.pending) return pend;
       return castFor(s, me, { kind: "hand", uid: action.uid }, []) ?? refuse(s, `You can't pay for ${d.name} right now.`);
+    }
+    case "cycle": {
+      const card = s.cards[action.uid];
+      if (!card || !player(s, me).hand.includes(action.uid)) return refuse(s, "That card isn't in your hand.");
+      const d = def(s, card);
+      const cy = d.abilities.find((a) => a.kind === "cycling");
+      if (!cy) return refuse(s, `${d.name} doesn't have cycling.`);
+      const paid = pay(s, me, typeof cy.cost === "string" ? cy.cost : "");
+      if (!paid) return refuse(s, `Cycling ${d.name} costs {${cy.cost}}. You don't have the mana.`);
+      let st = setPlayer(paid, me, { hand: player(paid, me).hand.filter((u) => u !== action.uid), graveyard: [...player(paid, me).graveyard, card] });
+      st = log(st, `You cycle ${d.name}: discard it and draw a card.`);
+      return checkState(drawCards(st, me, 1));
     }
     case "castCommander": {
       const cz = player(s, me).commandZone;
@@ -1576,6 +1792,8 @@ function abilityEffects(s: CState, src: PendingSource): Effect[] | undefined {
   const d = sourceDef(s, src);
   if (src.kind === "ability") { const a = d.abilities[src.index]; return a?.kind === "equip" ? [{ op: "attach", target: "creatureYou" }] : a?.effects; }
   if (isAura(d)) return [{ op: "attach", target: "creature" }];
+  const modal = d.abilities.find((a) => a.kind === "modal");
+  if (modal && s.pending?.modes) return s.pending.modes.picked.flatMap((i) => modal.choices?.[i] ?? []);
   return d.abilities.find((a) => a.kind === "spell")?.effects;
 }
 
@@ -1588,10 +1806,16 @@ export function castable(s: CState, seat: Seat): string[] {
     const sorcerySpeed = d.kind !== "instant" && !hasFlash(d);
     if (sorcerySpeed && !(s.turn === seat && isMain(s) && !s.stack.length)) return false;
     if (!canAfford(s, seat, costAfterReductions(s, seat, d, d.cost))) return false;
+    const modal = d.abilities.find((a) => a.kind === "modal");
+    if (modal) return (modal.choices ?? []).some((effects) => targetSpecs(effects).every((sp) => sp.optional || candidates(s, sp.spec, seat, null, d.colors, d.id).length > 0));
     const effects = isAura(d) ? [{ op: "attach", target: "creature" }] : d.abilities.find((a) => a.kind === "spell")?.effects;
     const specs = targetSpecs(effects);
-    return specs.every((sp) => sp.optional || candidates(s, sp.spec, seat, null, d.colors).length > 0);
+    return specs.every((sp) => sp.optional || candidates(s, sp.spec, seat, null, d.colors, d.id).length > 0);
   });
+}
+/** Hand cards with cycling the player can pay for. */
+export function cyclable(s: CState, seat: Seat): string[] {
+  return player(s, seat).hand.filter((uid) => { const d = def(s, s.cards[uid] ?? ""); const cy = d.abilities.find((a) => a.kind === "cycling"); return !!cy && canAfford(s, seat, typeof cy.cost === "string" ? cy.cost : ""); });
 }
 
 /** Builds a fresh game. Decks are card id lists (100 cards, the commander separate). */

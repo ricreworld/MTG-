@@ -6,13 +6,15 @@ import { forwardRef, useMemo, useState, type ReactNode } from "react";
 import { Icon } from "../../components/Icon";
 
 const files = import.meta.glob<string>("../../content/guides/*.md", { eager: true, query: "?raw", import: "default" });
+const lists = import.meta.glob<string>("../../content/guides/*.txt", { eager: true, query: "?raw", import: "default" });
 
-export interface Guide { id: string; title: string; markdown: string }
+export interface Guide { id: string; title: string; markdown: string; decklist?: string }
 
 export const GUIDES: Guide[] = Object.entries(files).map(([path, markdown]) => {
   const id = path.replace(/^.*\//, "").replace(/\.md$/, "");
   const first = markdown.split("\n").find((l) => l.startsWith("# ")) ?? id;
-  return { id, title: first.replace(/^# /, "").replace(/\[\[([^\]]+)\]\]/g, "$1"), markdown };
+  const decklist = lists[path.replace(/\.md$/, ".txt")];
+  return { id, title: first.replace(/^# /, "").replace(/\[\[([^\]]+)\]\]/g, "$1"), markdown, ...(decklist ? { decklist } : {}) };
 }).sort((a, b) => a.title.localeCompare(b.title));
 
 const cardImage = (name: string) => `https://api.scryfall.com/cards/named?format=image&version=normal&exact=${encodeURIComponent(name)}`;
@@ -69,9 +71,9 @@ export function Markdown({ source, onCard }: { source: string; onCard: (name: st
   );
 }
 
-interface Props { onBack: () => void }
+interface Props { onBack: () => void; onPlayList?: ((decklist: string, name: string) => void) | undefined }
 
-export const DeckGuides = forwardRef<HTMLHeadingElement, Props>(function DeckGuides({ onBack }, headingRef) {
+export const DeckGuides = forwardRef<HTMLHeadingElement, Props>(function DeckGuides({ onBack, onPlayList }, headingRef) {
   const [open, setOpen] = useState<string | null>(GUIDES.length === 1 ? GUIDES[0]!.id : null);
   const [card, setCard] = useState<string | null>(null);
   const guide = GUIDES.find((g) => g.id === open);
@@ -101,6 +103,9 @@ export const DeckGuides = forwardRef<HTMLHeadingElement, Props>(function DeckGui
               <p className="text-sm text-text-muted">© Wizards of the Coast. Image via Scryfall.</p>
               <button type="button" onClick={() => setCard(null)} className={`${btn} border-2 border-border-strong bg-surface`}><Icon name="close" /> Close</button>
             </div>
+          )}
+          {guide.decklist && onPlayList && (
+            <div><button type="button" onClick={() => onPlayList(guide.decklist!, guide.title)} className={`${btn} bg-accent text-accent-ink`}><Icon name="play" /> Check and play this deck</button></div>
           )}
           <Markdown source={guide.markdown} onCard={(n) => { setCard(n); window.scrollTo({ top: 0 }); }} />
         </>

@@ -3,10 +3,11 @@
 import { useMemo, useState } from "react";
 import { Icon } from "../../components/Icon";
 import library from "../../content/foundations.json";
-import { CDECKS, deckListText } from "../../game/commander/decks";
+import { CARD_LIST } from "../../game/commander/cards";
+import { CDECKS, deckListText, toLibraryCard } from "../../game/commander/decks";
 import { checkDeck, parseList, stars, TARGETS, type LibraryCard, type Report } from "../../game/deckcheck";
 
-const LIB = library as LibraryCard[];
+const LIB: LibraryCard[] = [...CARD_LIST.map(toLibraryCard), ...(library as LibraryCard[])];
 
 interface Props { onBack: () => void; onReadMore: (moduleId: string) => void }
 
@@ -32,7 +33,7 @@ export function DeckCheck({ onBack, onReadMore }: Props) {
         <h2 id="deckcheck-heading" tabIndex={-1} className="text-2xl font-bold">Deck doctor</h2>
         <button type="button" onClick={onBack} className={`${btn} border-2 border-border-strong bg-surface`}><Icon name="back" /> Back</button>
       </div>
-      <p>Paste a Commander deck list and get an honest check: the shape a 100-card deck wants, what's missing, the bracket it actually is (and why), and a strict star rating where a deck that merely works is three stars. It reads each card's rules text, so it only knows Foundations cards; anything else is listed as not checked. Nothing leaves your device.</p>
+      <p>Paste a Commander deck list and get an honest check: the shape a 100-card deck wants, what's missing, the bracket it actually is (and why), and a strict star rating where a deck that merely works is three stars. It reads each card's rules text. It knows every card the table can play plus the whole Foundations set; anything else is listed as not checked. Nothing leaves your device.</p>
       <div className="grid gap-s2">
         <label className="grid gap-s1 text-sm font-bold">Commander (or mark it with *CMDR* in the list)
           <input value={commander} onChange={(e) => setCommander(e.target.value)} placeholder="Lyra Dawnbringer" className="min-h-tap rounded-md border-2 border-border-strong bg-bg px-s3 font-normal" />

@@ -46,6 +46,7 @@ export function AppShell() {
   const [matchSetup, setMatchSetup] = useState<MatchSetup | null>(null);
   const [pickingDeck, setPickingDeck] = useState<null | "standard" | "commander">(null);
   const [cmdGame, setCmdGame] = useState<{ state: CState; deckId: string } | null>(null);
+  const [prefill, setPrefill] = useState<{ decklist: string; name: string } | null>(null);
   const savedCmd = useMemo(() => (view === "commander" && !cmdGame ? loadGame() : null), [view, cmdGame]);
   const match = useMemo(() => (matchSetup ? makeMatch(matchSetup) : undefined), [matchSetup]);
   const scenario = match ?? (scenarioId ? scenarioById(scenarioId) : undefined);
@@ -223,7 +224,7 @@ export function AppShell() {
           )}
           {view === "guides" && (
             <Suspense fallback={<p className="p-s4">Loading the deck guides…</p>}>
-              <DeckGuides ref={headingRef} onBack={() => setView("practice")} />
+              <DeckGuides ref={headingRef} onBack={() => setView("practice")} onPlayList={(decklist, name) => { setPrefill({ decklist, name }); setCmdGame(null); setView("commander"); }} />
             </Suspense>
           )}
           {view === "library" && (
@@ -233,7 +234,7 @@ export function AppShell() {
           )}
           {view === "commander" && !cmdGame && (
             <Suspense fallback={<p className="p-s4">Loading the Commander table…</p>}>
-              <CommanderSetup ref={headingRef} saved={savedCmd} onContinue={() => { const g = loadGame(); if (g) setCmdGame({ state: g.state, deckId: g.deckId }); }} onStart={(deckId) => { void import("../../game/commander/start").then((m) => setCmdGame({ state: m.startFourPlayer(deckId, Math.floor(Math.random() * 1e9)), deckId })); }} onBack={() => setView("practice")} onReadMore={(moduleId) => { const mi = modules.findIndex((m) => m.id === moduleId); if (mi >= 0) goTo(mi, 0); }} />
+              <CommanderSetup ref={headingRef} saved={savedCmd} prefill={prefill} onPrefillUsed={() => setPrefill(null)} onContinue={() => { const g = loadGame(); if (g) setCmdGame({ state: g.state, deckId: g.deckId }); }} onStart={(deckId) => { void import("../../game/commander/start").then((m) => setCmdGame({ state: m.startFourPlayer(deckId, Math.floor(Math.random() * 1e9)), deckId })); }} onStartCustom={(deck) => { void import("../../game/commander/start").then((m) => setCmdGame({ state: m.startFourPlayer(deck.id, Math.floor(Math.random() * 1e9), { commander: deck.commander, cards: deck.cards }), deckId: deck.id })); }} onBack={() => setView("practice")} onReadMore={(moduleId) => { const mi = modules.findIndex((m) => m.id === moduleId); if (mi >= 0) goTo(mi, 0); }} />
             </Suspense>
           )}
           {view === "commander" && cmdGame && (

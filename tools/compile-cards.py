@@ -12,7 +12,19 @@ import json, re, sys, os
 from collections import Counter, defaultdict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-data = json.load(open(os.path.join(ROOT, ".tmp/fdn/fdn.json")))
+import argparse
+_ap = argparse.ArgumentParser()
+_ap.add_argument("--input", default=".tmp/fdn/fdn.json")
+_ap.add_argument("--output", default="src/game/cards.generated.json")
+_ap.add_argument("--report", default=".tmp/compile-report.txt")
+_ap.add_argument("--prefer", default="", help="a Scryfall set file whose printings win for cards of the same name (id, set, art, number)")
+ARGS = _ap.parse_args()
+data = json.load(open(os.path.join(ROOT, ARGS.input)))
+PREFER = {}
+if ARGS.prefer:
+    _pf = json.load(open(os.path.join(ROOT, ARGS.prefer)))
+    for _c in (_pf if isinstance(_pf, list) else _pf.get("data", _pf)):
+        PREFER.setdefault(_c["name"], _c)
 
 KEYWORDS = ["Flying", "Reach", "Haste", "Trample", "Deathtouch", "First strike", "Double strike", "Vigilance", "Lifelink", "Menace", "Defender", "Indestructible", "Hexproof", "Flash", "Prowess", "Changeling"]
 KW_LOWER = {k.lower(): k for k in KEYWORDS}
@@ -80,6 +92,38 @@ EFFECTS = [
     (rf"this creature deals (?P<n>\d+) damage to you", lambda m: {"op": "damage", "target": "self_player", "n": int(m.group("n"))}),
     (r"put (?P<n>a|two|three) \+1/\+1 counters? on (?:it|this creature|that creature|CARDNAME)", lambda m: {"op": "counters", "target": "self", "n": num(m.group("n"))}),
     (r"destroy all creatures", lambda m: {"op": "wipe", "what": "creatures"}),
+    (r"destroy all tapped creatures", lambda m: {"op": "wipe", "what": "tappedCreatures"}),
+    (r"destroy all artifacts", lambda m: {"op": "wipe", "what": "artifacts"}),
+    (r"destroy all enchantments", lambda m: {"op": "wipe", "what": "enchantments"}),
+    (r"destroy all creatures with mana value (?P<n>\d) or less", lambda m: {"op": "wipe", "what": "creatures", "maxMv": int(m.group("n"))}),
+    (r"destroy all creatures with mana value (?P<n>\d) or greater", lambda m: {"op": "wipe", "what": "creatures", "minMv": int(m.group("n"))}),
+    (r"they can't be regenerated", lambda m: {"op": "noop"}),
+    (r"destroy target permanent", lambda m: {"op": "destroy", "target": "permanent"}),
+    (r"exile (?P<tgt>another target nonland permanent|target nonland permanent|target creature|target artifact or creature|target nonland permanent an opponent controls|target creature an opponent controls) until this (?:permanent|creature|enchantment|artifact) leaves the battlefield", lambda m: {"op": "exileUntilLeaves", "target": {"another target nonland permanent": "otherNonlandPermanent", "target nonland permanent": "nonlandPermanent", "target creature": "creature", "target artifact or creature": "artifactOrCreature", "target nonland permanent an opponent controls": "nonlandPermanentOpp", "target creature an opponent controls": "creatureOpp"}[m.group("tgt")]}),
+    (r"exile another target nonland permanent", lambda m: {"op": "exile", "target": "otherNonlandPermanent"}),
+    (r"its controller gains life equal to its power", lambda m: {"op": "gainLife", "who": "thatController", "n": 0, "per": "thatPower"}),
+    (r"its controller may search their library for a basic land card, put that card onto the battlefield tapped, then shuffle", lambda m: {"op": "rampTapped", "n": 1, "who": "thatController", "optional": True}),
+    (r"its controller creates a (?P<p>\d)/(?P<t>\d) (?P<col>[a-z]+) (?P<sub>[A-Z][a-z]+) creature token", lambda m: {"op": "token", "n": 1, "p": int(m.group("p")), "t": int(m.group("t")), "color": m.group("col"), "subtype": m.group("sub"), "keywords": [], "who": "thatController"}),
+    (r"you gain life equal to that creature's toughness", lambda m: {"op": "gainLife", "who": "you", "n": 0, "per": "thatToughness"}),
+    (r"pay (?P<c>(\{[WUBRGC0-9]\})+)", lambda m: {"op": "pay", "cost": mana_cost_str(m.group("c"))}),
+    (r"add one mana of any color in your commander's color identity", lambda m: {"op": "addMana", "colors": ["identity"]}),
+    (r"add one mana of any color", lambda m: {"op": "addMana", "colors": ["W", "U", "B", "R", "G"]}),
+    (r"add \{C\}\{C\}", lambda m: {"op": "addMana", "colors": ["C"], "n": 2}),
+    (r"add \{C\}", lambda m: {"op": "addMana", "colors": ["C"]}),
+    (r"gain (?P<n>\d+) life", lambda m: {"op": "gainLife", "who": "you", "n": int(m.group("n"))}),
+    (r"put a \+1/\+1 counter on target creature for each 1 life you gained", lambda m: {"op": "counters", "target": "creature", "n": 0, "per": "lifeGained"}),
+    (r"put a \+1/\+1 counter on each (?P<sub>[A-Z][a-z]+) you control", lambda m: {"op": "countersAll", "filter": "subtypeYou", "subtype": m.group("sub"), "n": 1}),
+    (r"search your library for up to two basic (?P<sub>Plains|Island|Swamp|Mountain|Forest) cards, reveal them, put them into your hand, then shuffle", lambda m: {"op": "fetchLandToHand", "n": 2, "basic": True, "basicType": m.group("sub")}),
+    (r"search your library for up to two basic land cards that share a land type, put them onto the battlefield tapped, then shuffle", lambda m: {"op": "rampTapped", "n": 2, "sameType": True}),
+    (r"you may put a land card from your hand onto the battlefield", lambda m: {"op": "putLandFromHand", "optional": True}),
+    (r"look at the top card of your library\. If it's a creature card of the chosen type, you may reveal it and put it into your hand", lambda m: {"op": "topToHandIf", "chosenType": True}),
+    (r"you become the monarch", lambda m: {"op": "monarch"}),
+    (r"investigate", lambda m: {"op": "investigate", "n": 1}),
+    (r"investigate once for each opponent who has more cards in hand than you", lambda m: {"op": "investigate", "n": 0, "per": "opponentsWithMoreCards"}),
+    (r"create a (?P<p>\d)/(?P<t>\d) (?P<col>[a-z]+) (?P<sub>[A-Z][a-z]+) creature token with (?P<kw>[a-z ]+)\. If you're the monarch, create a (?P<p2>\d)/(?P<t2>\d) (?P<col2>[a-z]+) (?P<sub2>[A-Z][a-z]+) creature token with (?P<kw2>[a-z ]+) instead", lambda m: {"op": "token", "n": 1, "p": int(m.group("p")), "t": int(m.group("t")), "color": m.group("col"), "subtype": m.group("sub"), "keywords": kws(m.group("kw")), "monarchAlt": {"p": int(m.group("p2")), "t": int(m.group("t2")), "color": m.group("col2"), "subtype": m.group("sub2"), "keywords": kws(m.group("kw2"))}}),
+    (r"until end of turn, this creature gets \+(?P<p>\d+)/\+(?P<t>\d+) and gains (?P<kw>[a-z ]+)", lambda m: {"op": "pump", "target": "self", "p": int(m.group("p")), "t": int(m.group("t")), "keywords": kws(m.group("kw"))}),
+
+    (r"target creature gains (?P<kw>[a-z ]+) until end of turn", lambda m: {"op": "grant", "target": "creature", "keywords": kws(m.group("kw"))}),
     (r"search your library for a basic land card, put (?:it|that card) onto the battlefield tapped, then shuffle", lambda m: {"op": "rampTapped", "n": 1}),
     (r"search your library for up to two basic land cards(?: and/or Gate cards)?, put them onto the battlefield tapped, then shuffle", lambda m: {"op": "rampTapped", "n": 2}),
     (r"search your library for a land card, reveal it, put it into your hand, then shuffle", lambda m: {"op": "fetchLandToHand"}),
@@ -229,7 +273,7 @@ def compile_sentence(sent, cardname):
     if s.startswith("you may "):
         s = s[8:]; optional = True
     cond = None
-    m = re.match(r"if (?P<c>you control (?:a creature with power 4 or greater|another creature with power 4 or greater|three or more creatures|six or more lands|another Elf|two or more other creatures)|you attacked this turn|a creature died this turn|an opponent lost life this turn), (?P<rest>.+)", s, re.I)
+    m = re.match(r"if (?P<c>you control (?:a creature with power 4 or greater|another creature with power 4 or greater|three or more creatures|six or more lands|another Elf|two or more other creatures|an? [A-Z][a-z]+)|you attacked this turn|a creature died this turn|an opponent lost life this turn|you gained \d+ or more life this turn|that player controls more lands than you), (?P<rest>.+)", s, re.I)
     if m:
         cond = m.group("c").lower(); s = m.group("rest")
     for pat, fn in EFFECTS:
@@ -254,7 +298,8 @@ def compile_sentence(sent, cardname):
 
 def compile_effects(text, cardname):
     # Sentences separated by ". " ; "Then " joins are fine as separate sentences.
-    sents = [p for p in re.split(r"(?<=[^A-Z])\.\s+|\.$", text.strip()) if p.strip()]
+    text = text.replace(". If you're the monarch, create", "\u2024 If you're the monarch, create").replace("look at the top card of your library. If it's a creature card", "look at the top card of your library\u2024 If it's a creature card")
+    sents = [p.replace("\u2024", ".") for p in re.split(r"(?<=[^A-Z])\.\s+|\.$", text.strip()) if p.strip()]
     out = []
     for sent in sents:
         sent = re.sub(r"^(Then|then) ", "", sent.strip())
@@ -270,12 +315,22 @@ def compile_effects(text, cardname):
 
 TRIGGERS = [
     (r"When this creature enters or dies, (?P<e>.+)", "etbOrDies"),
+    (r"Whenever an? (?P<sub>[A-Z][a-z]+) you control enters, (?P<e>.+)", "subtypeYouEnters"),
+    (r"Whenever an? (?P<sub>[A-Z][a-z]+) you control dies, (?P<e>.+)", "subtypeYouDies"),
+    (r"Whenever another (?P<sub>[A-Z][a-z]+) or (?P<sub2>[A-Z][a-z]+) you control enters, (?P<e>.+)", "anotherSubtypeEnters"),
+    (r"At the beginning of each end step, (?P<e>.+)", "eachEndStep"),
+    (r"At the beginning of your end step, (?P<e>.+)", "endStep"),
+    (r"Whenever you attack with two or more creatures, (?P<e>.+)", "youAttack2"),
+    (r"Whenever another player attacks with two or more creatures, they draw a card if none of those creatures attacked you\.?", "otherAttacks2NotMe"),
+    (r"Whenever a land an opponent controls enters, (?P<e>.+)", "oppLandEnters"),
+    (r"Whenever you cast a white spell, (?P<e>.+)", "castWhiteSpell"),
+    (r"When this land enters, (?P<e>.+)", "etb"),
     (r"Whenever a nontoken creature you control dies, (?P<e>.+)", "nontokenCreatureYouDies"),
     (r"Whenever another nontoken creature dies, (?P<e>.+)", "anotherNontokenCreatureDies"),
     (r"Whenever a creature you control with power 4 or greater enters, (?P<e>.+)", "bigCreatureEnters"),
     (r"Whenever a Gate you control enters, (?P<e>.+)", "gateEnters"),
     (r"Whenever you cast a spell that targets this creature, (?P<e>.+)", "targetedByYourSpell"),
-    (r"Whenever you put one or more \+1/\+1 counters on this creature, (?P<e>.+?)\. This ability triggers only once each turn", "countersOnSelf:once"),
+    (r"Whenever you put one or more \+1/\+1 counters on this creature, (?P<e>.+?)\. This ability triggers only once each turn\.?", "countersOnSelf:once"),
     (r"At the beginning of your upkeep, (?P<e>.+)", "upkeep"),
     (r"When this creature dies, (?P<e>.+)", "dies"),
     (r"Whenever this creature enters or attacks, (?P<e>.+)", "etbOrAttacks"),
@@ -320,6 +375,21 @@ TRIGGERS = [
 ]
 
 STATICS = [
+    (r"This (?:artifact|creature|enchantment) enters tapped", lambda m: {"kind": "entersTapped"}),
+    (r"This land enters tapped unless you control an? (?P<sub>Plains|Island|Swamp|Mountain|Forest)", lambda m: {"kind": "entersTapped", "unless": m.group("sub")}),
+    (r"As this (?:artifact|enchantment|creature|land) enters, choose a creature type", lambda m: {"kind": "chooseType", "what": "creatureType"}),
+    (r"As this creature enters, choose a card type", lambda m: {"kind": "chooseType", "what": "cardType"}),
+    (r"Creature spells you cast of the chosen type cost \{(?P<n>\d)\} less to cast", lambda m: {"kind": "static", "op": "costLess", "what": "chosenType", "n": int(m.group("n"))}),
+    (r"(?P<sub>[A-Z][a-z]+) spells you cast cost \{(?P<n>\d)\} less to cast", lambda m: {"kind": "static", "op": "costLess", "what": "subtype", "subtype": m.group("sub"), "n": int(m.group("n"))}),
+    (r"Creatures you control of the chosen type get \+(?P<p>\d+)/\+(?P<t>\d+)", lambda m: {"kind": "static", "op": "anthem", "filter": {"subtype": "chosen"}, "p": int(m.group("p")), "t": int(m.group("t"))}),
+    (r"This creature gets \+(?P<p>\d+)/\+(?P<t>\d+) as long as you have (?P<n>\d+) or more life", lambda m: {"kind": "static", "op": "selfBuffIf", "p": int(m.group("p")), "t": int(m.group("t")), "cond": f"life>={m.group('n')}"}),
+    (r"As long as you have at least (?P<n>\d+) life more than your starting life total, creatures you control get \+(?P<p>\d+)/\+(?P<t>\d+)", lambda m: {"kind": "static", "op": "anthem", "filter": {}, "p": int(m.group("p")), "t": int(m.group("t")), "cond": f"lifeAboveStart>={m.group('n')}"}),
+    (r"Lieutenant — As long as you control your commander, this creature gets \+(?P<p>\d+)/\+(?P<t>\d+) and creatures you control have (?P<kw>[a-z ]+)", lambda m: {"kind": "static", "op": "lieutenant", "p": int(m.group("p")), "t": int(m.group("t")), "keywords": kws(m.group("kw"))}),
+    (r"Other creatures you control with flying have (?P<kw>[a-z ]+)", lambda m: {"kind": "static", "op": "grantAll", "filter": {"subtype": "creatures", "other": True, "flying": True}, "keywords": kws(m.group("kw"))}),
+    (r"You and creatures you control have protection from the chosen card type", lambda m: {"kind": "static", "op": "protectionChosen"}),
+    (r"If one or more creature tokens would be created under your control, that many (?P<p>\d)/(?P<t>\d) (?P<col>[a-z]+) (?P<sub>[A-Z][a-z]+) creature tokens with (?P<kw>[a-z ]+) are created instead", lambda m: {"kind": "static", "op": "tokenReplace", "p": int(m.group("p")), "t": int(m.group("t")), "color": m.group("col"), "subtype": m.group("sub"), "keywords": kws(m.group("kw"))}),
+    (r"If an opponent would gain life, that player loses that much life instead", lambda m: {"kind": "static", "op": "oppLifeGainToLoss"}),
+    (r"Your opponents can't gain life", lambda m: {"kind": "static", "op": "oppCantGainLife"}),
     (r"Creatures you control have (?P<kw>[a-z ]+)", lambda m: {"kind": "static", "op": "grantAll", "filter": {"subtype": "creatures", "other": False}, "keywords": kws(m.group("kw"))}),
     (r"Other (?P<sub>[A-Z][a-z]+s) you control get \+(?P<p>\d+)/\+(?P<t>\d+) and have (?P<kw>[a-z ]+)", lambda m: {"kind": "static", "op": "anthem", "filter": {"subtype": m.group("sub"), "other": True}, "p": int(m.group("p")), "t": int(m.group("t")), "keywords": kws(m.group("kw"))}),
     (r"As long as you have (?P<n>\d+) or more life, this creature has (?P<kw>[a-z ]+)", lambda m: {"kind": "static", "op": "selfKeywordIf", "keywords": kws(m.group("kw")), "cond": f"life>={m.group('n')}"}),
@@ -388,8 +458,18 @@ def compile_line(line, card):
     if not line: return None
     # keywords list: "Flying, vigilance" / "Flying" / "Trample, lifelink"
     parts = [p.strip() for p in line.rstrip(".").split(",")]
-    if all(p.lower() in KW_LOWER for p in parts):
-        return [{"kind": "keyword", "name": KW_LOWER[p.lower()]} for p in parts]
+    def kw_item(p):
+        if p.lower() in KW_LOWER: return {"kind": "keyword", "name": KW_LOWER[p.lower()]}
+        m = re.fullmatch(r"protection from (?P<q>.+)", p, re.I)
+        if m:
+            quals = [q.strip() for q in re.split(r"\s+and from\s+|\s+and\s+", m.group("q"))]
+            return {"kind": "protection", "from": quals}
+        m = re.fullmatch(r"Cycling (?P<c>(\{[WUBRGC0-9]\})+)", p)
+        if m: return {"kind": "cycling", "cost": mana_cost_str(m.group("c"))}
+        return None
+    items = [kw_item(p) for p in parts]
+    if all(items):
+        return items
     # statics / fixed lines
     for pat, fn in STATICS:
         m = re.fullmatch(pat, line.rstrip("."), re.I)
@@ -400,9 +480,10 @@ def compile_line(line, card):
     for pat, when in TRIGGERS:
         m = re.fullmatch(pat, line.replace(name, "CARDNAME"), re.I)
         if m:
-            if when == "mirrorLifeLoss": return [{"kind": "triggered", "when": when, "effects": []}]
+            if when in ("mirrorLifeLoss", "otherAttacks2NotMe"): return [{"kind": "triggered", "when": when, "effects": []}]
             t = {"kind": "triggered", "when": when, "effects": compile_effects(m.group("e"), "CARDNAME")}
             if "sub" in m.groupdict() and m.group("sub"): t["subtype"] = m.group("sub")
+            if "sub2" in m.groupdict() and m.group("sub2"): t["subtype2"] = m.group("sub2")
             return [t]
     # activated: "{cost}, {T}: effect" / "{T}: effect" / "{cost}: effect" / "{cost}, Sacrifice this creature: effect"
     m = re.fullmatch(r"(?P<cost>[^:]+): (?P<e>.+)", line)
@@ -440,7 +521,7 @@ def compile_card(card):
     abilities = []
     lines = [l for l in text.split("\n") if l.strip()]
     # Modal spells: "Choose one —" followed by bullet lines.
-    if lines and lines[0].startswith("Choose one"):
+    if lines and (lines[0].startswith("Choose one") or lines[0].startswith("Choose two")):
         n = 2 if "Choose two" in lines[0] else 1
         choices = []
         for l in lines[1:]:
@@ -449,6 +530,9 @@ def compile_card(card):
         abilities.append({"kind": "modal", "n": n, "choices": choices})
         lines = []
     additional = None
+    if any(l.strip() in ("When this enchantment leaves the battlefield, return the exiled card to the battlefield under its owner's control.", "When this creature leaves the battlefield, return the exiled card to the battlefield under its owner's control.", "When this artifact leaves the battlefield, return the exiled card to the battlefield under its owner's control.") for l in lines):
+        lines = [l for l in lines if "return the exiled card to the battlefield" not in l]
+        lines = [re.sub(r"exile (another target nonland permanent|target nonland permanent an opponent controls|target creature an opponent controls|target creature|target nonland permanent|target artifact or creature)(\.|$)", lambda mm: f"exile {mm.group(1)} until this creature leaves the battlefield{mm.group(2)}", l) for l in lines]
     for l in lines:
         if l.strip() == "As an additional cost to cast this spell, discard a card.": additional = {"discard": 1}; continue
         if l.strip() == "As an additional cost to cast this spell, sacrifice a creature.": additional = {"sacrificeCreature": "any"}; continue
@@ -464,17 +548,23 @@ def compile_card(card):
     out = {
         "id": card["id"], "name": card["name"], "kind": kind, "type": tl, "cost": mana_cost_str(face.get("mana_cost", card.get("mana_cost", "")) or ""),
         "colors": "".join(card.get("color_identity", [])), "text": text, "artist": card.get("artist", ""), "num": card["collector_number"], "rarity": card["rarity"],
-        "legendary": tl.startswith("Legendary"), "abilities": abilities,
+        "legendary": tl.startswith("Legendary"), "abilities": abilities, "set": card.get("set", ""), "rank": card.get("edhrec_rank") or 0,
     }
+    pref = PREFER.get(card["name"])
+    if pref and (pref.get("oracle_text") or "") == (card.get("oracle_text") or ""):
+        out["id"] = pref["id"]; out["set"] = pref.get("set", ""); out["num"] = pref["collector_number"]; out["artist"] = pref.get("artist", ""); out["rarity"] = pref["rarity"]
     if "power" in face: out["power"] = face["power"]; out["toughness"] = face["toughness"]
     if kind == "land" and "Basic" in tl:
-        sub = tl.split("— ")[1]
-        out["abilities"].append({"kind": "activated", "cost": {"tap": True}, "effects": [{"op": "addMana", "colors": [{"Plains": "W", "Island": "U", "Swamp": "B", "Mountain": "R", "Forest": "G"}[sub]]}]})
+        sub = (tl.split("— ")[1] if "— " in tl else "").replace("Snow ", "").strip()
+        basics = {"Plains": "W", "Island": "U", "Swamp": "B", "Mountain": "R", "Forest": "G"}
+        if sub not in basics: raise ValueError("land:" + tl)
+        out["abilities"].append({"kind": "activated", "cost": {"tap": True}, "effects": [{"op": "addMana", "colors": [basics[sub]]}]})
     if "X" in out["cost"]: raise ValueError("x-cost")
+    if not re.fullmatch(r"[0-9WUBRG]*", out["cost"]): raise ValueError("cost:symbol")
     for a in abilities:
         if a.get("kind") in ("flashback", "kicker"): raise ValueError("unsupported:" + a["kind"])
         if a.get("kind") == "keyword" and a.get("name") in ("Ward",): raise ValueError("unsupported:" + a["name"])
-        if a.get("kind") == "modal": raise ValueError("unsupported:modal")
+        if a.get("kind") == "modal" and a.get("n", 1) > 2: raise ValueError("unsupported:modal")
         if a.get("kind") == "enchant" and a.get("what") != "creature": raise ValueError("unsupported:enchant-" + a["what"])
     return out
 
@@ -484,16 +574,16 @@ for c in data:
     if c.get("layout") in ("token", "emblem", "art_series"): continue
     try:
         ok.append(compile_card(c))
-    except (ValueError, KeyError) as e:
-        r = str(e) if isinstance(e, ValueError) else "keyword:" + str(e)
+    except (ValueError, KeyError, IndexError, TypeError, AttributeError) as e:
+        r = str(e) if isinstance(e, ValueError) else type(e).__name__ + ":" + str(e)[:40]
         bad.append((c["name"], r)); reasons[r.split(":")[0]] += 1
 
-ok.sort(key=lambda c: (int(re.sub(r"\D", "", c["num"]) or 0), c["num"]))
-json.dump(ok, open(os.path.join(ROOT, "src/game/cards.generated.json"), "w"), ensure_ascii=False, indent=0)
+ok.sort(key=lambda c: (c["name"], c["set"]))
+json.dump(ok, open(os.path.join(ROOT, ARGS.output), "w"), ensure_ascii=False, separators=(",", ":"))
 by_kind = Counter(c["kind"] for c in ok)
 by_color = Counter(c["colors"] or "C" for c in ok)
 rep = [f"Playable: {len(ok)} of {len(ok) + len(bad)}", f"By kind: {dict(by_kind)}", f"By colour identity: {dict(sorted(by_color.items(), key=lambda x: -x[1]))}", "", "Blocked by reason:"]
 rep += [f"  {n:4d}  {r}" for r, n in reasons.most_common()]
 rep += ["", "Unplayable cards (first blocking line):"] + [f"  {n} :: {r[:120]}" for n, r in sorted(bad)]
-open(os.path.join(ROOT, ".tmp/compile-report.txt"), "w").write("\n".join(rep))
+open(os.path.join(ROOT, ARGS.report), "w").write("\n".join(rep))
 print("\n".join(rep[:5 + len(reasons)]))

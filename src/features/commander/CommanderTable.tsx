@@ -4,7 +4,7 @@ import { forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState, useS
 import { Icon } from "../../components/Icon";
 import { type CDef } from "../../game/commander/cards";
 import { advise, threatLabel } from "../../game/commander/coach";
-import { activated, allBlocksIn, canActivate, canAttack, canBlock, canPlayLand, castable, commanderCost, canAfford, def, describeSpec, find, isCreature, isLand, isMain, player, type Action, type CState, type Perm, type Seat, type Step, type Target } from "../../game/commander/engine";
+import { activated, allBlocksIn, canActivate, canAttack, canBlock, canPlayLand, castable, cyclable, commanderCost, canAfford, def, describeSpec, find, isCreature, isLand, isMain, player, type Action, type CState, type Perm, type Seat, type Step, type Target } from "../../game/commander/engine";
 import { CommanderMachine, type CSnapshot } from "../../table/cmachine";
 import { useSettings } from "../../theme/SettingsContext";
 import { EffectsLayer, playBatch, type Ghost } from "../table/cues";
@@ -79,6 +79,7 @@ export const CommanderTable = forwardRef<HTMLHeadingElement, Props>(function Com
   const stackTop = state.stack[state.stack.length - 1];
   const pend = state.pending;
   const canCast = useMemo(() => new Set(castable(state, me)), [state, me]);
+  const canCycle = useMemo(() => new Set(cyclable(state, me)), [state, me]);
   const inCombat = state.step === "blockers" || state.step === "damage";
   const defendingMe = state.step === "blockers" && !myTurn && Object.values(state.attackers).some((a) => a.defender === me) && !state.blocksDone.includes(me);
   const nameOf = (seat: Seat) => (seat === me ? "You" : player(state, seat).name);
@@ -96,6 +97,7 @@ export const CommanderTable = forwardRef<HTMLHeadingElement, Props>(function Com
     if (p.attachedTo) { const host = find(state, p.attachedTo); if (host) return `On ${def(state, host.card).name}`; }
     const bits: string[] = [];
     if (p.isCommander) bits.push("Commander");
+    if (p.chosen) bits.push(`Chosen: ${p.chosen}`);
     if (p.summoningSick && isCreature(state, p) && !def(state, p.card).abilities.some((x) => x.kind === "keyword" && x.name === "Haste")) bits.push("Arrived this turn");
     if (p.bonus.pacified) bits.push("Can't attack or block");
     return bits.length ? bits.join(" · ") : undefined;
@@ -143,6 +145,9 @@ export const CommanderTable = forwardRef<HTMLHeadingElement, Props>(function Com
     if (busy) return { text: "Watch what happens, or skip ahead.", button: "Skip ahead", action: skipCues };
     if (mode === "VICTORY") return { text: "You're the last player standing. You won!", button: "New game", action: onNewGame };
     if (mode === "DEFEAT") return { text: state.winner ? `${nameOf(state.winner)} won this game.` : "You're out of this game. Undo to try another line, or start a new game.", button: "New game", action: onNewGame, ...(state.winner ? {} : { secondary: { label: "Watch how it ends", action: () => machine.continueOthers() } }) };
+    if (pend && pend.modes && pend.modes.picked.length < pend.modes.n) {
+      return { text: `${pend.cardName}: choose ${pend.modes.n === 1 ? "one mode" : `${pend.modes.n} modes`} (the buttons above the bar).`, button: `Cancel ${pend.cardName}`, action: { type: "cancelTarget" } };
+    }
     if (pend) {
       const spec = pend.specs[Math.min(pend.chosen.length, pend.specs.length - 1)] ?? "";
       const left = pend.max > 1 ? ` (up to ${pend.max})` : "";
@@ -278,6 +283,7 @@ export const CommanderTable = forwardRef<HTMLHeadingElement, Props>(function Com
             <span data-life={me} className="on-felt inline-block rounded-sm px-s2 font-mono">Life {my.life}</span>
             <span className="on-felt rounded-sm px-s2 text-sm font-normal">Library {my.library.length} · Graveyard {my.graveyard.length}</span>
             <span className="on-felt rounded-sm px-s2 text-sm font-normal">Commander damage taken: {cmdDamageText(my.commanderDamage)}</span>
+            {state.monarch && <span className="on-felt rounded-sm px-s2 text-sm font-normal">Monarch: {state.monarch === me ? "you" : nameOf(state.monarch)}</span>}
             {myCandidate && <button type="button" onClick={() => act({ type: "chooseTarget", target: { kind: "player", seat: me } })} className={primary}>Target yourself</button>}
           </p>
           <div className="flex flex-wrap gap-s2">
@@ -342,6 +348,7 @@ export const CommanderTable = forwardRef<HTMLHeadingElement, Props>(function Com
               {!can && <span className="text-sm text-text-muted">{card.kind === "land" ? (my.landsPlayed >= 1 && myTurn ? "You've already played a land this turn." : "Lands are played in your own main phase.") : card.kind === "instant" ? "You can't cast it right now: not enough mana, or nothing for it to target." : myTurn && isMain(state) ? `You need {${card.cost}}. Play more lands first.` : "Cast it in your own main phase, when nothing is on the stack."}</span>}
               <div className="flex flex-wrap gap-s2">
                 <button type="button" onClick={() => act(card.kind === "land" ? { type: "playLand", uid: handPick } : { type: "cast", uid: handPick })} className={can ? primary : secondary}>{card.kind === "land" ? "Play this land" : `Cast ${card.name}${card.cost ? ` ({${card.cost}})` : ""}`}</button>
+                {card.abilities.some((a) => a.kind === "cycling") && <button type="button" onClick={() => act({ type: "cycle", uid: handPick })} className={canCycle.has(handPick) ? primary : secondary}>Cycle it ({`{${card.abilities.find((a) => a.kind === "cycling")?.cost}`}: discard, draw a card)</button>}
                 <button type="button" onClick={() => setHandPick(null)} className={secondary}>Close</button>
               </div>
             </div>
@@ -381,6 +388,11 @@ export const CommanderTable = forwardRef<HTMLHeadingElement, Props>(function Com
           )}
           {advice && !state.winner && !busy && mode === "PLAYING" && (
             <p className="text-sm"><strong>Coach:</strong> {advice.move} <button type="button" onClick={() => setShowWhy((v) => !v)} aria-expanded={showWhy} className="underline">{showWhy ? "Hide why" : "Why?"}</button>{showWhy && <span className="block text-text-muted">{advice.why}</span>}</p>
+          )}
+          {pend?.modes && pend.modes.picked.length < pend.modes.n && (
+            <div className="grid gap-s1" role="group" aria-label={`Modes for ${pend.cardName}`}>
+              {pend.modes.texts.map((t, i) => <button key={i} type="button" disabled={pend.modes!.picked.includes(i)} onClick={() => act({ type: "chooseMode", index: i })} className={`${secondary} justify-start text-left text-sm disabled:opacity-50`}>{t}</button>)}
+            </div>
           )}
           <p className="text-sm"><strong>Now:</strong> {now.text}</p>
           <div className="grid grid-cols-[auto_auto_1fr] gap-s2">

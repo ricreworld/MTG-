@@ -4,22 +4,28 @@ import { forwardRef, useMemo, useState } from "react";
 import { Icon } from "../../components/Icon";
 import { ManaSymbol, type ManaColor } from "../../components/ManaSymbol";
 import { CCARDS } from "../../game/commander/cards";
-import { CDECKS, deckListText, deckSummary, type CDeck } from "../../game/commander/decks";
+import { CDECKS, deckListText, deckSummary, toLibraryCard, type CDeck } from "../../game/commander/decks";
 import type { SavedGame } from "../../game/commander/save";
-import library from "../../content/foundations.json";
+import { CARD_LIST } from "../../game/commander/cards";
 import { checkDeck, parseList, stars, type LibraryCard } from "../../game/deckcheck";
 import { CommanderCard } from "./CommanderCard";
 import { DeckCheck } from "./DeckCheck";
+import { DeckImport } from "./DeckImport";
+import type { MyDeck } from "../../game/commander/mydecks";
 
-const LIB = library as LibraryCard[];
+const LIB: LibraryCard[] = CARD_LIST.map(toLibraryCard);
 const shapeOf = (d: CDeck) => { const lines = parseList(deckListText(d)); return checkDeck(lines.slice(1), LIB, lines[0]!.name); };
 
 interface Props {
   saved: SavedGame | null;
   onContinue: () => void;
   onStart: (deckId: string) => void;
+  onStartCustom: (deck: MyDeck) => void;
   onBack: () => void;
   onReadMore: (moduleId: string) => void;
+  /** A deck list handed over from a guide, to check and play. */
+  prefill?: { decklist: string; name: string } | null | undefined;
+  onPrefillUsed?: (() => void) | undefined;
 }
 
 function DeckTile({ deck, selected, onPick }: { deck: CDeck; selected: boolean; onPick: () => void }) {
@@ -44,11 +50,13 @@ function DeckTile({ deck, selected, onPick }: { deck: CDeck; selected: boolean; 
   );
 }
 
-export const CommanderSetup = forwardRef<HTMLHeadingElement, Props>(function CommanderSetup({ saved, onContinue, onStart, onBack, onReadMore }, headingRef) {
+export const CommanderSetup = forwardRef<HTMLHeadingElement, Props>(function CommanderSetup({ saved, onContinue, onStart, onStartCustom, onBack, onReadMore, prefill, onPrefillUsed }, headingRef) {
   const [pick, setPick] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
+  const [importing, setImporting] = useState(!!prefill);
   const btn = "inline-flex min-h-tap items-center gap-s2 rounded-md px-s4 font-bold";
   if (checking) return <DeckCheck onBack={() => setChecking(false)} onReadMore={onReadMore} />;
+  if (importing) return <DeckImport onBack={() => { setImporting(false); onPrefillUsed?.(); }} onPlay={onStartCustom} prefill={prefill ?? null} />;
   const picked = pick ? CDECKS.find((d) => d.id === pick) : undefined;
   return (
     <section aria-labelledby="cmd-setup-heading" className="grid gap-s4 rounded-lg border border-border bg-surface p-s4">
@@ -77,6 +85,11 @@ export const CommanderSetup = forwardRef<HTMLHeadingElement, Props>(function Com
             <p><strong>Common mistakes:</strong> {picked.primer.misplays}</p>
           </div>
         )}
+      </div>
+      <div className="grid gap-s2 rounded-md border-2 border-accent bg-surface p-s3">
+        <p className="font-bold">Your decks</p>
+        <p className="text-sm">Paste any Commander deck list. If the engine can run every card, you can save it and play it here against the three computer decks.</p>
+        <div><button type="button" onClick={() => setImporting(true)} className={`${btn} bg-accent text-accent-ink`}><Icon name="play" /> Paste or play your own deck</button></div>
       </div>
       <div className="grid gap-s2 rounded-md border border-border bg-surface-2 p-s3">
         <p className="font-bold">Deck doctor</p>

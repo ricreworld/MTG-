@@ -52,7 +52,8 @@ const QUOTAS: { role: Role; n: number }[] = [{ role: "ramp", n: 10 }, { role: "d
 function build(id: string, name: string, commanderName: string, style: string, vocab: Vocabulary, excludeCommanders: string[], primer: Primer): CDeck {
   const commander = byName(commanderName);
   const identity = commander.colors;
-  const pool = CARD_LIST.filter((c) => c.id !== commander.id && fitsIdentity(c, identity) && !excludeCommanders.includes(c.name));
+  // The four built-in decks are built from Foundations only: their art is bundled for offline play and their primers describe them.
+  const pool = CARD_LIST.filter((c) => c.set === "fdn" && c.id !== commander.id && fitsIdentity(c, identity) && !excludeCommanders.includes(c.name));
   const roleOf = new Map<string, Role[]>(pool.map((c) => [c.id, classify(toLibraryCard(c))]));
   const score = (c: CDef) => contacts(c, vocab) * 3 - manaValue(c.cost) * 0.25 + (c.kind === "creature" ? 0.5 : 0);
   const nonland = pool.filter((c) => c.kind !== "land").sort((a, b) => score(b) - score(a) || a.name.localeCompare(b.name));

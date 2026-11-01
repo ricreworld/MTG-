@@ -4,6 +4,7 @@
 // plus `abilities`: a small structured form of its rules text that engine.ts interprets.
 // Used under the Wizards of the Coast Fan Content Policy (free, non-commercial, unofficial).
 import raw from "../cards.generated.json";
+import bundledArt from "../art-bundled.json";
 
 export type Color = "W" | "U" | "B" | "R" | "G";
 export const COLORS: Color[] = ["W", "U", "B", "R", "G"];
@@ -38,17 +39,31 @@ export interface Effect {
   then?: Effect[];
   ifNot?: string;
   basic?: boolean;
+  basicType?: string;
+  sameType?: boolean;
+  chosenType?: boolean;
+  monarchAlt?: { p: number; t: number; color: string; subtype: string; keywords: string[] };
+  cost?: string;
+  minMv?: number;
 }
 
 export interface AbilityCost { tap?: boolean; mana?: string; sacrificeSelf?: boolean; sacrificeCreature?: "any" | "another"; life?: number }
 
 export interface Ability {
-  kind: "keyword" | "static" | "triggered" | "activated" | "spell" | "enchant" | "equip" | "entersTapped";
+  kind: "keyword" | "static" | "triggered" | "activated" | "spell" | "enchant" | "equip" | "entersTapped" | "protection" | "cycling" | "chooseType" | "modal";
+  /** protection: the qualities it protects from, e.g. ["Demons", "Dragons"], ["white"], ["the chosen card type"]. */
+  from?: string[];
+  /** entersTapped: unless you control a land of this basic type. */
+  unless?: string;
+  /** modal: how many modes to choose, and the modes. */
+  choices?: Effect[][];
+  subtype2?: string;
+  color?: string;
   /** keyword */
   name?: string;
   /** static */
   op?: string;
-  filter?: { subtype?: string; other?: boolean };
+  filter?: { subtype?: string; other?: boolean; flying?: boolean };
   p?: number;
   t?: number;
   keywords?: string[];
@@ -86,9 +101,13 @@ export interface CDef {
   toughness?: number;
   /** True for tokens the engine created during a game. */
   token?: boolean;
+  /** Set code of the printing, e.g. "fdn". */
+  set?: string;
+  /** EDHREC popularity rank (lower is more played); 0 when unknown. */
+  rank?: number;
 }
 
-interface RawCard { id: string; name: string; kind: string; type: string; cost: string; colors: string; text: string; artist: string; num: string; rarity: string; legendary: boolean; abilities: Record<string, unknown>[]; power?: string; toughness?: string }
+interface RawCard { id: string; name: string; kind: string; type: string; cost: string; colors: string; text: string; artist: string; num: string; rarity: string; legendary: boolean; abilities: Record<string, unknown>[]; power?: string; toughness?: string; set?: string; rank?: number }
 
 /** Older compiler output spelled two statics as their own kinds; fold them into "static". */
 function normaliseAbility(a: Record<string, unknown>): Ability {
@@ -101,7 +120,7 @@ export const CCARDS: Record<string, CDef> = Object.fromEntries(
   (raw as RawCard[]).map((c) => {
     const d: CDef = {
       id: c.id, name: c.name, kind: c.kind as Kind, type: c.type, cost: c.cost ?? "", colors: c.colors ?? "", text: c.text, artist: c.artist, num: c.num, rarity: c.rarity,
-      legendary: !!c.legendary, abilities: c.abilities.map(normaliseAbility),
+      legendary: !!c.legendary, abilities: c.abilities.map(normaliseAbility), set: c.set ?? "", rank: c.rank ?? 0,
     };
     if (c.power !== undefined) d.power = Number(c.power) || 0;
     if (c.toughness !== undefined) d.toughness = Number(c.toughness) || 0;
@@ -111,7 +130,9 @@ export const CCARDS: Record<string, CDef> = Object.fromEntries(
 
 export const CARD_LIST: CDef[] = Object.values(CCARDS).sort((a, b) => Number(a.num) - Number(b.num));
 
-export const cardArt = (id: string): string => `./art/${id}.jpg`;
+/** Art crops for the Foundations cards are bundled (offline); every other card's art comes from Scryfall when online. */
+const BUNDLED_ART = new Set<string>(bundledArt as string[]);
+export const cardArt = (id: string): string => (BUNDLED_ART.has(id) ? `./art/${id}.jpg` : `https://cards.scryfall.io/art_crop/front/${id[0]}/${id[1]}/${id}.jpg`);
 
 /** Parses "2GG" into { generic: 2, G: 2 }. */
 export function parseCost(cost: string | undefined): { generic: number } & Partial<Record<Color, number>> {

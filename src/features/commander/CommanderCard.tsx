@@ -76,7 +76,7 @@ export function CommanderCard({ card, state, perm, action, selected, badge, onCl
     <span className={`relative grid ${dims} aspect-[5/7] grid-cols-[minmax(0,1fr)] grid-rows-[auto_1fr_auto_auto] gap-[2px] rounded-[0.45rem] border-[3px] p-[3px] text-left leading-tight ${frameClass(card.colors)} ${selected ? "border-focus ring-[3px] ring-focus" : highlight ? "border-accent ring-[3px] ring-accent" : "border-border-strong"} ${tapped ? "rotate-6" : ""}`}>
       <span className="min-w-0 rounded-[3px] bg-surface px-1 py-[2px] font-bold leading-[1.1] text-text">{card.name}</span>
       <span className="relative min-h-0 overflow-hidden rounded-[3px] border border-border-strong bg-bg/20">
-        {card.token ? <span className="grid h-full w-full place-items-center text-center font-bold text-text">{card.name}<br />token</span> : <img src={cardArt(card.id)} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />}
+        {card.token ? <span className="grid h-full w-full place-items-center bg-surface text-center font-bold text-text">{card.name}<br />token</span> : <img src={cardArt(card.id)} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />}
         {card.cost && <span className="absolute right-[1px] top-[1px] rounded-full bg-surface p-[1px]"><CostSymbols cost={card.cost} size={sm ? 0.75 : lg ? 1.4 : 0.85} /></span>}
       </span>
       <span className="truncate rounded-[3px] bg-surface px-1 py-[1px] text-[0.9em] font-bold text-text">{card.type}</span>

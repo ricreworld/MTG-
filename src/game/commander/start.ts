@@ -4,9 +4,9 @@ import { newGame, type CState } from "./engine";
 
 export const COMPUTER_NAMES = ["Mara", "Theo", "Ines"];
 
-export function startFourPlayer(yourDeckId: string, seed: number): CState {
-  const yours = CDECKS.find((d) => d.id === yourDeckId) ?? CDECKS[0]!;
-  const rest = CDECKS.filter((d) => d.id !== yours.id);
+export function startFourPlayer(yourDeckId: string, seed: number, custom?: { commander: string; cards: string[] }): CState {
+  const yours = custom ?? (CDECKS.find((d) => d.id === yourDeckId) ?? CDECKS[0]!);
+  const rest = CDECKS.filter((d) => d.id !== yourDeckId).slice(0, 3);
   return newGame({
     seed,
     seats: [

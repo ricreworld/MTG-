@@ -62,6 +62,19 @@ function castSomething(s: CState, seat: Seat): CState | null {
   const perms = hand.filter((h) => (h.card.kind === "creature" || h.card.kind === "artifact" || (h.card.kind === "enchantment" && !isAura(h.card))) && canAfford(s, seat, h.card.cost)).sort((a, b) => manaValue(b.card.cost) - manaValue(a.card.cost));
   const best = perms[0];
   if (best) { const r = castFor(s, seat, { kind: "hand", uid: best.uid }, []); if (r) return why(r, `${best.card.name} is the strongest card it can afford this turn.`); }
+  // 3b. A modal spell: pick the mode that removes the biggest threat, else the first mode with legal targets.
+  for (const h of hand.filter((h) => h.card.abilities.some((a) => a.kind === "modal") && canAfford(s, seat, h.card.cost) && (h.card.kind === "sorcery" || h.card.kind === "instant"))) {
+    const modal = h.card.abilities.find((a) => a.kind === "modal")!;
+    const options = (modal.choices ?? []).map((effects, i) => ({ i, effects, targets: autoTargets(s, effects, seat, null, h.card.colors) })).filter((o) => o.targets !== null);
+    const removal = options.find((o) => o.effects.some((e) => ["destroy", "exile", "wipe", "damage"].includes(e.op)) && (o.targets?.length ?? 0) > 0);
+    const pick = removal ?? options.find((o) => o.effects.every((e) => !["destroy", "exile"].includes(e.op)));
+    if (!pick || !biggest) continue;
+    const modes = [pick.i];
+    if ((modal.n ?? 1) > 1) { const second = options.find((o) => o.i !== pick.i); if (!second) continue; modes.push(second.i); }
+    const targets = modes.flatMap((i) => options.find((o) => o.i === i)!.targets ?? []);
+    const r = castFor(s, seat, { kind: "hand", uid: h.uid }, targets, modes);
+    if (r) return why(r, `${h.card.name}: it chose the mode that helps most right now.`);
+  }
   // 4. An aura on its best creature.
   const aura = hand.find((h) => isAura(h.card) && canAfford(s, seat, h.card.cost));
   const own = creatures(s, mine(s, seat)).sort((a, b) => power(s, b) - power(s, a))[0];
