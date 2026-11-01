@@ -1,0 +1,121 @@
+{
+  "id": "building-a-commander-deck",
+  "order": 14,
+  "title": "Building a Commander deck",
+  "summary": "The shape a 100-card deck wants, the five jobs every card can do, synergy as points of contact, ways to win, and what really sets a deck's bracket.",
+  "estimatedMinutes": 9,
+  "checklist": [
+    { "id": "shape", "label": "I know the shape a 100-card deck wants" },
+    { "id": "jobs", "label": "I can name a card's job: ramp, draw, answer, wipe or finisher" },
+    { "id": "synergy", "label": "I know what points of contact are" },
+    { "id": "bracket", "label": "I know what actually sets a deck's bracket" }
+  ],
+  "steps": [
+    {
+      "id": "deck-shape",
+      "title": "The shape of a 100-card deck",
+      "body": "A Commander deck is 100 cards, and most good ones share a shape:\n\n- **37 or 38 lands**\n- **10 or 11 [[ramp]]** cards (extra mana)\n- **12 or more [[card-advantage]]** cards (extra cards)\n- **About 10 answers**: [[removal]] spells, plus **2 to 4 [[board-wipe|board wipes]]**\n- Only **3 or 4 cards that cost 6 or more**\n\nThat leaves about 30 slots for the cards that make the deck yours. Build the skeleton first, then add the fun.",
+      "visual": { "type": "svg", "src": "deck-shape", "altText": "A 100-card deck split into lands, ramp, card draw, answers and the rest." },
+      "glossaryTerms": ["ramp", "card-advantage", "removal", "board-wipe", "mana-curve"],
+      "ruleRefs": ["CR 903.5a"],
+      "check": {
+        "question": "A deck has 31 lands and 40 creatures. What's the first thing to fix?",
+        "options": [
+          { "id": "lands", "text": "Add lands: 31 is too few for 100 cards" },
+          { "id": "creatures", "text": "Add more creatures" },
+          { "id": "nothing", "text": "Nothing, that's the usual shape" }
+        ],
+        "correctOptionId": "lands",
+        "hint": "Most Commander decks run 37 or 38 lands."
+      }
+    },
+    {
+      "id": "the-five-jobs",
+      "title": "Every card has a job",
+      "body": "Read the rules text, not the name, and ask what job a card does:\n\n- **[[ramp|Ramp]]**: makes extra mana. \"Add {G}\", \"search your library for a basic land\".\n- **[[card-advantage|Card advantage]]**: draws extra cards. Draw-then-discard doesn't count.\n- **[[removal|Removal]]**: \"destroy target\", \"exile target\", \"counter target spell\".\n- **[[board-wipe|Board wipe]]**: \"destroy all creatures\".\n- **[[finisher|Finisher]]**: ends the game from a normal board, not a dream one.\n\nA card can do two jobs at once. Those are the best ones.",
+      "visual": { "type": "svg", "src": "the-five-jobs", "altText": "Five job labels with the rules text that signals each." },
+      "glossaryTerms": ["ramp", "card-advantage", "removal", "board-wipe", "finisher"],
+      "ruleRefs": ["CR 903.5a"],
+      "check": {
+        "question": "\"When this creature enters, search your library for a basic land card and put it onto the battlefield tapped. When it dies, draw a card.\" Which jobs?",
+        "options": [
+          { "id": "both", "text": "Ramp and card advantage" },
+          { "id": "ramp", "text": "Ramp only" },
+          { "id": "removal", "text": "Removal" }
+        ],
+        "correctOptionId": "both",
+        "hint": "Count every job the text does."
+      }
+    },
+    {
+      "id": "points-of-contact",
+      "title": "Synergy: points of contact",
+      "body": "A deck is a machine, not a pile of good cards. Write down what your commander cares about: its creature types, its triggers (\"whenever a land enters\"), its keywords.\n\nFor every other card, count how many of those things it touches. That number is its **points of contact**, its [[synergy]].\n\n- **2 or 3 points**: it belongs.\n- **1 point**: a passenger. Swap it for something denser.\n- **0 points**: cut it, however strong it looks alone.\n\nLands, ramp and answers are exempt: every deck needs them.",
+      "visual": { "type": "svg", "src": "points-of-contact", "altText": "A commander's three interests, and cards touching three, one and zero of them." },
+      "glossaryTerms": ["synergy", "commander"],
+      "ruleRefs": ["CR 903.3a"],
+      "check": {
+        "question": "Your commander says \"Whenever a land you control enters, you gain 1 life and draw a card.\" Which card has the most points of contact?",
+        "options": [
+          { "id": "fetch", "text": "A spell that puts two lands onto the battlefield" },
+          { "id": "vanilla", "text": "A 4/4 creature with no text" },
+          { "id": "burn", "text": "A spell that deals 3 damage" }
+        ],
+        "correctOptionId": "fetch",
+        "hint": "Two lands entering means two triggers."
+      }
+    },
+    {
+      "id": "ways-to-win",
+      "title": "Ways to win",
+      "body": "Every deck needs **3 or 4 real ways to close a game**. Common shapes:\n\n- **Combat**: big or evasive creatures, trample, double damage.\n- **Voltron**: one huge creature and 21 [[commander-damage|commander damage]].\n- **Go wide**: many tokens and an anthem.\n- **Drain**: creatures dying or life gained costs each opponent life.\n- **Big mana**: a huge X spell.\n\nA card that only helps when you are already winning is not a win condition.",
+      "visual": { "type": "svg", "src": "ways-to-win", "altText": "Five ways a Commander deck closes a game." },
+      "glossaryTerms": ["finisher", "commander-damage"],
+      "ruleRefs": ["CR 903.10a"],
+      "check": {
+        "question": "Which of these counts as a way to win?",
+        "options": [
+          { "id": "flyer", "text": "A 6/6 flying creature your deck can cast most games" },
+          { "id": "winmore", "text": "A spell that doubles your life when you're already at 80" }
+        ],
+        "correctOptionId": "flyer",
+        "hint": "It has to close from a normal board."
+      }
+    },
+    {
+      "id": "what-sets-the-bracket",
+      "title": "What really sets the bracket",
+      "body": "A [[bracket]] is not a feeling. Wizards' rules set a floor from a few hard signals:\n\n- **[[game-changer|Game Changers]]**: 1 to 3 of them makes a deck at least **Bracket 3**; 4 or more, **Bracket 4**.\n- A cheap **two-card infinite combo** that wins early: Bracket 4.\n- **Mass land destruction** or **chained extra turns**: Bracket 4.\n\nA tuned deck with none of these is **Bracket 2**, however good it is. Being well built does not raise the bracket; only those signals do.",
+      "visual": { "type": "svg", "src": "what-sets-the-bracket", "altText": "The signals that raise a deck's bracket floor." },
+      "glossaryTerms": ["bracket", "game-changer"],
+      "ruleRefs": ["CR 903.1"],
+      "check": {
+        "question": "A perfectly tuned deck has 0 Game Changers, no combos, no land destruction and no extra turns. Which bracket is it?",
+        "options": [
+          { "id": "two", "text": "Bracket 2" },
+          { "id": "three", "text": "Bracket 3, because it's tuned" },
+          { "id": "four", "text": "Bracket 4" }
+        ],
+        "correctOptionId": "two",
+        "hint": "Only the signals raise the floor."
+      }
+    },
+    {
+      "id": "stars-are-not-power",
+      "title": "Stars are not power",
+      "body": "When people rate a deck out of five stars, the stars say **how good it is within its bracket**. The bracket says **how powerful it is**. A two-star Bracket 4 deck beats a five-star Bracket 2 deck.\n\nAn honest rating is strict: a deck that simply works, with the right shape and a plan, is **three stars**. Four or five must be earned by matching proven decklists.\n\nThe Deck doctor on the Commander screen checks any list this way.",
+      "visual": { "type": "svg", "src": "stars-are-not-power", "altText": "Stars within a bracket versus the bracket itself." },
+      "glossaryTerms": ["bracket"],
+      "ruleRefs": ["CR 903.1"],
+      "check": {
+        "question": "Which deck is more powerful: a five-star Bracket 2 deck or a two-star Bracket 4 deck?",
+        "options": [
+          { "id": "b4", "text": "The Bracket 4 deck" },
+          { "id": "b2", "text": "The five-star deck" }
+        ],
+        "correctOptionId": "b4",
+        "hint": "The bracket is the power tier."
+      }
+    }
+  ]
+}

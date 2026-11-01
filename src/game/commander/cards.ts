@@ -35,6 +35,9 @@ export interface Effect {
   artifact?: string;
   colors?: string[];
   payOptional?: string;
+  then?: Effect[];
+  ifNot?: string;
+  basic?: boolean;
 }
 
 export interface AbilityCost { tap?: boolean; mana?: string; sacrificeSelf?: boolean; sacrificeCreature?: "any" | "another"; life?: number }
@@ -61,6 +64,8 @@ export interface Ability {
   /** activated: cost object; equip: cost string */
   cost?: AbilityCost | string;
   restriction?: string;
+  /** spell: paid on casting, e.g. { discard: 1 } or { sacrificeCreature: "any" }. */
+  additionalCost?: { discard?: number; sacrificeCreature?: "any" | "another" };
 }
 
 export interface CDef {

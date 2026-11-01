@@ -80,6 +80,21 @@ EFFECTS = [
     (rf"this creature deals (?P<n>\d+) damage to you", lambda m: {"op": "damage", "target": "self_player", "n": int(m.group("n"))}),
     (r"put (?P<n>a|two|three) \+1/\+1 counters? on (?:it|this creature|that creature|CARDNAME)", lambda m: {"op": "counters", "target": "self", "n": num(m.group("n"))}),
     (r"destroy all creatures", lambda m: {"op": "wipe", "what": "creatures"}),
+    (r"search your library for a basic land card, put (?:it|that card) onto the battlefield tapped, then shuffle", lambda m: {"op": "rampTapped", "n": 1}),
+    (r"search your library for up to two basic land cards(?: and/or Gate cards)?, put them onto the battlefield tapped, then shuffle", lambda m: {"op": "rampTapped", "n": 2}),
+    (r"search your library for a land card, reveal it, put it into your hand, then shuffle", lambda m: {"op": "fetchLandToHand"}),
+    (r"search your library for a basic land card, reveal it, put it into your hand, then shuffle", lambda m: {"op": "fetchLandToHand", "basic": True}),
+    (r"you draw a card and lose (?P<l>\d+) life", lambda m: {"op": "seq", "effects": [{"op": "draw", "who": "you", "n": 1}, {"op": "loseLife", "who": "you", "n": int(m.group("l"))}]}),
+    (r"you draw (?P<n>a|two|three) cards?", lambda m: {"op": "draw", "who": "you", "n": num(m.group("n"))}),
+    (r"draw a card for each creature you control with a \+1/\+1 counter on it", lambda m: {"op": "draw", "who": "you", "n": 0, "per": "counteredCreaturesYou"}),
+    (r"draw a card for each different mana value among nonland permanents you control", lambda m: {"op": "draw", "who": "you", "n": 0, "per": "distinctMv"}),
+    (r"those creatures gain (?P<kw>[a-z ]+) until end of turn", lambda m: {"op": "grantAll", "filter": "counteredCreaturesYou", "keywords": kws(m.group("kw"))}),
+    (r"sacrifice another creature", lambda m: {"op": "sacrificeAnother"}),
+    (r"sacrifice a land", lambda m: {"op": "sacrificeLand"}),
+    (r"return CARDNAME to its owner's hand", lambda m: {"op": "bounce", "target": "self"}),
+    (r"target creature can't be blocked this turn", lambda m: {"op": "grant", "target": "creature", "keywords": ["Unblockable"]}),
+    (r"CARDNAME deals (?P<n>\d+) damage to you", lambda m: {"op": "damage", "target": "self_player", "n": int(m.group("n"))}),
+    (r"add \{G\} for each Elf you control", lambda m: {"op": "addMana", "colors": ["G"], "per": "Elf"}),
     (r"you gain 1 life for each creature destroyed this way", lambda m: {"op": "gainLife", "who": "you", "n": 1, "per": "destroyedThisWay"}),
     (r"create (?P<n>four|five) (?P<p>\d)/(?P<t>\d) (?P<col>[a-z]+) (?P<sub>[A-Z][a-z]+(?: [A-Z][a-z]+)?) creature tokens", lambda m: {"op": "token", "n": num(m.group("n")), "p": int(m.group("p")), "t": int(m.group("t")), "color": m.group("col"), "subtype": m.group("sub"), "keywords": []}),
     (r"destroy target creature with toughness (?P<n>\d) or greater", lambda m: {"op": "destroy", "target": "creature", "cond": {"toughnessAtLeast": int(m.group("n"))}}),
@@ -160,6 +175,7 @@ EFFECTS = [
     (r"each opponent loses (?P<n>\d+) life", lambda m: {"op": "loseLife", "who": "eachOpponent", "n": int(m.group("n"))}),
     (r"target opponent loses (?P<n>\d+) life", lambda m: {"op": "loseLife", "who": "opponent", "n": int(m.group("n"))}),
     (r"draw (?P<n>a|two|three|four) cards?", lambda m: {"op": "draw", "who": "you", "n": num(m.group("n"))}),
+    (r"you draw a card and lose (?P<l>\d+) life", lambda m: {"op": "seq", "effects": [{"op": "draw", "who": "you", "n": 1}, {"op": "loseLife", "who": "you", "n": int(m.group("l"))}]}),
     (r"you draw (?P<n>a|two|three) cards?", lambda m: {"op": "draw", "who": "you", "n": num(m.group("n"))}),
     (r"target player draws (?P<n>a|two) cards?", lambda m: {"op": "draw", "who": "player", "n": num(m.group("n"))}),
     (r"target opponent discards (?P<n>a|two) cards?", lambda m: {"op": "discard", "who": "opponent", "n": num(m.group("n"))}),
@@ -242,11 +258,26 @@ def compile_effects(text, cardname):
     out = []
     for sent in sents:
         sent = re.sub(r"^(Then|then) ", "", sent.strip())
+        if re.match(r"^[Ii]f you do, ", sent):
+            if not out or not out[-1].get("optional"): raise ValueError("sentence:" + sent)
+            out[-1]["then"] = compile_effects(sent[len("If you do, "):], cardname)
+            continue
+        m = re.fullmatch(r"(.+) unless (you attacked this turn)", sent.rstrip("."))
+        if m:
+            e = compile_sentence(m.group(1), cardname); e["ifNot"] = m.group(2); out.append(e); continue
         out.append(compile_sentence(sent, cardname))
     return out
 
 TRIGGERS = [
     (r"When this creature enters or dies, (?P<e>.+)", "etbOrDies"),
+    (r"Whenever a nontoken creature you control dies, (?P<e>.+)", "nontokenCreatureYouDies"),
+    (r"Whenever another nontoken creature dies, (?P<e>.+)", "anotherNontokenCreatureDies"),
+    (r"Whenever a creature you control with power 4 or greater enters, (?P<e>.+)", "bigCreatureEnters"),
+    (r"Whenever a Gate you control enters, (?P<e>.+)", "gateEnters"),
+    (r"Whenever you cast a spell that targets this creature, (?P<e>.+)", "targetedByYourSpell"),
+    (r"Whenever you put one or more \+1/\+1 counters on this creature, (?P<e>.+?)\. This ability triggers only once each turn", "countersOnSelf:once"),
+    (r"At the beginning of your upkeep, (?P<e>.+)", "upkeep"),
+    (r"When this creature dies, (?P<e>.+)", "dies"),
     (r"Whenever this creature enters or attacks, (?P<e>.+)", "etbOrAttacks"),
     (r"Whenever this creature attacks while you control a creature with power 4 or greater, (?P<e>.+)", "attacks:power4"),
     (r"Whenever CARDNAME attacks while you control a creature with power 4 or greater, (?P<e>.+)", "attacks:power4"),
@@ -289,6 +320,7 @@ TRIGGERS = [
 ]
 
 STATICS = [
+    (r"Creatures you control have (?P<kw>[a-z ]+)", lambda m: {"kind": "static", "op": "grantAll", "filter": {"subtype": "creatures", "other": False}, "keywords": kws(m.group("kw"))}),
     (r"Other (?P<sub>[A-Z][a-z]+s) you control get \+(?P<p>\d+)/\+(?P<t>\d+) and have (?P<kw>[a-z ]+)", lambda m: {"kind": "static", "op": "anthem", "filter": {"subtype": m.group("sub"), "other": True}, "p": int(m.group("p")), "t": int(m.group("t")), "keywords": kws(m.group("kw"))}),
     (r"As long as you have (?P<n>\d+) or more life, this creature has (?P<kw>[a-z ]+)", lambda m: {"kind": "static", "op": "selfKeywordIf", "keywords": kws(m.group("kw")), "cond": f"life>={m.group('n')}"}),
     (r"During your turn, this creature has (?P<kw>[a-z ]+)", lambda m: {"kind": "static", "op": "selfKeywordIf", "keywords": kws(m.group("kw")), "cond": "yourTurn"}),
@@ -389,6 +421,7 @@ def compile_line(line, card):
         restriction = None
         if eff.endswith(" Activate only as a sorcery."): eff = eff[: -len(" Activate only as a sorcery.")]; restriction = "sorcery"
         if eff.endswith(" Activate only once each turn."): eff = eff[: -len(" Activate only once each turn.")]; restriction = "oncePerTurn"
+        if eff.endswith(" Activate only if you control five or more lands."): eff = eff[: -len(" Activate only if you control five or more lands.")]; restriction = "lands>=5"
         out = {"kind": "activated", "cost": cost, "effects": compile_effects(eff, name)}
         if restriction: out["restriction"] = restriction
         return [out]
@@ -415,9 +448,16 @@ def compile_card(card):
             choices.append(compile_effects(l.lstrip("• ").strip(), short_name(card)))
         abilities.append({"kind": "modal", "n": n, "choices": choices})
         lines = []
+    additional = None
     for l in lines:
+        if l.strip() == "As an additional cost to cast this spell, discard a card.": additional = {"discard": 1}; continue
+        if l.strip() == "As an additional cost to cast this spell, sacrifice a creature.": additional = {"sacrificeCreature": "any"}; continue
         r = compile_line(l, card)
         if r: abilities.extend(r)
+    if additional:
+        spell = next((a for a in abilities if a.get("kind") == "spell"), None)
+        if not spell: raise ValueError("line:additional-cost-without-spell")
+        spell["additionalCost"] = additional
     kind = "land" if "Land" in tl else "creature" if "Creature" in tl else "instant" if "Instant" in tl else "sorcery" if "Sorcery" in tl else "artifact" if "Artifact" in tl else "enchantment" if "Enchantment" in tl else None
     if not kind: raise ValueError("kind:" + tl)
     # Lands need a mana ability (basic lands have an implicit one).

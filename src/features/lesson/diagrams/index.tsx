@@ -751,6 +751,80 @@ export const DIAGRAMS: Record<string, Diagram> = {
       <Label x={265} y={128} anchor="middle" size={10} fill={C.muted}>sharp to play</Label>
     </g>
   ),
+  "deck-shape": () => (
+    <g>
+      <Label x={14} y={24} size={12} weight={700}>100 cards</Label>
+      <rect x={14} y={40} width={124} height={28} rx={5} fill={C.mtg.G} stroke={C.border} /><Label x={76} y={54} anchor="middle" size={11} fill={C.ink.G} weight={700}>37 lands</Label>
+      <rect x={140} y={40} width={36} height={28} rx={5} fill={C.mtg.U} stroke={C.border} /><Label x={158} y={54} anchor="middle" size={9} fill={C.ink.U} weight={700}>10 ramp</Label>
+      <rect x={178} y={40} width={42} height={28} rx={5} fill={C.mtg.W} stroke={C.border} /><Label x={199} y={54} anchor="middle" size={9} fill={C.ink.W} weight={700}>12 draw</Label>
+      <rect x={222} y={40} width={42} height={28} rx={5} fill={C.mtg.B} stroke={C.border} /><Label x={243} y={54} anchor="middle" size={9} fill={C.ink.B} weight={700}>12 answers</Label>
+      <rect x={266} y={40} width={80} height={28} rx={5} fill={C.mtg.R} stroke={C.border} /><Label x={306} y={54} anchor="middle" size={9} fill={C.ink.R} weight={700}>29 yours</Label>
+      <Label x={14} y={96} size={11}>skeleton first, then the cards that make it yours</Label>
+      <Label x={14} y={126} size={11} weight={700}>cost 6 or more: only 3 or 4</Label>
+      {[1, 2, 3, 4, 5, 6, 7].map((mv, i) => { const h = [6, 14, 18, 14, 9, 4, 2][i]!; return <g key={mv}><rect x={200 + i * 20} y={170 - h * 2.4} width={16} height={h * 2.4} rx={2} fill={mv >= 6 ? C.hint : C.accent} /><Label x={208 + i * 20} y={182} anchor="middle" size={9} fill={C.muted}>{mv}</Label></g>; })}
+      <Label x={200} y={126} size={9} fill={C.muted}>cards per cost</Label>
+    </g>
+  ),
+  "the-five-jobs": () => (
+    <g>
+      {[["Ramp", "Add {G}", "G"], ["Draw", "draw a card", "U"], ["Removal", "destroy target", "B"], ["Wipe", "destroy all", "W"], ["Finisher", "7/7 trample", "R"]].map(([job, text, col], i) => (
+        <g key={job}>
+          <rect x={14} y={16 + i * 36} width={88} height={28} rx={6} fill={C.mtg[col as "G"]} stroke={C.border} /><Label x={58} y={30 + i * 36} anchor="middle" size={11} weight={700} fill={C.ink[col as "G"]}>{job}</Label>
+          <Arrow x1={106} y1={30 + i * 36} x2={126} y2={30 + i * 36} color={C.muted} width={2} />
+          <Chip x={132} y={20 + i * 36} text={`"${text}"`} />
+        </g>
+      ))}
+      <Label x={250} y={100} size={10} fill={C.muted}>read the text,</Label>
+      <Label x={250} y={114} size={10} fill={C.muted}>not the name</Label>
+    </g>
+  ),
+  "points-of-contact": () => (
+    <g>
+      <Card x={14} y={30} w={60} h={84} color="G" name="Commander" glyph="G" />
+      <Chip x={84} y={34} text="lands entering" /><Chip x={84} y={56} text="draw a card" /><Chip x={84} y={78} text="gain life" />
+      <Card x={210} y={14} w={46} h={60} color="G" name="Fetch 2 lands" />
+      <Check x={268} y={44} r={9} /><Label x={282} y={48} size={10} weight={700}>3 points</Label>
+      <Card x={210} y={80} w={46} h={60} color="R" name="3 damage" />
+      <Label x={268} y={112} size={10} fill={C.muted}>1 point: passenger</Label>
+      <Card x={210} y={146} w={46} h={52} color="C" name="4/4 no text" />
+      <Cross x={268} y={172} r={9} /><Label x={282} y={176} size={10} weight={700}>0 points: cut</Label>
+    </g>
+  ),
+  "ways-to-win": () => (
+    <g>
+      {[["Combat", "R"], ["Voltron 21", "W"], ["Go wide", "G"], ["Drain", "B"], ["Big X", "U"]].map(([name, col], i) => (
+        <g key={name}><rect x={14 + i * 68} y={60} width={60} height={40} rx={6} fill={C.mtg[col as "G"]} stroke={C.border} /><Label x={44 + i * 68} y={80} anchor="middle" size={10} weight={700} fill={C.ink[col as "G"]}>{name}</Label></g>
+      ))}
+      <Label x={14} y={30} size={12} weight={700}>3 or 4 real ways to close</Label>
+      <Label x={14} y={134} size={10} fill={C.muted}>from a normal board, not a dream one</Label>
+      <Label x={14} y={170} size={10} fill={C.muted}>"double your life at 80" is not one of them</Label>
+    </g>
+  ),
+  "what-sets-the-bracket": () => (
+    <g>
+      {[1, 2, 3, 4, 5].map((b) => (<g key={b}><rect x={14 + (b - 1) * 68} y={20} width={60} height={30} rx={6} fill={b === 2 ? C.accent : C.surface} stroke={C.border} /><Label x={44 + (b - 1) * 68} y={35} anchor="middle" size={11} weight={700} fill={b === 2 ? C.accentInk : C.text}>B{b}</Label></g>))}
+      <Label x={14} y={72} size={10} weight={700}>none of the signals: Bracket 2</Label>
+      <Chip x={14} y={90} text="1 to 3 Game Changers" /><Arrow x1={150} y1={100} x2={170} y2={100} color={C.muted} width={2} /><Label x={176} y={104} size={10}>at least B3</Label>
+      <Chip x={14} y={118} text="4+ Game Changers" /><Arrow x1={150} y1={128} x2={170} y2={128} color={C.muted} width={2} /><Label x={176} y={132} size={10}>B4</Label>
+      <Chip x={14} y={146} text="early infinite combo" /><Arrow x1={150} y1={156} x2={170} y2={156} color={C.muted} width={2} /><Label x={176} y={160} size={10}>B4</Label>
+      <Chip x={14} y={174} text="land destruction, extra turns" /><Arrow x1={190} y1={184} x2={210} y2={184} color={C.muted} width={2} /><Label x={216} y={188} size={10}>B4</Label>
+    </g>
+  ),
+  "stars-are-not-power": () => (
+    <g>
+      <rect x={14} y={30} width={150} height={110} rx={8} fill={C.surface} stroke={C.border} />
+      <Label x={89} y={52} anchor="middle" size={12} weight={700}>Bracket 2</Label>
+      <Label x={89} y={82} anchor="middle" size={16} weight={700} fill={C.accent}>★★★★★</Label>
+      <Label x={89} y={110} anchor="middle" size={10} fill={C.muted}>the best B2 deck</Label>
+      <rect x={196} y={30} width={150} height={110} rx={8} fill={C.surface} stroke={C.border} />
+      <Label x={271} y={52} anchor="middle" size={12} weight={700}>Bracket 4</Label>
+      <Label x={271} y={82} anchor="middle" size={16} weight={700} fill={C.accent}>★★☆☆☆</Label>
+      <Label x={271} y={110} anchor="middle" size={10} fill={C.muted}>a rough B4 deck</Label>
+      <Arrow x1={170} y1={160} x2={300} y2={160} color={C.hint} width={3} />
+      <Label x={14} y={164} size={11} weight={700}>more powerful</Label>
+      <Label x={14} y={188} size={10} fill={C.muted}>stars rate a deck inside its bracket; the bracket is the power</Label>
+    </g>
+  ),
   "where-to-play": () => (
     <g>
       <rect x={30} y={40} width={60} height={110} rx={10} fill={C.surface2} stroke={C.border} strokeWidth={2} />

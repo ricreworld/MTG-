@@ -226,7 +226,7 @@ export function AppShell() {
           )}
           {view === "commander" && !cmdGame && (
             <Suspense fallback={<p className="p-s4">Loading the Commander table…</p>}>
-              <CommanderSetup ref={headingRef} saved={savedCmd} onContinue={() => { const g = loadGame(); if (g) setCmdGame({ state: g.state, deckId: g.deckId }); }} onStart={(deckId) => { void import("../../game/commander/start").then((m) => setCmdGame({ state: m.startFourPlayer(deckId, Math.floor(Math.random() * 1e9)), deckId })); }} onBack={() => setView("practice")} />
+              <CommanderSetup ref={headingRef} saved={savedCmd} onContinue={() => { const g = loadGame(); if (g) setCmdGame({ state: g.state, deckId: g.deckId }); }} onStart={(deckId) => { void import("../../game/commander/start").then((m) => setCmdGame({ state: m.startFourPlayer(deckId, Math.floor(Math.random() * 1e9)), deckId })); }} onBack={() => setView("practice")} onReadMore={(moduleId) => { const mi = modules.findIndex((m) => m.id === moduleId); if (mi >= 0) goTo(mi, 0); }} />
             </Suspense>
           )}
           {view === "commander" && cmdGame && (

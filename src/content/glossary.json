@@ -404,5 +404,45 @@
     "id": "rarity",
     "term": "Rarity",
     "definition": "How scarce a card is in packs, shown by its set symbol's colour: common (black), uncommon (silver), rare (gold), mythic rare (orange-red)."
+  },
+  {
+    "id": "ramp",
+    "term": "Ramp",
+    "definition": "Cards that give you extra mana beyond one land a turn: mana rocks, creatures that tap for mana, or spells that fetch lands."
+  },
+  {
+    "id": "card-advantage",
+    "term": "Card advantage",
+    "definition": "Getting more cards than your opponents over the game, usually by drawing extra cards. Drawing a card and then discarding one doesn't count."
+  },
+  {
+    "id": "removal",
+    "term": "Removal",
+    "definition": "A spell or ability that gets rid of an opponent's card: destroy, exile, bounce it to hand, or counter it."
+  },
+  {
+    "id": "board-wipe",
+    "term": "Board wipe",
+    "definition": "A spell that destroys or exiles every creature (or every permanent of a kind) at once, resetting the table."
+  },
+  {
+    "id": "mana-curve",
+    "term": "Mana curve",
+    "definition": "How many of your cards cost 1, 2, 3, 4 and so on. A good curve has lots of cheap cards and only a few expensive ones."
+  },
+  {
+    "id": "synergy",
+    "term": "Synergy",
+    "definition": "When cards make each other better. Counted as points of contact: how many of the deck's interests a card touches."
+  },
+  {
+    "id": "finisher",
+    "term": "Finisher",
+    "definition": "A card that can actually end the game from a normal board, such as a big evasive creature or a spell that drains every opponent."
+  },
+  {
+    "id": "game-changer",
+    "term": "Game Changer",
+    "definition": "A card on Wizards' list of unusually powerful Commander cards. One in a deck makes it at least Bracket 3; four or more, Bracket 4. The list is updated by Wizards."
   }
 ]

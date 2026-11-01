@@ -1,7 +1,14 @@
-// Four honest 100-card Commander decks built from the compiled Foundations pool: one commander,
-// 99 other cards, no card twice except basic lands (CR 903.5a-b), every card inside the commander's
-// colour identity (CR 903.5c). The build is deterministic, so the same decks appear every time.
-import { CARD_LIST, CCARDS, fitsIdentity, isBasicLand, manaValue, type CDef } from "./cards";
+// Four honest 100-card Commander decks built from the compiled Foundations pool: one commander, 99 other
+// cards, no card twice except basic lands (CR 903.5a-b), every card inside the commander's colour identity
+// (CR 903.5c). The builder follows the deck-building method from the claude-mtg-skills kit: fill the
+// structural roles first (lands, ramp, card advantage, interaction, board wipes), keep the curve sane
+// (few cards at mana value 6+), then prefer cards with the most "points of contact" with the commander's
+// plan. The build is deterministic, so the same decks appear every time. The pool is what it is: a
+// 245-card Foundations pool can't always reach every target, and the deck doctor says so honestly.
+import { classify, type LibraryCard, type Role } from "../deckcheck";
+import { CARD_LIST, CCARDS, fitsIdentity, isBasicLand, manaValue, subtypesOf, type CDef } from "./cards";
+
+export interface Primer { wins: string; early: string; mid: string; late: string; misplays: string }
 
 export interface CDeck {
   id: string;
@@ -12,38 +19,87 @@ export interface CDeck {
   style: string;
   /** 99 card ids (basic lands may repeat). */
   cards: string[];
+  primer: Primer;
 }
 
 const BASIC: Record<string, string> = { W: "Plains", U: "Island", B: "Swamp", R: "Mountain", G: "Forest" };
 const byName = (name: string): CDef => { const c = CARD_LIST.find((x) => x.name === name); if (!c) throw new Error(`No card named ${name}`); return c; };
 
-function build(id: string, name: string, commanderName: string, style: string, excludeCommanders: string[]): CDeck {
+/** The compiled card in the shape the deck doctor reads. */
+export const toLibraryCard = (d: CDef): LibraryCard => ({
+  id: d.id, name: d.name, type: d.type, text: d.text, rarity: d.rarity,
+  cost: (d.cost.match(/\d+|[WUBRG]/g) ?? []).map((s) => `{${s}}`).join(""),
+  ...(d.kind === "creature" ? { pt: `${d.power ?? 0}/${d.toughness ?? 0}` } : {}),
+});
+
+/** What the commander cares about: subtypes, keywords, and ability shapes. Each hit is one point of contact. */
+interface Vocabulary { subtypes: string[]; keywords: string[]; textHits: RegExp[]; kinds: string[]; bigPower?: boolean; lands?: boolean }
+
+function contacts(d: CDef, v: Vocabulary): number {
+  let n = 0;
+  const subs = subtypesOf(d);
+  if (v.subtypes.some((s) => subs.includes(s))) n++;
+  if (v.keywords.some((k) => d.abilities.some((a) => a.kind === "keyword" && a.name === k))) n++;
+  for (const re of v.textHits) if (re.test(d.text)) n++;
+  if (v.kinds.includes(d.kind)) n++;
+  if (v.bigPower && (d.power ?? 0) >= 4) n++;
+  if (v.lands && d.kind === "land") n++;
+  return n;
+}
+
+const QUOTAS: { role: Role; n: number }[] = [{ role: "ramp", n: 10 }, { role: "draw", n: 12 }, { role: "wipe", n: 2 }, { role: "removal", n: 9 }, { role: "finisher", n: 5 }];
+
+function build(id: string, name: string, commanderName: string, style: string, vocab: Vocabulary, excludeCommanders: string[], primer: Primer): CDeck {
   const commander = byName(commanderName);
   const identity = commander.colors;
   const pool = CARD_LIST.filter((c) => c.id !== commander.id && fitsIdentity(c, identity) && !excludeCommanders.includes(c.name));
-  const nonland = pool.filter((c) => c.kind !== "land").sort((a, b) => manaValue(a.cost) - manaValue(b.cost) || a.name.localeCompare(b.name));
-  // Keep the curve sane: at most ~8 cards of mana value 6+, and all the cheap ones.
-  const big = nonland.filter((c) => manaValue(c.cost) >= 6).slice(0, 8);
-  const rest = nonland.filter((c) => manaValue(c.cost) < 6);
-  const spells = [...rest, ...big].slice(0, 63);
-  const nonbasicLands = pool.filter((c) => c.kind === "land" && !isBasicLand(c) && (c.colors === "" ? true : fitsIdentity(c, identity))).filter((c) => c.name !== "Evolving Wilds" || identity.length > 1).slice(0, identity.length > 1 ? 8 : 3);
+  const roleOf = new Map<string, Role[]>(pool.map((c) => [c.id, classify(toLibraryCard(c))]));
+  const score = (c: CDef) => contacts(c, vocab) * 3 - manaValue(c.cost) * 0.25 + (c.kind === "creature" ? 0.5 : 0);
+  const nonland = pool.filter((c) => c.kind !== "land").sort((a, b) => score(b) - score(a) || a.name.localeCompare(b.name));
+  const chosen: CDef[] = [];
+  const taken = new Set<string>();
+  let big = 0;
+  const take = (c: CDef) => { if (taken.has(c.id)) return; if (manaValue(c.cost) >= 6) { if (big >= 5) return; big++; } taken.add(c.id); chosen.push(c); };
+  // 1. Structural roles first, best synergy inside each role.
+  for (const q of QUOTAS) {
+    let have = chosen.filter((c) => roleOf.get(c.id)?.includes(q.role)).length;
+    for (const c of nonland) { if (have >= q.n) break; if (roleOf.get(c.id)?.includes(q.role) && !taken.has(c.id)) { take(c); have++; } }
+  }
+  // 2. Then the densest synergy cards until 62 nonland cards.
+  for (const c of nonland) { if (chosen.length >= 62) break; take(c); }
+  const spells = chosen.slice(0, 62);
+  // 3. 37 lands: the nonbasics in identity, then basics split by the deck's colour needs.
+  const nonbasic = pool.filter((c) => c.kind === "land" && !isBasicLand(c) && (c.colors === "" ? identity.length > 1 || c.name !== "Evolving Wilds" : true)).slice(0, identity.length > 1 ? 9 : 4);
   const landsNeeded = 99 - spells.length;
-  const basicsNeeded = landsNeeded - nonbasicLands.length;
+  const basicsNeeded = landsNeeded - nonbasic.length;
   const colors = identity ? [...identity] : ["W"];
+  const weight = colors.map((col) => spells.reduce((n, c) => n + (c.cost.split(col).length - 1), 0) || 1);
+  const totalWeight = weight.reduce((a, b) => a + b, 0);
   const basics: string[] = [];
-  for (let i = 0; i < basicsNeeded; i++) basics.push(byName(BASIC[colors[i % colors.length]!]!).id);
-  const cards = [...spells.map((c) => c.id), ...nonbasicLands.map((c) => c.id), ...basics];
+  const counts = colors.map((_, i) => Math.round((basicsNeeded * weight[i]!) / totalWeight));
+  while (counts.reduce((a, b) => a + b, 0) > basicsNeeded) counts[counts.indexOf(Math.max(...counts))]! -= 1;
+  while (counts.reduce((a, b) => a + b, 0) < basicsNeeded) counts[counts.indexOf(Math.min(...counts))]! += 1;
+  colors.forEach((col, i) => { for (let k = 0; k < counts[i]!; k++) basics.push(byName(BASIC[col]!).id); });
+  const cards = [...spells.map((c) => c.id), ...nonbasic.map((c) => c.id), ...basics];
   if (cards.length !== 99) throw new Error(`${name}: ${cards.length} cards`);
-  return { id, name, commander: commander.id, identity, style, cards };
+  return { id, name, commander: commander.id, identity, style, cards, primer };
 }
 
 const LEADERS = ["Lyra Dawnbringer", "Balmor, Battlemage Captain", "Ruby, Daring Tracker", "Tatyova, Benthic Druid"];
 
 export const CDECKS: CDeck[] = [
-  build("angels", "Dawn Chorus", "Lyra Dawnbringer", "White: angels, cats and soldiers that gain life and grow together.", LEADERS),
-  build("storm", "Spell Storm", "Balmor, Battlemage Captain", "Blue and red: cheap spells, flyers that grow when you cast, and counterspells.", LEADERS),
-  build("stampede", "Stampede", "Ruby, Daring Tracker", "Red and green: big creatures, extra mana, and attacks that trample over.", LEADERS),
-  build("tide", "Rising Tide", "Tatyova, Benthic Druid", "Green and blue: lands that draw cards, growth, and bounce.", LEADERS),
+  build("angels", "Dawn Chorus", "Lyra Dawnbringer", "White: angels, cats and soldiers that gain life and grow together.",
+    { subtypes: ["Angel", "Cat"], keywords: ["Flying", "Lifelink"], textHits: [/gain \d+ life|whenever you gain life|lifelink/i, /\+1\/\+1 counter/], kinds: [] }, LEADERS,
+    { wins: "Combat in the air. Lyra gives every other Angel +1/+1 and lifelink, so a few flyers hit hard while your life climbs out of reach. Life-gain triggers (Ajani's Pridemate style) turn each hit into +1/+1 counters.", early: "Play a land every turn and a cheap creature or a mana rock. Keep a hand with three or four lands.", mid: "Cast Lyra when you have five mana and protect her: she is the engine. Attack the player with the fewest flyers.", late: "Swing with everything evasive; use a board wipe only when you are behind on the ground, since your flyers often survive the race anyway.", misplays: "Casting Lyra into open blue mana with a counterspell waiting, and attacking the strongest player just because they sit next to you." }),
+  build("storm", "Spell Storm", "Balmor, Battlemage Captain", "Blue and red: cheap spells, flyers that grow when you cast, and counterspells.",
+    { subtypes: ["Wizard"], keywords: ["Flying", "Prowess"], textHits: [/whenever you cast (an instant or sorcery|a noncreature) spell/i, /instant and sorcery spells you cast cost/i], kinds: ["instant", "sorcery"] }, LEADERS,
+    { wins: "Many small spells in one turn. Each instant or sorcery gives your whole team +1/+0 and trample through Balmor, and prowess creatures grow with every spell. Draw spells keep the chain going.", early: "Lands, then Balmor on turn two. Cast cheap draw spells to find more lands and keep your hand full.", mid: "Build a board of two or three evasive creatures, then spend a turn casting three or four spells before combat.", late: "Hold a counterspell for the one spell that would end the game, usually a board wipe or a commander.", misplays: "Casting spells on other players' turns when they would have pumped your attackers on yours." }),
+  build("stampede", "Stampede", "Ruby, Daring Tracker", "Red and green: big creatures, extra mana, and attacks that trample over.",
+    { subtypes: ["Elf", "Dragon"], keywords: ["Trample", "Haste"], textHits: [/power 4 or greater/i, /add \{/i, /trample/i], kinds: [], bigPower: true }, LEADERS,
+    { wins: "Big creatures attacking. Ruby taps for mana early and grows when you control a creature with power 4 or more, which this deck has plenty of. Trample pushes damage through chump blocks.", early: "Ruby on turn two is also a mana creature: use her to reach four and five mana a turn early.", mid: "One big creature a turn. Attack the player who has the fewest blockers, not the one with the most life.", late: "Overrun effects and trample close games; keep one creature home if two opponents can swing back.", misplays: "Attacking Ruby into a bigger blocker before you have a creature with power 4, and running out of cards: cast your draw spells." }),
+  build("tide", "Rising Tide", "Tatyova, Benthic Druid", "Green and blue: lands that draw cards, growth, and bounce.",
+    { subtypes: ["Merfolk", "Elf"], keywords: ["Flying"], textHits: [/landfall|whenever a land/i, /search your library for .*land/i, /draw/i], kinds: [], lands: true }, LEADERS,
+    { wins: "Card advantage first, then a wide board. Tatyova turns every land into a card and a life, land-fetching spells trigger her twice, and the extra cards become creatures and answers. Flyers and growth finish.", early: "Ramp spells and mana creatures. Hold land drops when Tatyova is one turn away so each land draws a card.", mid: "Cast Tatyova, then play lands and ramp spells: three cards a turn is normal. Bounce the scariest permanent at the table.", late: "Outvalue the table; a board wipe when everyone else is wide, then rebuild faster than they can.", misplays: "Playing all your lands before Tatyova is out, and forgetting that counterspells need untapped blue mana." }),
 ];
 
 export const cdeckById = (id: string): CDeck | undefined => CDECKS.find((d) => d.id === id);
@@ -51,4 +107,10 @@ export const deckSummary = (d: CDeck): { lands: number; creatures: number; other
   let lands = 0, creatures = 0, other = 0;
   for (const id of d.cards) { const k = CCARDS[id]?.kind; if (k === "land") lands++; else if (k === "creature") creatures++; else other++; }
   return { lands, creatures, other };
+};
+/** The deck as "1 Card Name" lines, for the deck doctor and for copying out. */
+export const deckListText = (d: CDeck): string => {
+  const counts = new Map<string, number>();
+  for (const id of d.cards) { const n = CCARDS[id]!.name; counts.set(n, (counts.get(n) ?? 0) + 1); }
+  return [`1 ${CCARDS[d.commander]!.name} *CMDR*`, "", ...[...counts].map(([n, q]) => `${q} ${n}`)].join("\n");
 };

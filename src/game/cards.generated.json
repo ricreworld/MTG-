@@ -549,6 +549,32 @@
 "toughness": "1"
 },
 {
+"id": "a9a159f6-fecf-4bdd-b2f8-a9665a5cc32d",
+"name": "Lunar Insight",
+"kind": "sorcery",
+"type": "Sorcery",
+"cost": "2U",
+"colors": "U",
+"text": "Draw a card for each different mana value among nonland permanents you control.",
+"artist": "Dan Murayama Scott",
+"num": "46",
+"rarity": "rare",
+"legendary": false,
+"abilities": [
+{
+"kind": "spell",
+"effects": [
+{
+"op": "draw",
+"who": "you",
+"n": 0,
+"per": "distinctMv"
+}
+]
+}
+]
+},
+{
 "id": "38806934-dd9c-4ad4-a59c-a16dce03a14a",
 "name": "Refute",
 "kind": "instant",
@@ -606,6 +632,55 @@
 }
 ],
 "power": "4",
+"toughness": "3"
+},
+{
+"id": "51da4a4b-ea12-4169-a7cf-eb4427f13e84",
+"name": "High-Society Hunter",
+"kind": "creature",
+"type": "Creature — Vampire Noble",
+"cost": "3BB",
+"colors": "B",
+"text": "Flying\nWhenever this creature attacks, you may sacrifice another creature. If you do, put a +1/+1 counter on this creature.\nWhenever another nontoken creature dies, draw a card.",
+"artist": "Daneen Wilkerson",
+"num": "61",
+"rarity": "rare",
+"legendary": false,
+"abilities": [
+{
+"kind": "keyword",
+"name": "Flying"
+},
+{
+"kind": "triggered",
+"when": "attacks",
+"effects": [
+{
+"op": "sacrificeAnother",
+"optional": true,
+"then": [
+{
+"op": "counters",
+"target": "self",
+"n": 1
+}
+]
+}
+]
+},
+{
+"kind": "triggered",
+"when": "anotherNontokenCreatureDies",
+"effects": [
+{
+"op": "draw",
+"who": "you",
+"n": 1
+}
+]
+}
+],
+"power": "5",
 "toughness": "3"
 },
 {
@@ -736,6 +811,52 @@
 ]
 }
 ]
+},
+{
+"id": "917514c0-9cd5-4b97-85b9-c4f753560ad4",
+"name": "Vampire Gourmand",
+"kind": "creature",
+"type": "Creature — Vampire",
+"cost": "1B",
+"colors": "B",
+"text": "Whenever this creature attacks, you may sacrifice another creature. If you do, draw a card and this creature can't be blocked this turn.",
+"artist": "Chris Rallis",
+"num": "74",
+"rarity": "uncommon",
+"legendary": false,
+"abilities": [
+{
+"kind": "triggered",
+"when": "attacks",
+"effects": [
+{
+"op": "sacrificeAnother",
+"optional": true,
+"then": [
+{
+"op": "seq",
+"effects": [
+{
+"op": "draw",
+"who": "you",
+"n": 1
+},
+{
+"op": "grant",
+"target": "self",
+"keywords": [
+"Unblockable"
+]
+}
+]
+}
+]
+}
+]
+}
+],
+"power": "2",
+"toughness": "2"
 },
 {
 "id": "bd0c12dd-f138-45c0-9614-d83a1d8e8399",
@@ -954,6 +1075,49 @@
 ],
 "power": "4",
 "toughness": "4"
+},
+{
+"id": "d58e20ab-c5ca-4295-884d-78efdaa83243",
+"name": "Incinerating Blast",
+"kind": "sorcery",
+"type": "Sorcery",
+"cost": "4R",
+"colors": "R",
+"text": "Incinerating Blast deals 6 damage to target creature.\nYou may discard a card. If you do, draw a card.",
+"artist": "Zoltan Boros",
+"num": "90",
+"rarity": "common",
+"legendary": false,
+"abilities": [
+{
+"kind": "spell",
+"effects": [
+{
+"op": "damage",
+"target": "creature",
+"n": 6
+}
+]
+},
+{
+"kind": "spell",
+"effects": [
+{
+"op": "discard",
+"who": "you",
+"n": 1,
+"optional": true,
+"then": [
+{
+"op": "draw",
+"who": "you",
+"n": 1
+}
+]
+}
+]
+}
+]
 },
 {
 "id": "673e4561-8dfd-46db-b492-878009666ac7",
@@ -1891,6 +2055,42 @@
 "toughness": "2"
 },
 {
+"id": "0784b6f0-9ebf-43d2-ba0f-a6bc93ba0c48",
+"name": "Phyrexian Arena",
+"kind": "enchantment",
+"type": "Enchantment",
+"cost": "1BB",
+"colors": "B",
+"text": "At the beginning of your upkeep, you draw a card and lose 1 life.",
+"artist": "Svetlin Velinov",
+"num": "180",
+"rarity": "rare",
+"legendary": false,
+"abilities": [
+{
+"kind": "triggered",
+"when": "upkeep",
+"effects": [
+{
+"op": "seq",
+"effects": [
+{
+"op": "draw",
+"who": "you",
+"n": 1
+},
+{
+"op": "loseLife",
+"who": "you",
+"n": 1
+}
+]
+}
+]
+}
+]
+},
+{
 "id": "dc798e6f-13c4-457c-b052-b7b65bc83cfe",
 "name": "Zombify",
 "kind": "sorcery",
@@ -2123,6 +2323,34 @@
 ]
 },
 {
+"id": "882b348c-076b-41d8-b505-063480636669",
+"name": "Thrill of Possibility",
+"kind": "instant",
+"type": "Instant",
+"cost": "1R",
+"colors": "R",
+"text": "As an additional cost to cast this spell, discard a card.\nDraw two cards.",
+"artist": "Steve Argyle",
+"num": "210",
+"rarity": "common",
+"legendary": false,
+"abilities": [
+{
+"kind": "spell",
+"effects": [
+{
+"op": "draw",
+"who": "you",
+"n": 2
+}
+],
+"additionalCost": {
+"discard": 1
+}
+}
+]
+},
+{
 "id": "61f9cbeb-cc9c-4562-be65-8a77053faefe",
 "name": "Broken Wings",
 "kind": "instant",
@@ -2180,6 +2408,97 @@
 "toughness": "2"
 },
 {
+"id": "341da856-7414-403b-b2e3-4bebd58a5aa4",
+"name": "Elvish Archdruid",
+"kind": "creature",
+"type": "Creature — Elf Druid",
+"cost": "1GG",
+"colors": "G",
+"text": "Other Elf creatures you control get +1/+1.\n{T}: Add {G} for each Elf you control.",
+"artist": "Karl Kopinski",
+"num": "219",
+"rarity": "rare",
+"legendary": false,
+"abilities": [
+{
+"kind": "static",
+"op": "anthem",
+"filter": {
+"subtype": "Elf",
+"other": true
+},
+"p": 1,
+"t": 1
+},
+{
+"kind": "activated",
+"cost": {
+"tap": true
+},
+"effects": [
+{
+"op": "addMana",
+"colors": [
+"G"
+],
+"per": "Elf"
+}
+]
+}
+],
+"power": "2",
+"toughness": "2"
+},
+{
+"id": "4805c303-e73b-443b-a09f-49d2c2c88bb5",
+"name": "Garruk's Uprising",
+"kind": "enchantment",
+"type": "Enchantment",
+"cost": "2G",
+"colors": "G",
+"text": "When this enchantment enters, if you control a creature with power 4 or greater, draw a card.\nCreatures you control have trample.\nWhenever a creature you control with power 4 or greater enters, draw a card.",
+"artist": "Wisnu Tan",
+"num": "220",
+"rarity": "uncommon",
+"legendary": false,
+"abilities": [
+{
+"kind": "triggered",
+"when": "etb",
+"effects": [
+{
+"op": "draw",
+"who": "you",
+"n": 1,
+"if": "you control a creature with power 4 or greater"
+}
+]
+},
+{
+"kind": "static",
+"op": "grantAll",
+"filter": {
+"subtype": "creatures",
+"other": false
+},
+"keywords": [
+"Trample"
+]
+},
+{
+"kind": "triggered",
+"when": "bigCreatureEnters",
+"effects": [
+{
+"op": "draw",
+"who": "you",
+"n": 1
+}
+]
+}
+]
+},
+{
 "id": "bd0bf74e-14c1-4428-88d8-2181a080b5d0",
 "name": "Giant Growth",
 "kind": "instant",
@@ -2200,6 +2519,39 @@
 "target": "creature",
 "p": 3,
 "t": 3
+}
+]
+}
+]
+},
+{
+"id": "3e241642-5172-4437-b694-f6aa159d5cd9",
+"name": "Inspiring Call",
+"kind": "instant",
+"type": "Instant",
+"cost": "2G",
+"colors": "G",
+"text": "Draw a card for each creature you control with a +1/+1 counter on it. Those creatures gain indestructible until end of turn.",
+"artist": "Dan Murayama Scott",
+"num": "226",
+"rarity": "uncommon",
+"legendary": false,
+"abilities": [
+{
+"kind": "spell",
+"effects": [
+{
+"op": "draw",
+"who": "you",
+"n": 0,
+"per": "counteredCreaturesYou"
+},
+{
+"op": "grantAll",
+"filter": "counteredCreaturesYou",
+"keywords": [
+"Indestructible"
+]
 }
 ]
 }
@@ -2662,6 +3014,46 @@
 "toughness": "4"
 },
 {
+"id": "5383f45e-3da2-40fb-beee-801448bbb60f",
+"name": "Solemn Simulacrum",
+"kind": "creature",
+"type": "Artifact Creature — Golem",
+"cost": "4",
+"colors": "",
+"text": "When this creature enters, you may search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.\nWhen this creature dies, you may draw a card.",
+"artist": "Dan Murayama Scott",
+"num": "257",
+"rarity": "rare",
+"legendary": false,
+"abilities": [
+{
+"kind": "triggered",
+"when": "etb",
+"effects": [
+{
+"op": "rampTapped",
+"n": 1,
+"optional": true
+}
+]
+},
+{
+"kind": "triggered",
+"when": "dies",
+"effects": [
+{
+"op": "draw",
+"who": "you",
+"n": 1,
+"optional": true
+}
+]
+}
+],
+"power": "2",
+"toughness": "2"
+},
+{
 "id": "41040541-b129-4cf4-9411-09b1d9d32c19",
 "name": "Swiftfoot Boots",
 "kind": "artifact",
@@ -2842,7 +3234,8 @@
 },
 "effects": [
 {
-"op": "rampTapped"
+"op": "rampTapped",
+"n": 1
 }
 ]
 }
@@ -2886,6 +3279,51 @@
 "colors": [
 "B",
 "G"
+]
+}
+]
+}
+]
+},
+{
+"id": "a2a424ea-ef32-4ac5-8f8c-3ea1839f01d4",
+"name": "Rogue's Passage",
+"kind": "land",
+"type": "Land",
+"cost": "",
+"colors": "",
+"text": "{T}: Add {C}.\n{4}, {T}: Target creature can't be blocked this turn.",
+"artist": "Christine Choi",
+"num": "264",
+"rarity": "uncommon",
+"legendary": false,
+"abilities": [
+{
+"kind": "activated",
+"cost": {
+"tap": true
+},
+"effects": [
+{
+"op": "addMana",
+"colors": [
+"C"
+]
+}
+]
+},
+{
+"kind": "activated",
+"cost": {
+"mana": "4",
+"tap": true
+},
+"effects": [
+{
+"op": "grant",
+"target": "creature",
+"keywords": [
+"Unblockable"
 ]
 }
 ]
@@ -4278,6 +4716,51 @@
 "toughness": "2"
 },
 {
+"id": "efcf7e75-5de2-45cc-9275-caccd73214fa",
+"name": "Seize the Spoils",
+"kind": "sorcery",
+"type": "Sorcery",
+"cost": "2R",
+"colors": "R",
+"text": "As an additional cost to cast this spell, discard a card.\nDraw two cards and create a Treasure token.",
+"artist": "Brian Valeza",
+"num": "546",
+"rarity": "common",
+"legendary": false,
+"abilities": [
+{
+"kind": "spell",
+"effects": [
+{
+"op": "seq",
+"effects": [
+{
+"op": "draw",
+"who": "you",
+"n": 2
+},
+{
+"op": "token",
+"n": 1,
+"p": 0,
+"t": 0,
+"color": "C",
+"subtypes": [
+"Treasure"
+],
+"keywords": [],
+"artifact": "treasure"
+}
+]
+}
+],
+"additionalCost": {
+"discard": 1
+}
+}
+]
+},
+{
 "id": "5e3fbafb-e915-43eb-8a68-245840ba73ff",
 "name": "Skyraker Giant",
 "kind": "creature",
@@ -4915,6 +5398,37 @@
 "toughness": "8"
 },
 {
+"id": "7599d459-fe71-48f4-8c65-0f519bb63a68",
+"name": "Chart a Course",
+"kind": "sorcery",
+"type": "Sorcery",
+"cost": "1U",
+"colors": "U",
+"text": "Draw two cards. Then discard a card unless you attacked this turn.",
+"artist": "James Ryman",
+"num": "586",
+"rarity": "uncommon",
+"legendary": false,
+"abilities": [
+{
+"kind": "spell",
+"effects": [
+{
+"op": "draw",
+"who": "you",
+"n": 2
+},
+{
+"op": "discard",
+"who": "you",
+"n": 1,
+"ifNot": "you attacked this turn"
+}
+]
+}
+]
+},
+{
 "id": "65d5cff9-a3ec-432d-9ce5-68949e524279",
 "name": "Dive Down",
 "kind": "instant",
@@ -4942,6 +5456,85 @@
 ]
 }
 ]
+},
+{
+"id": "3834176f-29c5-4511-87d6-75d0c348a770",
+"name": "Gateway Sneak",
+"kind": "creature",
+"type": "Creature — Vedalken Rogue",
+"cost": "2U",
+"colors": "U",
+"text": "Whenever a Gate you control enters, this creature can't be blocked this turn.\nWhenever this creature deals combat damage to a player, draw a card.",
+"artist": "Matt Stewart",
+"num": "592",
+"rarity": "uncommon",
+"legendary": false,
+"abilities": [
+{
+"kind": "triggered",
+"when": "gateEnters",
+"effects": [
+{
+"op": "grant",
+"target": "self",
+"keywords": [
+"Unblockable"
+]
+}
+]
+},
+{
+"kind": "triggered",
+"when": "combatDamageToPlayer",
+"effects": [
+{
+"op": "draw",
+"who": "you",
+"n": 1
+}
+]
+}
+],
+"power": "1",
+"toughness": "3"
+},
+{
+"id": "f229b0e6-1ffd-410e-b04b-a0afc179c58c",
+"name": "Midnight Reaper",
+"kind": "creature",
+"type": "Creature — Zombie Knight",
+"cost": "2B",
+"colors": "B",
+"text": "Whenever a nontoken creature you control dies, this creature deals 1 damage to you and you draw a card.",
+"artist": "Sidharth Chaturvedi",
+"num": "609",
+"rarity": "rare",
+"legendary": false,
+"abilities": [
+{
+"kind": "triggered",
+"when": "nontokenCreatureYouDies",
+"effects": [
+{
+"op": "seq",
+"effects": [
+{
+"op": "damage",
+"target": "self_player",
+"n": 1
+},
+{
+"op": "draw",
+"who": "you",
+"n": 1
+}
+]
+}
+]
+}
+],
+"power": "3",
+"toughness": "2"
 },
 {
 "id": "9ae0b1e0-a481-4a98-b67b-0cf8bac53fdd",
@@ -5143,6 +5736,62 @@
 ],
 "power": "2",
 "toughness": "1"
+},
+{
+"id": "a806dec2-d4f9-4f8d-a1dd-170777941131",
+"name": "Circuitous Route",
+"kind": "sorcery",
+"type": "Sorcery",
+"cost": "3G",
+"colors": "G",
+"text": "Search your library for up to two basic land cards and/or Gate cards, put them onto the battlefield tapped, then shuffle.",
+"artist": "Milivoj Ćeran",
+"num": "635",
+"rarity": "uncommon",
+"legendary": false,
+"abilities": [
+{
+"kind": "spell",
+"effects": [
+{
+"op": "rampTapped",
+"n": 2
+}
+]
+}
+]
+},
+{
+"id": "6b638f3d-7eb6-4675-9538-4a87a7f75c43",
+"name": "Gnarlback Rhino",
+"kind": "creature",
+"type": "Creature — Rhino",
+"cost": "2GG",
+"colors": "G",
+"text": "Trample\nWhenever you cast a spell that targets this creature, draw a card.",
+"artist": "YW Tang",
+"num": "638",
+"rarity": "uncommon",
+"legendary": false,
+"abilities": [
+{
+"kind": "keyword",
+"name": "Trample"
+},
+{
+"kind": "triggered",
+"when": "targetedByYourSpell",
+"effects": [
+{
+"op": "draw",
+"who": "you",
+"n": 1
+}
+]
+}
+],
+"power": "4",
+"toughness": "4"
 },
 {
 "id": "332c9742-dc3b-48e5-8736-7724fae1b4c4",
@@ -6367,6 +7016,34 @@
 ]
 },
 {
+"id": "08e66835-c228-48fa-bcaa-eb96edbd4f5a",
+"name": "Expedition Map",
+"kind": "artifact",
+"type": "Artifact",
+"cost": "1",
+"colors": "",
+"text": "{2}, {T}, Sacrifice this artifact: Search your library for a land card, reveal it, put it into your hand, then shuffle.",
+"artist": "Franz Vohwinkel",
+"num": "724",
+"rarity": "common",
+"legendary": false,
+"abilities": [
+{
+"kind": "activated",
+"cost": {
+"mana": "2",
+"tap": true,
+"sacrificeSelf": true
+},
+"effects": [
+{
+"op": "fetchLandToHand"
+}
+]
+}
+]
+},
+{
 "id": "aa5e88f1-0ddf-45d7-bbd0-baa88d121867",
 "name": "Gilded Lotus",
 "kind": "artifact",
@@ -7195,5 +7872,83 @@
 ],
 "power": "7",
 "toughness": "7"
+},
+{
+"id": "17d67b88-3f76-401f-b04a-f2bcaab4aa97",
+"name": "Springbloom Druid",
+"kind": "creature",
+"type": "Creature — Elf Druid",
+"cost": "2G",
+"colors": "G",
+"text": "When this creature enters, you may sacrifice a land. If you do, search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.",
+"artist": "Randy Gallegos",
+"num": "767",
+"rarity": "common",
+"legendary": false,
+"abilities": [
+{
+"kind": "triggered",
+"when": "etb",
+"effects": [
+{
+"op": "sacrificeLand",
+"optional": true,
+"then": [
+{
+"op": "rampTapped",
+"n": 2
+}
+]
+}
+]
+}
+],
+"power": "1",
+"toughness": "1"
+},
+{
+"id": "9d126c8f-a3df-497c-aad5-a448c55f51cc",
+"name": "Cryptic Caves",
+"kind": "land",
+"type": "Land",
+"cost": "",
+"colors": "",
+"text": "{T}: Add {C}.\n{1}, {T}, Sacrifice this land: Draw a card. Activate only if you control five or more lands.",
+"artist": "Sung Choi",
+"num": "771",
+"rarity": "uncommon",
+"legendary": false,
+"abilities": [
+{
+"kind": "activated",
+"cost": {
+"tap": true
+},
+"effects": [
+{
+"op": "addMana",
+"colors": [
+"C"
+]
+}
+]
+},
+{
+"kind": "activated",
+"cost": {
+"mana": "1",
+"tap": true,
+"sacrificeSelf": true
+},
+"effects": [
+{
+"op": "draw",
+"who": "you",
+"n": 1
+}
+],
+"restriction": "lands>=5"
+}
+]
 }
 ]
