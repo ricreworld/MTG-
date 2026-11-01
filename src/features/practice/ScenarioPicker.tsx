@@ -11,10 +11,11 @@ interface Props {
   onPlayCommander: () => void;
   onPlayFour: () => void;
   onLibrary: () => void;
+  onGuides: () => void;
   onBack: () => void;
 }
 
-export const ScenarioPicker = forwardRef<HTMLHeadingElement, Props>(function ScenarioPicker({ completed, onPick, onPlayGame, onPlayCommander, onPlayFour, onLibrary, onBack }, headingRef) {
+export const ScenarioPicker = forwardRef<HTMLHeadingElement, Props>(function ScenarioPicker({ completed, onPick, onPlayGame, onPlayCommander, onPlayFour, onLibrary, onGuides, onBack }, headingRef) {
   return (
     <section aria-labelledby="scenarios-heading" className="grid gap-s4 rounded-lg border border-border bg-surface p-s4">
       <div className="flex flex-wrap items-center justify-between gap-s3">
@@ -54,7 +55,7 @@ export const ScenarioPicker = forwardRef<HTMLHeadingElement, Props>(function Sce
       <div className="grid gap-s2 rounded-md border border-border bg-surface-2 p-s3">
         <p className="font-bold">Curious about the other cards?</p>
         <p className="text-sm">Browse every card in the Foundations set, with its official text and picture.</p>
-        <div><button type="button" onClick={onLibrary} className="inline-flex min-h-tap items-center gap-s2 rounded-md border-2 border-border-strong bg-surface px-s4 font-bold"><Icon name="book" /> Card library</button></div>
+        <div className="flex flex-wrap gap-s2"><button type="button" onClick={onLibrary} className="inline-flex min-h-tap items-center gap-s2 rounded-md border-2 border-border-strong bg-surface px-s4 font-bold"><Icon name="book" /> Card library</button><button type="button" onClick={onGuides} className="inline-flex min-h-tap items-center gap-s2 rounded-md border-2 border-border-strong bg-surface px-s4 font-bold"><Icon name="book" /> Deck guides</button></div>
       </div>
     </section>
   );

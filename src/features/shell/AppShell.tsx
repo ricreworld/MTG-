@@ -16,6 +16,7 @@ import { ScenarioPicker } from "../practice/ScenarioPicker";
 import { DeckPicker } from "../practice/DeckPicker";
 import { lazy, Suspense } from "react";
 const CardLibrary = lazy(() => import("../library/CardLibrary").then((m) => ({ default: m.CardLibrary })));
+const DeckGuides = lazy(() => import("../guides/DeckGuides").then((m) => ({ default: m.DeckGuides })));
 const CommanderSetup = lazy(() => import("../commander/CommanderSetup").then((m) => ({ default: m.CommanderSetup })));
 const CommanderTable = lazy(() => import("../commander/CommanderTable").then((m) => ({ default: m.CommanderTable })));
 import { makeMatch, type MatchSetup } from "../../game/match";
@@ -30,7 +31,7 @@ import { SettingsPanel } from "./SettingsPanel";
 import { detectSwipe, type TouchPoint } from "./swipe";
 import { useShortcuts } from "./useShortcuts";
 
-type View = "lesson" | "outline" | "settings" | "paused" | "welcome" | "finished" | "practice" | "library" | "commander";
+type View = "lesson" | "outline" | "settings" | "paused" | "welcome" | "finished" | "practice" | "library" | "commander" | "guides";
 
 const topButton = "inline-flex min-h-tap flex-1 items-center justify-center gap-s2 rounded-md border-2 px-s2 font-bold sm:flex-none sm:px-s3";
 
@@ -99,6 +100,7 @@ export function AppShell() {
       practice: scenario ? `Practice: ${scenario.title}` : "Practice Table",
       library: "Card library",
       commander: cmdGame ? "Commander: four players" : "Commander setup",
+      guides: "Deck guides",
     };
     setAnnouncement(text[view]);
     headingRef.current?.focus({ preventScroll: true });
@@ -142,7 +144,7 @@ export function AppShell() {
             className={`${topButton} lg:hidden ${view === "outline" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
             <Icon name="list" /> Outline
           </button>
-          <button type="button" onClick={() => { setScenarioId(null); setMatchSetup(null); setPickingDeck(null); toggleView("practice"); }} aria-pressed={view === "practice" || view === "commander" || view === "library"}
+          <button type="button" onClick={() => { setScenarioId(null); setMatchSetup(null); setPickingDeck(null); toggleView("practice"); }} aria-pressed={view === "practice" || view === "commander" || view === "library" || view === "guides"}
             className={`${topButton} ${view === "practice" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
             <Icon name="play" /> Practice
           </button>
@@ -217,7 +219,12 @@ export function AppShell() {
           {view === "settings" && <SettingsPanel ref={headingRef} onClose={() => setView("lesson")} />}
 
           {view === "practice" && !scenario && !pickingDeck && (
-            <ScenarioPicker ref={headingRef} completed={progress.scenarios} onPick={(id) => setScenarioId(id)} onPlayGame={() => setPickingDeck("standard")} onPlayCommander={() => setPickingDeck("commander")} onPlayFour={() => { setCmdGame(null); setView("commander"); }} onLibrary={() => setView("library")} onBack={() => setView("lesson")} />
+            <ScenarioPicker ref={headingRef} completed={progress.scenarios} onPick={(id) => setScenarioId(id)} onPlayGame={() => setPickingDeck("standard")} onPlayCommander={() => setPickingDeck("commander")} onPlayFour={() => { setCmdGame(null); setView("commander"); }} onLibrary={() => setView("library")} onGuides={() => setView("guides")} onBack={() => setView("lesson")} />
+          )}
+          {view === "guides" && (
+            <Suspense fallback={<p className="p-s4">Loading the deck guides…</p>}>
+              <DeckGuides ref={headingRef} onBack={() => setView("practice")} />
+            </Suspense>
           )}
           {view === "library" && (
             <Suspense fallback={<p className="p-s4">Loading the card library…</p>}>
@@ -302,7 +309,7 @@ export function AppShell() {
         </p>
       </footer>
 
-      {view !== "practice" && view !== "library" && view !== "commander" && <BottomBar
+      {view !== "practice" && view !== "library" && view !== "commander" && view !== "guides" && <BottomBar
         canBack={view === "lesson" && !isFirst(position)}
         canNext={view === "lesson"}
         nextLabel={atEnd ? "Finish" : "Next"}
