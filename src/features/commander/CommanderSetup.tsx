@@ -4,7 +4,7 @@ import { forwardRef, useMemo, useState } from "react";
 import { Icon } from "../../components/Icon";
 import { ManaSymbol, type ManaColor } from "../../components/ManaSymbol";
 import { CCARDS } from "../../game/commander/cards";
-import { CDECKS, deckListText, deckSummary, toLibraryCard, type CDeck } from "../../game/commander/decks";
+import { CDECKS, FULL_DECKS, deckListText, deckSummary, toLibraryCard, type CDeck } from "../../game/commander/decks";
 import type { SavedGame } from "../../game/commander/save";
 import { CARD_LIST } from "../../game/commander/cards";
 import { checkDeck, parseList, stars, type LibraryCard } from "../../game/deckcheck";
@@ -57,7 +57,7 @@ export const CommanderSetup = forwardRef<HTMLHeadingElement, Props>(function Com
   const btn = "inline-flex min-h-tap items-center gap-s2 rounded-md px-s4 font-bold";
   if (checking) return <DeckCheck onBack={() => setChecking(false)} onReadMore={onReadMore} />;
   if (importing) return <DeckImport onBack={() => { setImporting(false); onPrefillUsed?.(); }} onPlay={onStartCustom} prefill={prefill ?? null} />;
-  const picked = pick ? CDECKS.find((d) => d.id === pick) : undefined;
+  const picked = pick ? [...FULL_DECKS, ...CDECKS].find((d) => d.id === pick) : undefined;
   return (
     <section aria-labelledby="cmd-setup-heading" className="grid gap-s4 rounded-lg border border-border bg-surface p-s4">
       <div className="flex flex-wrap items-center justify-between gap-s3">
@@ -74,8 +74,11 @@ export const CommanderSetup = forwardRef<HTMLHeadingElement, Props>(function Com
       )}
       <div className="grid gap-s2">
         <p className="font-bold">{saved ? "Or start a new game. Which deck is yours?" : "Which deck is yours?"}</p>
+        <p className="text-sm"><strong>Decks from the whole pool</strong>: popular commanders, built from every card the table can play. Pictures load when online.</p>
+        <div className="grid gap-s2 sm:grid-cols-2">{FULL_DECKS.map((d) => <DeckTile key={d.id} deck={d} selected={pick === d.id} onPick={() => setPick(d.id)} />)}</div>
+        <p className="text-sm"><strong>Starter decks</strong>: Foundations only, pictures bundled for offline play.</p>
         <div className="grid gap-s2 sm:grid-cols-2">{CDECKS.map((d) => <DeckTile key={d.id} deck={d} selected={pick === d.id} onPick={() => setPick(d.id)} />)}</div>
-        <p className="text-sm text-text-muted">The three decks you don't pick go to Mara, Theo and Ines, the computer players. Turns go clockwise: you, then Mara, Theo, Ines.</p>
+        <p className="text-sm text-text-muted">The three other decks of the same group go to Mara, Theo and Ines, the computer players. Turns go clockwise: you, then Mara, Theo, Ines.</p>
         {picked && (
           <div className="grid gap-s1 rounded-md border border-border bg-surface-2 p-s3 text-sm">
             <p className="font-bold">How to play {picked.name}</p>

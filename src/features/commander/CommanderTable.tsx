@@ -4,7 +4,7 @@ import { forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState, useS
 import { Icon } from "../../components/Icon";
 import { type CDef } from "../../game/commander/cards";
 import { advise, threatLabel } from "../../game/commander/coach";
-import { activated, allBlocksIn, canActivate, canAttack, canBlock, canPlayLand, castable, cyclable, commanderCost, canAfford, def, describeSpec, find, isCreature, isLand, isMain, player, type Action, type CState, type Perm, type Seat, type Step, type Target } from "../../game/commander/engine";
+import { activated, allBlocksIn, altCastable, canActivate, canAttack, canBlock, canPlayLand, castable, cyclable, commanderCost, embalmable, canAfford, def, describeSpec, find, isCreature, isLand, isMain, player, type Action, type CState, type Perm, type Seat, type Step, type Target } from "../../game/commander/engine";
 import { CommanderMachine, type CSnapshot } from "../../table/cmachine";
 import { useSettings } from "../../theme/SettingsContext";
 import { EffectsLayer, playBatch, type Ghost } from "../table/cues";
@@ -80,6 +80,8 @@ export const CommanderTable = forwardRef<HTMLHeadingElement, Props>(function Com
   const pend = state.pending;
   const canCast = useMemo(() => new Set(castable(state, me)), [state, me]);
   const canCycle = useMemo(() => new Set(cyclable(state, me)), [state, me]);
+  const canAlt = useMemo(() => new Set(altCastable(state, me)), [state, me]);
+  const canEmbalm = useMemo(() => embalmable(state, me), [state, me]);
   const inCombat = state.step === "blockers" || state.step === "damage";
   const defendingMe = state.step === "blockers" && !myTurn && Object.values(state.attackers).some((a) => a.defender === me) && !state.blocksDone.includes(me);
   const nameOf = (seat: Seat) => (seat === me ? "You" : player(state, seat).name);
@@ -314,6 +316,12 @@ export const CommanderTable = forwardRef<HTMLHeadingElement, Props>(function Com
               </div>
             );
           })()}
+          {canEmbalm.length > 0 && (
+            <div className="on-felt flex flex-wrap items-center gap-s2 rounded-md p-s2" role="group" aria-label="Embalm from your graveyard">
+              <span className="text-sm font-bold">Graveyard:</span>
+              {canEmbalm.map((c) => <button key={c} type="button" onClick={() => act({ type: "embalm", card: c })} className={primary}>Embalm {def(state, c).name} ({`{${def(state, c).abilities.find((a) => a.kind === "embalm")?.cost}`})</button>)}
+            </div>
+          )}
           <div className="flex flex-wrap items-start gap-s3 rounded-md border border-dashed border-felt-ink/40 p-s2">
             <span className="on-felt rounded-sm px-s2 text-sm font-bold">Your command zone</span>
             {my.commandZone.inZone ? (() => {
@@ -348,6 +356,7 @@ export const CommanderTable = forwardRef<HTMLHeadingElement, Props>(function Com
               {!can && <span className="text-sm text-text-muted">{card.kind === "land" ? (my.landsPlayed >= 1 && myTurn ? "You've already played a land this turn." : "Lands are played in your own main phase.") : card.kind === "instant" ? "You can't cast it right now: not enough mana, or nothing for it to target." : myTurn && isMain(state) ? `You need {${card.cost}}. Play more lands first.` : "Cast it in your own main phase, when nothing is on the stack."}</span>}
               <div className="flex flex-wrap gap-s2">
                 <button type="button" onClick={() => act(card.kind === "land" ? { type: "playLand", uid: handPick } : { type: "cast", uid: handPick })} className={can ? primary : secondary}>{card.kind === "land" ? "Play this land" : `Cast ${card.name}${card.cost ? ` ({${card.cost}})` : ""}`}</button>
+                {card.abilities.some((a) => a.kind === "altCost") && <button type="button" onClick={() => act({ type: "castAlt", uid: handPick })} className={canAlt.has(handPick) ? primary : secondary}>Cast for its other cost ({`{${card.abilities.find((a) => a.kind === "altCost")?.mana}`} and tap {card.abilities.find((a) => a.kind === "altCost")?.tapCreatures?.n} flying creatures)</button>}
                 {card.abilities.some((a) => a.kind === "cycling") && <button type="button" onClick={() => act({ type: "cycle", uid: handPick })} className={canCycle.has(handPick) ? primary : secondary}>Cycle it ({`{${card.abilities.find((a) => a.kind === "cycling")?.cost}`}: discard, draw a card)</button>}
                 <button type="button" onClick={() => setHandPick(null)} className={secondary}>Close</button>
               </div>

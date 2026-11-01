@@ -1,11 +1,11 @@
-// The Foundations card library: every card in the set, searchable and filterable, one calm list.
-// Text comes from the official Oracle text (via Scryfall). Pictures load from Scryfall when online;
-// offline, the text still works. Cards that the Practice Table can play are marked.
-import { forwardRef, useDeferredValue, useMemo, useState } from "react";
+// The card library: the cards the table can play, the Foundations set, or every Commander-legal card
+// (loaded on request, since that index is large). Text comes from the official Oracle text (via Scryfall).
+// Pictures load from Scryfall when online; offline, the text still works. Playable cards are marked.
+import { forwardRef, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Icon } from "../../components/Icon";
 import { ManaSymbol, type ManaColor } from "../../components/ManaSymbol";
 import foundations from "../../content/foundations.json";
-import { CARDS } from "../../game/cards";
+import { CARD_LIST } from "../../game/commander/cards";
 
 interface LibraryCard {
   id: string;
@@ -15,14 +15,18 @@ interface LibraryCard {
   text?: string;
   pt?: string;
   colors?: string;
-  rarity: "c" | "u" | "r" | "m";
-  num: string;
+  rarity: string;
+  num?: string;
   artist?: string;
+  set?: string;
+  ci?: string;
 }
 
-const ALL = foundations as LibraryCard[];
-const PLAYABLE = new Set(Object.values(CARDS).map((c) => c.name));
-const RARITY: Record<LibraryCard["rarity"], string> = { c: "Common", u: "Uncommon", r: "Rare", m: "Mythic rare" };
+type Source = "playable" | "foundations" | "all";
+const FDN = foundations as LibraryCard[];
+const PLAYABLE_LIST: LibraryCard[] = CARD_LIST.map((c) => ({ id: c.id, name: c.name, cost: (c.cost.match(/\d+|[WUBRG]/g) ?? []).map((x) => `{${x}}`).join(""), type: c.type, text: c.text, ...(c.kind === "creature" ? { pt: `${c.power ?? 0}/${c.toughness ?? 0}` } : {}), colors: c.colors, rarity: c.rarity[0] ?? "c", num: c.num, artist: c.artist, set: c.set ?? "" }));
+const PLAYABLE = new Set(CARD_LIST.map((c) => c.name));
+const RARITY: Record<string, string> = { c: "Common", u: "Uncommon", r: "Rare", m: "Mythic rare", s: "Special", b: "Bonus" };
 const COLOR_FILTERS: { id: string; label: string; color?: ManaColor }[] = [
   { id: "W", label: "White", color: "W" }, { id: "U", label: "Blue", color: "U" }, { id: "B", label: "Black", color: "B" },
   { id: "R", label: "Red", color: "R" }, { id: "G", label: "Green", color: "G" }, { id: "C", label: "Colourless" }, { id: "M", label: "Two or more colours" },
@@ -76,7 +80,7 @@ function CardRow({ card, open, onToggle }: { card: LibraryCard; open: boolean; o
           )}
           {!imgFailed && <div><button type="button" onClick={() => setFull((v) => !v)} className="inline-flex min-h-tap items-center rounded-md border-2 border-border-strong px-s3 text-sm font-bold">{full ? "Show artwork only" : "Show the full card"}</button></div>}
           <p className="whitespace-pre-line leading-relaxed">{card.text ? <ManaText text={card.text} /> : <span className="text-text-muted">No rules text.</span>}</p>
-          <p className="text-sm text-text-muted">{RARITY[card.rarity]} · Foundations #{card.num}{card.artist ? ` · Art by ${card.artist}` : ""}</p>
+          <p className="text-sm text-text-muted">{RARITY[card.rarity] ?? "Card"}{card.set ? ` · ${card.set.toUpperCase()}` : " · Foundations"}{card.num ? ` #${card.num}` : ""}{card.artist ? ` · Art by ${card.artist}` : ""}</p>
         </div>
       )}
     </li>
@@ -85,14 +89,25 @@ function CardRow({ card, open, onToggle }: { card: LibraryCard; open: boolean; o
 
 interface Props { onBack: () => void }
 
+const chip = (on: boolean) => `inline-flex min-h-tap items-center gap-s1 rounded-md border-2 px-s2 text-sm font-bold ${on ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`;
+
 export const CardLibrary = forwardRef<HTMLHeadingElement, Props>(function CardLibrary({ onBack }, headingRef) {
   const [query, setQuery] = useState("");
   const [colors, setColors] = useState<string[]>([]);
   const [types, setTypes] = useState<string[]>([]);
   const [onlyPlayable, setOnlyPlayable] = useState(false);
+  const [source, setSource] = useState<Source>("playable");
+  const [everything, setEverything] = useState<LibraryCard[] | null>(null);
+  const [loading, setLoading] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [limit, setLimit] = useState(60);
   const q = useDeferredValue(query.trim().toLowerCase());
+  useEffect(() => {
+    if (source !== "all" || everything || loading) return;
+    setLoading(true);
+    void import("../../content/commander-cards.json").then((m) => { setEverything((m.default as LibraryCard[]).map((c) => ({ ...c, colors: c.ci ?? "" }))); setLoading(false); }).catch(() => setLoading(false));
+  }, [source, everything, loading]);
+  const ALL: LibraryCard[] = source === "playable" ? PLAYABLE_LIST : source === "foundations" ? FDN : everything ?? [];
 
   const results = useMemo(() => ALL.filter((c) => {
     if (q && !c.name.toLowerCase().includes(q) && !(c.text ?? "").toLowerCase().includes(q) && !c.type.toLowerCase().includes(q)) return false;
@@ -104,10 +119,9 @@ export const CardLibrary = forwardRef<HTMLHeadingElement, Props>(function CardLi
     if (types.length && !types.some((t) => c.type.includes(t))) return false;
     if (onlyPlayable && !PLAYABLE.has(c.name)) return false;
     return true;
-  }), [q, colors, types, onlyPlayable]);
+  }), [ALL, q, colors, types, onlyPlayable]);
 
   const toggle = (list: string[], set: (v: string[]) => void, id: string) => set(list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
-  const chip = (on: boolean) => `inline-flex min-h-tap items-center gap-s1 rounded-md border-2 px-s2 text-sm font-bold ${on ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`;
   const shown = results.slice(0, limit);
 
   return (
@@ -116,7 +130,17 @@ export const CardLibrary = forwardRef<HTMLHeadingElement, Props>(function CardLi
         <h2 id="library-heading" ref={headingRef} tabIndex={-1} className="text-2xl font-bold">Card library</h2>
         <button type="button" onClick={onBack} className="inline-flex min-h-tap items-center gap-s2 rounded-md border-2 border-border-strong bg-surface px-s3 font-bold"><Icon name="back" /> Practice</button>
       </div>
-      <p>Every card in Foundations ({ALL.length} cards), with its official rules text. Tap a card to see its picture and text. Cards marked <strong>On the table</strong> can be played on the Practice Table.</p>
+      <p>Official rules text for every card. Tap a card to see its picture and text. Cards marked <strong>On the table</strong> can be played in the four-player Commander game.</p>
+      <fieldset className="grid gap-s2">
+        <legend className="font-bold">Which cards</legend>
+        <div className="flex flex-wrap gap-s2">
+          <button type="button" aria-pressed={source === "playable"} onClick={() => { setSource("playable"); setLimit(60); }} className={chip(source === "playable")}>Playable on the table ({PLAYABLE_LIST.length})</button>
+          <button type="button" aria-pressed={source === "foundations"} onClick={() => { setSource("foundations"); setLimit(60); }} className={chip(source === "foundations")}>Foundations set ({FDN.length})</button>
+          <button type="button" aria-pressed={source === "all"} onClick={() => { setSource("all"); setLimit(60); }} className={chip(source === "all")}>Every Commander card (32,115; a 3 MB download once)</button>
+        </div>
+        {source === "all" && loading && <p className="text-sm text-text-muted" role="status">Loading the full card index…</p>}
+        {source === "all" && !loading && !everything && <p className="text-sm text-text-muted" role="status">The full index couldn't load. Check your connection and try again.</p>}
+      </fieldset>
 
       <label className="grid gap-s1">
         <span className="font-bold">Search by name, type or text</span>

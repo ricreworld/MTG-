@@ -2,12 +2,12 @@
 // rules: cards are conserved, life and counts stay sane, every game ends with one winner.
 import { describe, expect, it } from "vitest";
 import { CCARDS } from "./cards";
-import { CDECKS, deckSummary } from "./decks";
+import { ALL_DECKS, CDECKS, FULL_DECKS, deckSummary } from "./decks";
 import { aiStep, autoBlocksForHuman, runUntilHuman } from "./ai";
 import { newGame, player, reduce, type CState } from "./engine";
 
-function start(seed: number): CState {
-  return newGame({ seed, seats: CDECKS.map((d, i) => ({ id: `p${i + 1}`, name: ["You", "Mara", "Theo", "Ines"][i]!, human: i === 0, commander: d.commander, deck: d.cards })) });
+function start(seed: number, decks = CDECKS): CState {
+  return newGame({ seed, seats: decks.map((d, i) => ({ id: `p${i + 1}`, name: ["You", "Mara", "Theo", "Ines"][i]!, human: i === 0, commander: d.commander, deck: d.cards })) });
 }
 
 function cardCount(s: CState): number {
@@ -31,7 +31,7 @@ function humanAuto(s: CState): CState {
 
 describe("four-player Commander simulation", () => {
   it("decks are 99 cards plus a commander, singleton except basics, inside the colour identity", () => {
-    for (const d of CDECKS) {
+    for (const d of ALL_DECKS) {
       expect(d.cards).toHaveLength(99);
       const seen = new Map<string, number>();
       for (const id of d.cards) { seen.set(id, (seen.get(id) ?? 0) + 1); expect([...CCARDS[id]!.colors].every((c) => d.identity.includes(c))).toBe(true); }
@@ -44,7 +44,7 @@ describe("four-player Commander simulation", () => {
 
   it("plays 6 whole games to a single winner without breaking invariants", () => {
     for (let seed = 1; seed <= 6; seed++) {
-      let s = start(seed * 7919);
+      let s = start(seed * 7919, seed % 2 ? CDECKS : FULL_DECKS);
       const total = cardCount(s);
       let steps = 0;
       while (!s.winner && steps < 6000) {

@@ -38,13 +38,17 @@ export interface Perm {
   bonus: { p: number; t: number; keywords: string[]; pacified: boolean; cantBlock: boolean; mustAttack: boolean; blockOnlyFlyers: boolean; evasion: string | null };
   attachedTo?: string | null;
   isCommander?: boolean;
-  /** Cards this permanent exiled "until it leaves the battlefield". */
-  exiled?: { card: string; owner: Seat }[];
+  /** Cards this permanent exiled "until it leaves the battlefield" (toHand: they come back to hand instead). */
+  exiled?: { card: string; owner: Seat; toHand?: boolean }[];
   enteredTurn: number;
   /** "As this enters, choose a creature type / card type." */
   chosen?: string;
   /** Abilities that already triggered this turn (for "triggers only once each turn"). */
   firedThisTurn?: string[];
+  /** Counters other than +1/+1, by name (e.g. divinity). */
+  namedCounters?: Record<string, number>;
+  /** "As this enters, note your life total." */
+  noted?: number;
 }
 
 export type Target = { kind: "perm"; uid: string } | { kind: "player"; seat: Seat } | { kind: "spell"; uid: string };
@@ -59,6 +63,8 @@ export interface Spell {
   responses?: number;
   /** Modal spells: the chosen modes, in order. */
   modes?: number[];
+  /** Cast during the caster's own main phase (Addendum). */
+  castInMain?: boolean;
 }
 
 export type PendingSource = { kind: "hand"; uid: string } | { kind: "commander" } | { kind: "ability"; uid: string; index: number };
@@ -133,6 +139,8 @@ export type Action =
   | { type: "chooseTarget"; target: Target }
   | { type: "chooseMode"; index: number }
   | { type: "cycle"; uid: string }
+  | { type: "castAlt"; uid: string }
+  | { type: "embalm"; card: string }
   | { type: "doneTargets" }
   | { type: "cancelTarget" }
   | { type: "pass" }
@@ -245,9 +253,12 @@ export function refresh(s: CState): CState {
       for (const a of statics(s, src)) {
         switch (a.op) {
           case "anthem": case "grantAll": {
-            if (!creature || src.controller !== p.controller) break;
+            if (src.controller !== p.controller) break;
+            if (!creature && !a.filter?.anyPermanent) break;
+            if (a.filter?.namedCounter && !((p.namedCounters?.[a.filter.namedCounter] ?? 0) > 0)) break;
+            if (a.filter?.anyPermanent && a.filter.subtype && !subtypesOf(pdef(s, p)).includes(a.filter.subtype)) break;
             if (a.filter?.other && src.uid === p.uid) break;
-            if (a.filter?.subtype && a.filter.subtype !== "chosen" && !hasSubtype(s, p, a.filter.subtype)) break;
+            if (a.filter?.subtype && a.filter.subtype !== "chosen" && !a.filter.anyPermanent && !hasSubtype(s, p, a.filter.subtype)) break;
             if (a.filter?.subtype === "chosen" && !(src.chosen && hasSubtype(s, p, src.chosen))) break;
             if (a.filter?.flying && !keywordsOf(pdef(s, p)).includes("Flying") && !p.granted.includes("Flying")) break;
             if (a.cond && !staticCond(s, src, a.cond)) break;
@@ -308,7 +319,7 @@ export function refresh(s: CState): CState {
 
 /* ------------------------------------------------------------------ mana */
 
-interface ManaSource { perm: Perm; colors: (Color | "C")[]; n: number; sacrifice: boolean }
+interface ManaSource { perm: Perm; colors: (Color | "C")[]; n: number; sacrifice: boolean; only?: string; rider?: string }
 
 function manaSources(s: CState, seat: Seat): ManaSource[] {
   const out: ManaSource[] = [];
@@ -320,13 +331,20 @@ function manaSources(s: CState, seat: Seat): ManaSource[] {
       const cost = a.cost ?? {};
       if (!cost.tap || cost.mana || cost.sacrificeCreature) continue;
       const eff = a.effects?.[0];
-      if (!eff || eff.op !== "addMana" || (a.effects?.length ?? 0) !== 1) continue;
+      if (!eff || eff.op !== "addMana" || (a.effects ?? []).slice(1).some((x) => x.op !== "manaRider" && x.op !== "manaOnly")) continue;
+      const only = (a.effects ?? []).find((x) => x.op === "manaOnly")?.subtype;
+      const rider = (a.effects ?? []).find((x) => x.op === "manaRider")?.rider;
       const n = eff.per ? s.battlefield.filter((x) => x.controller === seat && isCreature(s, x) && hasSubtype(s, x, eff.per!)).length : eff.n ?? 1;
       if (n <= 0) continue;
       let colors = (eff.colors ?? []) as (Color | "C")[];
       if (colors[0] === ("identity" as string)) colors = (def(s, player(s, seat).commandZone.card).colors.split("") as Color[]);
+      if (colors[0] === ("opponentsLands" as string)) {
+        const set = new Set<Color | "C">();
+        for (const o of opponentsOf(s, seat)) for (const l of s.battlefield) if (l.controller === o && isLand(s, l)) for (const ab of pdef(s, l).abilities) if (ab.kind === "activated" && ab.effects?.[0]?.op === "addMana") for (const col of ab.effects[0].colors ?? []) if (col !== ("identity" as string) && col !== ("opponentsLands" as string)) set.add(col as Color | "C");
+        colors = [...set];
+      }
       if (!colors.length) continue;
-      out.push({ perm: p, colors, n, sacrifice: !!cost.sacrificeSelf });
+      out.push({ perm: p, colors, n, sacrifice: !!cost.sacrificeSelf, ...(only ? { only } : {}), ...(rider ? { rider } : {}) });
     }
   }
   // Mono-colour lands first, then duals, then anything that has to be sacrificed (Treasure).
@@ -348,6 +366,7 @@ function costAfterReductions(s: CState, seat: Seat, card: CDef, cost: string): s
     if (a.what === "instantSorcery" && (card.kind === "instant" || card.kind === "sorcery")) less += a.n ?? 0;
     else if (a.what === "subtype" && a.subtype && subtypesOf(card).includes(a.subtype)) less += a.n ?? 0;
     else if (a.what === "chosenType" && p.chosen && card.kind === "creature" && subtypesOf(card).includes(p.chosen)) less += a.n ?? 0;
+    else if (a.what === "subtypes" && a.subtypes?.some((x) => subtypesOf(card).includes(x))) less += a.perCounter ? p.counters : a.n ?? 0;
   }
   if (!less) return cost;
   const c = parseCost(cost);
@@ -356,16 +375,19 @@ function costAfterReductions(s: CState, seat: Seat, card: CDef, cost: string): s
 }
 
 /** Pays a cost from the pool, tapping (or sacrificing) mana sources as needed. Null when it can't be paid. */
-export function pay(s: CState, seat: Seat, cost: string): CState | null {
+export function pay(s: CState, seat: Seat, cost: string, forCard?: CDef): CState | null {
   const need = parseCost(cost);
   let pool: Pool = { ...player(s, seat).pool };
   let st = s;
-  const sources = manaSources(s, seat);
+  const usable = (x: ManaSource) => !x.only || (!!forCard && subtypesOf(forCard).includes(x.only));
+  const sources = manaSources(s, seat).filter(usable);
   const used = new Set<string>();
+  const riders: string[] = [];
   const tapFor = (color: Color | null): boolean => {
     const src = sources.find((x) => !used.has(x.perm.uid) && (color === null ? true : x.colors.includes(color)));
     if (!src) return false;
     used.add(src.perm.uid);
+    if (src.rider) riders.push(src.rider);
     const c: Color | "C" = color ?? src.colors[0] ?? "C";
     pool[c] = (pool[c] ?? 0) + src.n;
     st = setPerm(st, src.perm.uid, (p) => ({ ...p, tapped: true }));
@@ -384,8 +406,15 @@ export function pay(s: CState, seat: Seat, cost: string): CState | null {
     spend();
   }
   for (const c of Object.keys(pool) as (Color | "C")[]) if (!pool[c]) delete pool[c];
-  return setPlayer(st, seat, { pool });
+  st = setPlayer(st, seat, { pool });
+  // Path of Ancestry: "When that mana is spent to cast a creature spell that shares a creature type with your commander, scry 1."
+  if (riders.includes("scry1IfSharesType") && forCard?.kind === "creature") {
+    const cmd = def(st, player(st, seat).commandZone.card);
+    if (subtypesOf(forCard).some((x) => subtypesOf(cmd).includes(x))) st = scry(st, seat, 1, "Path of Ancestry");
+  }
+  return st;
 }
+export const canAffordFor = (s: CState, seat: Seat, cost: string, forCard: CDef): boolean => pay(s, seat, cost, forCard) !== null;
 export const canAfford = (s: CState, seat: Seat, cost: string): boolean => pay(s, seat, cost) !== null;
 
 /** The cost to cast a commander from the command zone right now (CR 903.8). */
@@ -414,6 +443,12 @@ export function enter(s: CState, card: string, controller: Seat, opts: { uid?: s
   const entersTapped = d.abilities.some((a) => a.kind === "entersTapped" && (!a.unless || !st.battlefield.some((x) => x.controller === controller && hasSubtype(st, x, a.unless!)))) || (d.kind === "creature" && opponentsOf(st, controller).some((o) => hasStatic(st, o, "oppEnterTapped")));
   if (opts.tapped || entersTapped) p = { ...p, tapped: true };
   if (opts.attachTo !== undefined) p = { ...p, attachedTo: opts.attachTo };
+  if (d.abilities.some((a) => a.kind === "noteLife")) p = { ...p, noted: player(st, controller).life };
+  // Giada: "Each other Angel you control enters with an additional +1/+1 counter on it for each Angel you already control."
+  for (const holder of st.battlefield) if (holder.controller === controller && holder.uid !== uid) for (const a of statics(st, holder)) if (a.op === "entersWithCountersPer" && d.kind === "creature" && subtypesOf(d).includes(a.subtype ?? "")) {
+    const n = st.battlefield.filter((x) => x.controller === controller && isCreature(st, x) && hasSubtype(st, x, a.per ?? "")).length;
+    if (n > 0) { p = { ...p, counters: p.counters + n }; st = log(st, `${pdef(st, holder).name}: ${d.name} enters with ${n} extra +1/+1 counter${n === 1 ? "" : "s"}.`); }
+  }
   const choose = d.abilities.find((a) => a.kind === "chooseType");
   if (choose) { const chosen = choose.what === "cardType" ? "creature" : commonestSubtype(st, controller); p = { ...p, chosen }; st = log(st, `${d.name}: ${nameOf(st, controller)} choose${verb(st, controller, "", "s")} ${chosen}.`); }
   st = refresh({ ...st, battlefield: [...st.battlefield, p] });
@@ -449,6 +484,7 @@ export function leave(s: CState, uid: string, to: "graveyard" | "exile" | "hand"
   // Cards it exiled "until it leaves" come back under their owners' control (CR 610.3).
   for (const ex of p.exiled ?? []) {
     if (player(st, ex.owner).out) { st = setPlayer(st, ex.owner, { graveyard: [...player(st, ex.owner).graveyard, ex.card] }); continue; }
+    if (ex.toHand) { const [n2, huid] = nextUid(st, "h"); st = setPlayer(n2, ex.owner, { hand: [...player(n2, ex.owner).hand, huid] }); st = { ...st, cards: { ...st.cards, [huid]: ex.card } }; st = log(st, `${def(st, ex.card).name} returns to ${poss(st, ex.owner)} hand because ${d.name} left.`); continue; }
     st = log(st, `${def(st, ex.card).name} returns to the battlefield because ${d.name} left.`);
     st = enter(st, ex.card, ex.owner);
   }
@@ -577,7 +613,7 @@ export function targetSpecs(effects: Effect[] | undefined): { spec: string; opti
     if (e.op === "seq") { out.push(...targetSpecs(e.effects)); continue; }
     for (const t of [e.target, e.target2]) {
       if (!t || ["self", "equipped", "that", "self_player", "eachOpponent", "eachPlayer", "eachCreatureYou"].includes(t)) continue;
-      out.push({ spec: t, optional: !!e.optional || t === "creatureOptional" || t.startsWith("upTo"), max: t === "upToTwoOtherCreaturesYou" ? 2 : 1 });
+      out.push({ spec: t, optional: !!e.optional || t === "creatureOptional" || t.startsWith("upTo"), max: t === "upToTwoOtherCreaturesYou" ? 2 : t === "upToThreeOtherCreatures" ? 3 : 1 });
     }
     if (e.who === "player" || e.who === "opponent") out.push({ spec: e.who, optional: !!e.optional, max: 1 });
   }
@@ -594,6 +630,8 @@ export function candidates(s: CState, spec: string, from: Seat, sourceUid: strin
     case "creature": case "creatureOptional": return perms(cre);
     case "creatureYou": return perms((p) => cre(p) && p.controller === from);
     case "otherCreatureYou": case "upToTwoOtherCreaturesYou": return perms((p) => cre(p) && p.controller === from && other(p));
+    case "upToThreeOtherCreatures": return perms((p) => cre(p) && other(p));
+    case "creatureYouChosen": { const src = sourceUid ? find(s, sourceUid) : undefined; return perms((p) => cre(p) && p.controller === from && !!src?.chosen && hasSubtype(s, p, src.chosen)); }
     case "otherAttackingCreatureYou": return perms((p) => cre(p) && p.controller === from && other(p) && s.attackers[p.uid] !== undefined);
     case "creatureOpp": return perms((p) => cre(p) && p.controller !== from);
     case "creatureCombat": return perms((p) => cre(p) && inCombat(p));
@@ -704,7 +742,7 @@ function placeCounters(s: CState, uid: string, n: number): CState {
   return st;
 }
 
-interface Ctx { source: Perm | null; sourceCard: string; controller: Seat; targets: Target[]; that?: Target; sacrificed?: Perm; wasAttacking?: boolean; destroyedCount?: number; amount?: number; thatPower?: number; thatToughness?: number; thatController?: Seat }
+interface Ctx { source: Perm | null; sourceCard: string; controller: Seat; targets: Target[]; that?: Target; sacrificed?: Perm; wasAttacking?: boolean; destroyedCount?: number; amount?: number; thatPower?: number; thatToughness?: number; thatController?: Seat; castInMain?: boolean; X?: number }
 
 const condition = (s: CState, c: string | undefined, ctx: Ctx): boolean => {
   if (!c) return true;
@@ -720,6 +758,7 @@ const condition = (s: CState, c: string | undefined, ctx: Ctx): boolean => {
     case "you attacked this turn": return player(s, ctx.controller).attackedThisTurn;
     case "a creature died this turn": return s.creatureDiedThisTurn;
     case "an opponent lost life this turn": return opponentsOf(s, ctx.controller).some((o) => player(s, o).lostLifeThisTurn);
+    case "cast during your main phase": return !!ctx.castInMain;
     case "that player controls more lands than you": { const t = ctx.that; const seat = t?.kind === "player" ? t.seat : t?.kind === "perm" ? find(s, t.uid)?.controller : undefined; if (!seat) return false; const lands = (x: Seat) => s.battlefield.filter((p) => p.controller === x && isLand(s, p)).length; return lands(seat) > lands(ctx.controller); }
     default: {
       let m = /^you gained (\d+) or more life this turn$/.exec(c);
@@ -780,6 +819,7 @@ const wantsOptional = (s: CState, e: Effect, ctx: Ctx): boolean => {
   if (e.op === "sacrificeLand") return s.battlefield.filter((p) => p.controller === me && isLand(s, p)).length >= 3;
   if (e.op === "discard") return player(s, me).hand.length >= 2;
   if (e.op === "pay") return !!e.then && canAfford(s, me, e.cost ?? "");
+  if (e.op === "payX") return (ctx.amount ?? 0) > 0 && canAfford(s, me, "1");
   if (e.op === "putLandFromHand") return player(s, me).hand.some((u) => def(s, s.cards[u] ?? "").kind === "land");
   if (e.target && e.target !== "self") return ctx.targets.length > 0;
   return true;
@@ -914,13 +954,43 @@ function runOne(s: CState, e: Effect, ctx: Ctx): CState {
       return log(st, `${srcName} returns from the graveyard to ${poss(st, me)} hand.`);
     }
     case "exileUntilLeaves": {
-      const p = permTarget(e.target); if (!p || !src) return st;
-      const card = p.card, owner = p.owner;
-      st = leave(st, p.uid, "exile", `${srcName} exiles ${pdef(st, p).name} until ${srcName} leaves the battlefield.`);
-      // A commander goes to the command zone instead (CR 903.9a) and a token stops existing; only a real card waits in exile.
-      if (!pdef(s, p).token && !p.isCommander) { st = setPlayer(st, owner, { exile: player(st, owner).exile.filter((c, i, arr) => !(c === card && i === arr.lastIndexOf(card))) }); st = setPerm(st, src.uid, (x) => ({ ...x, exiled: [...(x.exiled ?? []), { card, owner }] })); }
+      if (!src) return st;
+      const many = e.target === "upToThreeOtherCreatures";
+      let done = 0;
+      do {
+        const p = permTarget(e.target); if (!p) break;
+        const card = p.card, owner = p.owner;
+        st = leave(st, p.uid, "exile", `${srcName} exiles ${pdef(st, p).name} until ${srcName} leaves the battlefield.`);
+        // A commander goes to the command zone instead (CR 903.9a) and a token stops existing; only a real card waits in exile.
+        if (!pdef(s, p).token && !p.isCommander) { st = setPlayer(st, owner, { exile: player(st, owner).exile.filter((c, i, arr) => !(c === card && i === arr.lastIndexOf(card))) }); st = setPerm(st, src.uid, (x) => ({ ...x, exiled: [...(x.exiled ?? []), { card, owner, ...(e.toHand ? { toHand: true } : {}) }] })); }
+        done++;
+      } while (many && ctx.targets.length && done < 3);
       return checkState(st);
     }
+    case "namedCounter": {
+      const p = permTarget(e.target); if (!p) return st;
+      st = setPerm(st, p.uid, (x) => ({ ...x, namedCounters: { ...x.namedCounters, [e.name ?? "counter"]: (x.namedCounters?.[e.name ?? "counter"] ?? 0) + 1 } }));
+      return refresh(log(st, `${srcName} puts a ${e.name} counter on ${pdef(st, p).name}.`));
+    }
+    case "drawIfLifeNoted": {
+      const noted = src?.noted ?? player(st, me).life;
+      const life = player(st, me).life;
+      if (life >= noted) { st = log(st, `${srcName}: ${nameOf(st, me)} ${verb(st, me, "are", "is")} at ${life} life, not below the noted ${noted}, so ${verb(st, me, "you draw", "they draw")} a card.`); st = drawCards(st, me, 1); }
+      else st = log(st, `${srcName}: ${nameOf(st, me)} ${verb(st, me, "are", "is")} below the noted life total (${life} vs ${noted}), so no card.`);
+      if (src) st = setPerm(st, src.uid, (x) => ({ ...x, noted: player(st, me).life }));
+      return st;
+    }
+    case "payX": {
+      // Pay as much as is useful: up to the life gained, and only what spare mana allows.
+      const max = e.maxPer === "lifeGained" ? ctx.amount ?? 0 : 0;
+      let x = 0;
+      for (let k = max; k > 0; k--) { if (pay(st, me, String(k))) { x = k; break; } }
+      if (x <= 0) return st;
+      const paid = pay(st, me, String(x))!;
+      ctx.X = x;
+      return log(paid, `${nameOf(st, me)} ${verb(st, me, "pay", "pays")} {${x}} for ${srcName}.`);
+    }
+    case "manaRider": case "manaOnly": return st;
     case "exileGraveyard": { for (const seat of whoSeats(st, e.who, ctx)) { const pl = player(st, seat); st = setPlayer(st, seat, { graveyard: [], exile: [...pl.exile, ...pl.graveyard] }); st = log(st, `${srcName} exiles ${poss(st, seat)} graveyard (${pl.graveyard.length} cards).`); } return st; }
     case "bounce": { const p = permTarget(e.target); if (!p) return st; return checkState(leave(st, p.uid, "hand", `${srcName} returns ${pdef(st, p).name} to its owner's hand.`)); }
     case "bounceAll": { const list = filterPerms(st, e.filter, ctx); st = log(st, `${srcName} returns ${list.length} creature${list.length === 1 ? "" : "s"} to their owners' hands.`); for (const p of list) st = leave(st, p.uid, "hand"); return checkState({ ...st, attackers: {} }); }
@@ -950,6 +1020,7 @@ function runOne(s: CState, e: Effect, ctx: Ctx): CState {
     case "draw": {
       if (e.payOptional) { const paid = pay(st, me, e.payOptional); if (!paid) return st; st = log(paid, `${nameOf(st, me)} ${verb(st, me, "pay", "pays")} {${e.payOptional}} for ${srcName}.`); }
       let n = e.n ?? 1;
+      if (e.per === "X") n = ctx.X ?? 0;
       if (e.per === "counteredCreaturesYou") n = st.battlefield.filter((p) => p.controller === me && isCreature(st, p) && p.counters > 0).length;
       else if (e.per === "distinctMv") n = new Set(st.battlefield.filter((p) => p.controller === me && !isLand(st, p)).map((p) => manaValue(pdef(st, p).cost))).size;
       for (const seat of whoSeats(st, e.who, ctx)) st = drawCards(st, seat, n);
@@ -1157,7 +1228,7 @@ function matches(s: CState, holder: Perm, a: Ability, when: string, c: TriggerCt
       if (c.perm.controller !== holder.controller) return false;
       return w === "selfOrAnotherDies" || w === "creatureYouDies" || w === "anotherCreatureYouDies" || (w === "nontokenCreatureYouDies" && !token) || (w === "subtypeYouDies" && hasSubtype(s, c.perm, a.subtype ?? ""));
     }
-    case "landfall": return w === "landfall" && mineEvent;
+    case "landfall": return (w === "landfall" || w === "landfall:emeria") && mineEvent;
     case "attacks": return self && (w === "attacks" || w === "etbOrAttacks" || (w === "attacks:power4" && s.battlefield.some((p) => p.controller === holder.controller && isCreature(s, p) && power(s, p) >= 4)));
     case "youAttack": return mineEvent && (w === "youAttack" || (w === "youAttack3" && (c.attackers?.length ?? 0) >= 3) || (w === "youAttack2" && (c.attackers?.length ?? 0) >= 2));
     case "otherAttacks2": return !mineEvent && w === "otherAttacks2NotMe" && (c.attackers?.length ?? 0) >= 2 && !(c.defenders ?? []).includes(holder.controller);
@@ -1185,6 +1256,17 @@ export function fire(s: CState, when: string, c: TriggerCtx): CState {
     for (const a of triggers(st, holder)) {
       if (!matches(st, holder, a, when, c)) continue;
       if (a.when === "mirrorLifeLoss") continue;
+      if (a.when === "landfall:emeria") {
+        const pl = player(st, holder.controller);
+        const best = [...pl.graveyard].filter((c) => def(st, c).kind !== "land").sort((x, y) => manaValue(def(st, y).cost) - manaValue(def(st, x).cost))[0];
+        if (!best) continue;
+        const idx = pl.graveyard.lastIndexOf(best);
+        const plains = !!c.perm && hasSubtype(st, c.perm, "Plains");
+        st = setPlayer(st, holder.controller, { graveyard: pl.graveyard.filter((_, i) => i !== idx) });
+        if (plains) { st = log(st, `${pdef(st, holder).name}: the land was a Plains, so ${def(st, best).name} returns from the graveyard to the battlefield.`); st = enter(st, best, holder.controller); }
+        else { const [n2, huid] = nextUid(st, "h"); st = setPlayer(n2, holder.controller, { hand: [...player(n2, holder.controller).hand, huid] }); st = { ...st, cards: { ...st.cards, [huid]: best } }; st = log(st, `${pdef(st, holder).name}: ${def(st, best).name} returns from the graveyard to ${poss(st, holder.controller)} hand.`); }
+        continue;
+      }
       if (a.when === "otherAttacks2NotMe") { if (c.seat) { st = log(st, `${pdef(st, holder).name} triggers: ${nameOf(st, c.seat)} attacked with two or more creatures and none came at ${holder.controller === st.human ? "you" : nameOf(st, holder.controller)}.`); st = drawCards(st, c.seat, 1); } continue; }
       if (a.when === "countersOnSelf:once") st = setPerm(st, holder.uid, (x) => ({ ...x, firedThisTurn: [...(x.firedThisTurn ?? []), a.when!] }));
       const d = pdef(st, holder);
@@ -1306,14 +1388,25 @@ export function playLandFor(s: CState, seat: Seat, uid: string): CState {
 export const canPlayLand = (s: CState, seat: Seat): boolean => s.turn === seat && isMain(s) && !s.stack.length && player(s, seat).landsPlayed < (hasStatic(s, seat, "extraLand") ? 2 : 1);
 
 /** Casts a spell: pays, moves it to the stack, fires cast triggers. Targets must already be chosen. */
-export function castFor(s: CState, seat: Seat, source: { kind: "hand"; uid: string } | { kind: "commander" }, targets: Target[], modes?: number[]): CState | null {
+export function castFor(s: CState, seat: Seat, source: { kind: "hand"; uid: string } | { kind: "commander" }, targets: Target[], modes?: number[], useAlt = false): CState | null {
   const pl = player(s, seat);
   const card = source.kind === "hand" ? s.cards[source.uid] ?? "" : pl.commandZone.card;
   const d = def(s, card);
   const cost = source.kind === "commander" ? commanderCost(s, seat) ?? "" : costAfterReductions(s, seat, d, d.cost);
-  const paid = pay(s, seat, cost);
-  if (!paid) return null;
-  let st = paid;
+  let st: CState;
+  const alt = d.abilities.find((a) => a.kind === "altCost");
+  if (useAlt && alt) {
+    const paidAlt = pay(s, seat, alt.mana ?? "", d);
+    if (!paidAlt) return null;
+    const tappers = paidAlt.battlefield.filter((x) => x.controller === seat && isCreature(paidAlt, x) && !x.tapped && has(paidAlt, x, alt.tapCreatures?.keyword ?? "Flying")).slice(0, alt.tapCreatures?.n ?? 0);
+    if (tappers.length < (alt.tapCreatures?.n ?? 0)) return null;
+    st = { ...paidAlt, battlefield: paidAlt.battlefield.map((x) => (tappers.some((t) => t.uid === x.uid) ? { ...x, tapped: true } : x)) };
+    st = log(st, `${nameOf(st, seat)} pay${verb(st, seat, "", "s")} ${d.name}'s other cost: {${alt.mana}} and tapping ${tappers.map((t) => pdef(st, t).name).join(", ")}.`);
+  } else {
+    const paid = pay(s, seat, cost, d);
+    if (!paid) return null;
+    st = paid;
+  }
   const extra = d.abilities.find((a) => a.kind === "spell")?.additionalCost;
   if (extra?.discard) {
     const others = player(st, seat).hand.filter((u) => !(source.kind === "hand" && u === source.uid));
@@ -1329,7 +1422,7 @@ export function castFor(s: CState, seat: Seat, source: { kind: "hand"; uid: stri
   let uid: string;
   if (source.kind === "hand") { uid = source.uid; st = setPlayer(st, seat, { hand: player(st, seat).hand.filter((u) => u !== uid) }); }
   else { [st, uid] = nextUid(st, "c"); st = setPlayer(st, seat, { commandZone: { ...player(st, seat).commandZone, inZone: false, casts: player(st, seat).commandZone.casts + 1 } }); }
-  const spell: Spell = { uid, card, caster: seat, targets, ...(source.kind === "commander" ? { fromCommandZone: true } : {}), ...(modes ? { modes } : {}) };
+  const spell: Spell = { uid, card, caster: seat, targets, ...(source.kind === "commander" ? { fromCommandZone: true } : {}), ...(modes ? { modes } : {}), castInMain: s.turn === seat && isMain(s) && !s.stack.length };
   st = { ...st, stack: [...st.stack, spell] };
   const tnames = targets.map((t) => (t.kind === "player" ? (t.seat === st.human ? "you" : nameOf(st, t.seat)) : t.kind === "perm" ? def(st, find(st, t.uid)?.card ?? "").name : def(st, st.stack.find((x) => x.uid === t.uid)?.card ?? "").name));
   st = log(st, `${nameOf(st, seat)} cast${verb(st, seat, "", "s")} ${d.name}${source.kind === "commander" ? " from the command zone" : ""}${cost ? ` for {${cost}}` : ""}${tnames.length ? `, targeting ${tnames.join(" and ")}` : ""}.`);
@@ -1346,7 +1439,7 @@ export function resolveTop(s: CState): CState {
   if (!item) return s;
   let st: CState = { ...s, stack: s.stack.slice(0, -1) };
   const d = def(st, item.card);
-  const ctx: Ctx = { source: null, sourceCard: item.card, controller: item.caster, targets: [...item.targets] };
+  const ctx: Ctx = { source: null, sourceCard: item.card, controller: item.caster, targets: [...item.targets], castInMain: !!item.castInMain };
   if (d.kind === "creature" || d.kind === "artifact" || (d.kind === "enchantment" && !isAura(d))) {
     st = log(st, `${d.name} resolves and enters the battlefield${item.caster === st.human ? "" : ` on ${poss(st, item.caster)} side`}.`);
     return enter(st, item.card, item.caster, { uid: item.uid, isCommander: !!item.fromCommandZone });
@@ -1455,6 +1548,11 @@ export function attackWith(s: CState, attackers: Record<string, Seat>): CState {
   st = { ...st, attackers: rec };
   st = { ...st, battlefield: st.battlefield.map((p) => (rec[p.uid] && !has(st, p, "Vigilance") ? { ...p, tapped: true } : p)) };
   st = setPlayer(st, st.turn, { attackedThisTurn: true });
+  // Exalted (CR 702.83): whenever a creature you control attacks alone, it gets +1/+1 until end of turn for each instance.
+  if (list.length === 1) {
+    const n = st.battlefield.filter((p) => p.controller === st.turn).reduce((k, p) => k + keywords(st, p).filter((x) => x === "Exalted").length, 0);
+    if (n > 0) { st = setPerm(st, list[0]!, (x) => ({ ...x, pump: { p: x.pump.p + n, t: x.pump.t + n } })); st = log(st, `Exalted: ${pdef(st, find(st, list[0]!)!).name} attacks alone and gets +${n}/+${n} until end of turn.`); }
+  }
   const byDefender = new Map<Seat, string[]>();
   for (const uid of list) byDefender.set(rec[uid]!.defender, [...(byDefender.get(rec[uid]!.defender) ?? []), pdef(st, find(st, uid)!).name]);
   for (const [dfd, names] of byDefender) st = log(st, `${nameOf(st, st.turn)} attack${verb(st, st.turn, "", "s")} ${dfd === st.human ? "you" : nameOf(st, dfd)} with ${names.join(", ")}.`);
@@ -1555,6 +1653,8 @@ export function describeSpec(spec: string): string {
   switch (spec) {
     case "creature": case "creatureOptional": return "a creature to target";
     case "creatureYou": case "otherCreatureYou": case "upToTwoOtherCreaturesYou": return "one of your creatures to target";
+    case "upToThreeOtherCreatures": return "up to three other creatures";
+    case "creatureYouChosen": return "one of your creatures of the chosen type";
     case "otherAttackingCreatureYou": return "another attacking creature of yours";
     case "creatureOpp": return "an opponent's creature to target";
     case "creatureCombat": return "an attacking or blocking creature";
@@ -1653,7 +1753,7 @@ export function reduce(state: CState, action: Action): CState {
       if (d.kind === "land") return refuse(s, `${d.name} is a land: play it, don't cast it.`);
       const sorcerySpeed = d.kind !== "instant" && !hasFlash(d);
       if (sorcerySpeed && !(myTurn && isMain(s) && !s.stack.length)) return refuse(s, `${d.name} can only be cast in your own main phase, when nothing is on the stack.`);
-      if (!canAfford(s, me, costAfterReductions(s, me, d, d.cost))) return refuse(s, `You don't have enough mana for ${d.name} (it costs {${d.cost}}).`);
+      if (!canAffordFor(s, me, costAfterReductions(s, me, d, d.cost), d)) return refuse(s, `You don't have enough mana for ${d.name} (it costs {${d.cost}}).`);
       const modal = d.abilities.find((a) => a.kind === "modal");
       if (modal) {
         const texts = d.text.split("\n").filter((l) => l.startsWith("•")).map((l) => l.replace(/^•\s*/, ""));
@@ -1663,6 +1763,18 @@ export function reduce(state: CState, action: Action): CState {
       const pend = startTargeting(s, { kind: "hand", uid: action.uid }, d.name, effects, d.colors, null);
       if (pend.refusal || pend.pending) return pend;
       return castFor(s, me, { kind: "hand", uid: action.uid }, []) ?? refuse(s, `You can't pay for ${d.name} right now.`);
+    }
+    case "castAlt": {
+      const card = s.cards[action.uid];
+      if (!card || !player(s, me).hand.includes(action.uid)) return refuse(s, "That card isn't in your hand.");
+      const d = def(s, card);
+      if (!d.abilities.some((a) => a.kind === "altCost")) return refuse(s, `${d.name} has no other way to pay for it.`);
+      if (!(myTurn && isMain(s) && !s.stack.length)) return refuse(s, `${d.name} can only be cast in your own main phase, when nothing is on the stack.`);
+      return castFor(s, me, { kind: "hand", uid: action.uid }, [], undefined, true) ?? refuse(s, `You can't pay ${d.name}'s other cost right now: it needs the mana and enough untapped flying creatures.`);
+    }
+    case "embalm": {
+      const r = embalmFor(s, me, action.card);
+      return r ?? refuse(s, "You can't embalm that right now: it must be in your graveyard, in your main phase, and you need the mana.");
     }
     case "cycle": {
       const card = s.cards[action.uid];
@@ -1805,13 +1917,42 @@ export function castable(s: CState, seat: Seat): string[] {
     if (d.kind === "land") return canPlayLand(s, seat);
     const sorcerySpeed = d.kind !== "instant" && !hasFlash(d);
     if (sorcerySpeed && !(s.turn === seat && isMain(s) && !s.stack.length)) return false;
-    if (!canAfford(s, seat, costAfterReductions(s, seat, d, d.cost))) return false;
+    if (!canAffordFor(s, seat, costAfterReductions(s, seat, d, d.cost), d)) return false;
     const modal = d.abilities.find((a) => a.kind === "modal");
     if (modal) return (modal.choices ?? []).some((effects) => targetSpecs(effects).every((sp) => sp.optional || candidates(s, sp.spec, seat, null, d.colors, d.id).length > 0));
     const effects = isAura(d) ? [{ op: "attach", target: "creature" }] : d.abilities.find((a) => a.kind === "spell")?.effects;
     const specs = targetSpecs(effects);
     return specs.every((sp) => sp.optional || candidates(s, sp.spec, seat, null, d.colors, d.id).length > 0);
   });
+}
+/** Embalm (CR 702.128): from your graveyard, pay the cost and exile the card to make a white Zombie token copy of it. */
+export function embalmFor(s: CState, seat: Seat, card: string): CState | null {
+  const pl = player(s, seat);
+  const d = def(s, card);
+  const em = d.abilities.find((a) => a.kind === "embalm");
+  if (!em || !pl.graveyard.includes(card)) return null;
+  if (!(s.turn === seat && isMain(s) && !s.stack.length)) return null;
+  const paid = pay(s, seat, typeof em.cost === "string" ? em.cost : "", d);
+  if (!paid) return null;
+  const idx = pl.graveyard.lastIndexOf(card);
+  let st = setPlayer(paid, seat, { graveyard: pl.graveyard.filter((_, i) => i !== idx), exile: [...pl.exile, card] });
+  const tokenId = `token:embalm:${card}`;
+  if (!st.tokens[tokenId]) {
+    const copy: CDef = { ...d, id: tokenId, name: d.name, token: true, cost: "", colors: "W", type: d.type.replace(/^(Legendary )?Creature —/, "Token Creature — Zombie"), abilities: d.abilities.filter((a) => a.kind !== "embalm") };
+    st = { ...st, tokens: { ...st.tokens, [tokenId]: copy } };
+  }
+  st = log(st, `${nameOf(st, seat)} embalm${verb(st, seat, "", "s")} ${d.name}: it is exiled and a white Zombie token copy enters.`);
+  return enter(st, tokenId, seat, { isToken: true });
+}
+/** Graveyard cards with embalm the player can pay for right now. */
+export function embalmable(s: CState, seat: Seat): string[] {
+  if (!(s.turn === seat && isMain(s) && !s.stack.length)) return [];
+  return [...new Set(player(s, seat).graveyard)].filter((c) => { const em = def(s, c).abilities.find((a) => a.kind === "embalm"); return !!em && canAfford(s, seat, typeof em.cost === "string" ? em.cost : ""); });
+}
+/** Hand cards whose alternative cost can be paid right now. */
+export function altCastable(s: CState, seat: Seat): string[] {
+  if (!(s.turn === seat && isMain(s) && !s.stack.length)) return [];
+  return player(s, seat).hand.filter((uid) => { const d = def(s, s.cards[uid] ?? ""); const alt = d.abilities.find((a) => a.kind === "altCost"); if (!alt) return false; const tappers = s.battlefield.filter((x) => x.controller === seat && isCreature(s, x) && !x.tapped && has(s, x, alt.tapCreatures?.keyword ?? "Flying")).length; return tappers >= (alt.tapCreatures?.n ?? 0) && canAfford(s, seat, alt.mana ?? ""); });
 }
 /** Hand cards with cycling the player can pay for. */
 export function cyclable(s: CState, seat: Seat): string[] {

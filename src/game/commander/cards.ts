@@ -45,12 +45,23 @@ export interface Effect {
   monarchAlt?: { p: number; t: number; color: string; subtype: string; keywords: string[] };
   cost?: string;
   minMv?: number;
+  toHand?: boolean;
+  name?: string;
+  rider?: string;
+  maxPer?: string;
 }
 
 export interface AbilityCost { tap?: boolean; mana?: string; sacrificeSelf?: boolean; sacrificeCreature?: "any" | "another"; life?: number }
 
 export interface Ability {
-  kind: "keyword" | "static" | "triggered" | "activated" | "spell" | "enchant" | "equip" | "entersTapped" | "protection" | "cycling" | "chooseType" | "modal";
+  kind: "keyword" | "static" | "triggered" | "activated" | "spell" | "enchant" | "equip" | "entersTapped" | "protection" | "cycling" | "chooseType" | "modal" | "embalm" | "noteLife" | "altCost";
+  /** altCost: "You may pay {W} and tap four untapped creatures with flying rather than pay this spell's mana cost." */
+  mana?: string;
+  tapCreatures?: { n: number; keyword: string };
+  /** costLess by several subtypes, per +1/+1 counter on the holder. */
+  subtypes?: string[];
+  perCounter?: boolean;
+  per?: string;
   /** protection: the qualities it protects from, e.g. ["Demons", "Dragons"], ["white"], ["the chosen card type"]. */
   from?: string[];
   /** entersTapped: unless you control a land of this basic type. */
@@ -63,7 +74,7 @@ export interface Ability {
   name?: string;
   /** static */
   op?: string;
-  filter?: { subtype?: string; other?: boolean; flying?: boolean };
+  filter?: { subtype?: string; other?: boolean; flying?: boolean; namedCounter?: string; anyPermanent?: boolean };
   p?: number;
   t?: number;
   keywords?: string[];

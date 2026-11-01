@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Icon } from "../../components/Icon";
 import library from "../../content/foundations.json";
 import { CARD_LIST } from "../../game/commander/cards";
-import { CDECKS, deckListText, toLibraryCard } from "../../game/commander/decks";
+import { ALL_DECKS, deckListText, toLibraryCard } from "../../game/commander/decks";
 import { checkDeck, parseList, stars, TARGETS, type LibraryCard, type Report } from "../../game/deckcheck";
 
 const LIB: LibraryCard[] = [...CARD_LIST.map(toLibraryCard), ...(library as LibraryCard[])];
@@ -24,7 +24,7 @@ export function DeckCheck({ onBack, onReadMore }: Props) {
     const rest = cmdName ? lines.filter((l, i) => !(l.name.toLowerCase() === cmdName.toLowerCase() && i === lines.findIndex((x) => x.name.toLowerCase() === cmdName.toLowerCase()))) : lines;
     setReport(checkDeck(rest, LIB, cmdName || undefined));
   };
-  const example = (id: string) => { const d = CDECKS.find((x) => x.id === id)!; const t = deckListText(d); setText(t); setCommander(""); run(t, ""); };
+  const example = (id: string) => { const d = ALL_DECKS.find((x) => x.id === id)!; const t = deckListText(d); setText(t); setCommander(""); run(t, ""); };
   const pct = useMemo(() => report ? Object.fromEntries(TARGETS.map((t) => [t.key, Math.min(100, Math.round((report.shape[t.key] / (t.max ?? t.min)) * 100))])) : {}, [report]);
 
   return (
@@ -44,7 +44,7 @@ export function DeckCheck({ onBack, onReadMore }: Props) {
         <div className="flex flex-wrap items-center gap-s2">
           <button type="button" onClick={() => run(text, commander)} disabled={!text.trim()} className={`${btn} bg-accent text-accent-ink disabled:opacity-50`}><Icon name="check" /> Check this deck</button>
           <span className="text-sm">Or check a built-in deck:</span>
-          {CDECKS.map((d) => <button key={d.id} type="button" onClick={() => example(d.id)} className={`${btn} min-h-[2.25rem] border-2 border-border-strong bg-surface text-sm`}>{d.name}</button>)}
+          {ALL_DECKS.map((d) => <button key={d.id} type="button" onClick={() => example(d.id)} className={`${btn} min-h-[2.25rem] border-2 border-border-strong bg-surface text-sm`}>{d.name}</button>)}
         </div>
       </div>
 
