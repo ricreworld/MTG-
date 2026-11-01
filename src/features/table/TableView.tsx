@@ -140,12 +140,12 @@ export const TableView = forwardRef<HTMLHeadingElement, Props>(function TableVie
     return { label: e.label, onClick: e.action };
   };
   const permBadge = (p: Permanent): string | undefined => {
-    if (state.attackers[p.uid] !== undefined && inCombat) { const b = nameOnTable(state.attackers[p.uid]); return b ? `Attacking · blocked by ${b}` : "Attacking"; }
+    if (state.attackers[p.uid] !== undefined && inCombat) { const b = nameOnTable(state.attackers[p.uid]); return b ? `Attacking, blocked by ${b}` : "Attacking"; }
     const blocks = inCombat ? Object.entries(state.attackers).find(([, b]) => b === p.uid) : undefined;
     if (blocks) { const a = nameOnTable(blocks[0]); return a ? `Blocks ${a}` : "Blocking"; }
     if (state.selectedAttackers.includes(p.uid)) return "Attacking";
     if (state.pendingBlocker === p.uid) return "Chosen to block";
-    if (p.summoningSick && def(p.card).kind === "creature" && !def(p.card).keywords?.includes("Haste")) return p.isCommander ? "Commander · arrived this turn" : "Arrived this turn";
+    if (p.summoningSick && def(p.card).kind === "creature" && !def(p.card).keywords?.includes("Haste")) return p.isCommander ? "Commander, arrived this turn" : "Arrived this turn";
     return p.isCommander ? "Commander" : undefined;
   };
   const targetLabel = (t: GameState["stack"][number]["target"]): string => {
@@ -240,7 +240,7 @@ export const TableView = forwardRef<HTMLHeadingElement, Props>(function TableVie
           <p className="flex flex-wrap items-center gap-s2 font-bold">
             <span className="on-felt rounded-sm px-s2">Opponent</span>
             <span data-life="opp" className="on-felt inline-block rounded-sm px-s2 font-mono">Life {state.opp.life}</span>
-            {freePlay && <span className="on-felt rounded-sm px-s2 text-sm font-normal">Hand {state.opp.hand.length} · Library {state.opp.library.length}</span>}
+            {freePlay && <span className="on-felt rounded-sm px-s2 text-sm font-normal">Hand {state.opp.hand.length}, library {state.opp.library.length}</span>}
             {commander && <span className="on-felt rounded-sm px-s2 text-sm font-normal">Commander damage taken: {cmdDamageText(state.opp.commanderDamage)}</span>}
           </p>
           {commander && state.opp.commandZone && (
@@ -264,7 +264,7 @@ export const TableView = forwardRef<HTMLHeadingElement, Props>(function TableVie
             <p className="font-bold">On the stack <span className="text-sm font-normal text-text-muted">(top happens first)</span></p>
             <ol className="grid gap-s1">
               {[...state.stack].reverse().map((item, i) => (
-                <li key={item.uid} className="text-sm">{i === 0 ? "▸ " : ""}{item.caster === "you" ? "Your" : "Opponent's"} <strong>{def(item.card).name}</strong>{targetLabel(item.target)}</li>
+                <li key={item.uid} className="text-sm">{i === 0 ? "Next to happen: " : ""}{item.caster === "you" ? "Your" : "Opponent's"} <strong>{def(item.card).name}</strong>{targetLabel(item.target)}</li>
               ))}
             </ol>
           </div>

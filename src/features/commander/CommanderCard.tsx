@@ -92,7 +92,7 @@ export function CommanderCard({ card, state, perm, action, selected, badge, onCl
     <span className="grid justify-items-center gap-1">
       {onClick ? <button type="button" onClick={onClick} aria-pressed={selected} className="rounded-md">{body}<span className="sr-only">{srDetail}</span></button> : <span>{body}<span className="sr-only">{srDetail}</span></span>}
       {highlight && !badge && !tapped && <span className="max-w-[7rem] rounded-sm bg-accent px-1 text-center text-[0.65rem] font-bold leading-tight text-accent-ink">{highlight}</span>}
-      {(badge || tapped) && <span className="max-w-[7rem] rounded-sm bg-surface-2 px-1 text-center text-[0.65rem] font-bold leading-tight text-text">{[tapped ? "Tapped" : null, badge].filter(Boolean).join(" · ")}</span>}
+      {(badge || tapped) && <span className="max-w-[7rem] rounded-sm bg-surface-2 px-1 text-center text-[0.65rem] font-bold leading-tight text-text">{[tapped ? "Tapped" : null, badge].filter(Boolean).join(", ")}</span>}
     </span>
   );
 }

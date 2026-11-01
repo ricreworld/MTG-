@@ -97,7 +97,7 @@ export function DeckCheck({ onBack, onReadMore }: Props) {
             <summary className="min-h-tap cursor-pointer content-center font-bold">Every card and its job</summary>
             <ul className="mt-s2 grid gap-[2px] text-sm">
               {report.commander && <li><strong>{report.commander.name}</strong> (commander): {report.commander.roles.join(", ") || "no listed job"}</li>}
-              {report.cards.map((c, i) => <li key={i} className={c.found ? "" : "text-text-muted"}>{c.qty > 1 ? `${c.qty} ` : ""}{c.name}: {c.found ? c.roles.join(", ") || "no listed job (a body, a theme card or a trick)" : "not in Foundations, not checked"}{c.offIdentity ? " · outside the colour identity" : ""}</li>)}
+              {report.cards.map((c, i) => <li key={i} className={c.found ? "" : "text-text-muted"}>{c.qty > 1 ? `${c.qty} ` : ""}{c.name}: {c.found ? c.roles.join(", ") || "no listed job (a body, a theme card or a trick)" : "not in Foundations, not checked"}{c.offIdentity ? ", outside the colour identity" : ""}</li>)}
             </ul>
           </details>
           <div><button type="button" onClick={() => onReadMore("building-a-commander-deck")} className={`${btn} border-2 border-border-strong bg-surface`}><Icon name="book" /> Read the deck-building lesson</button></div>

@@ -21,6 +21,7 @@
     text-align: left; /* left-aligned text only */
     -webkit-font-smoothing: antialiased;
   }
+  h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.01em; line-height: 1.25; text-wrap: balance; }
   /* No italics in body text: emphasis is shown with weight instead. */
   em, i, cite { font-style: normal; font-weight: 700; }
   p, li { max-width: var(--measure); }
@@ -40,7 +41,7 @@
     position: fixed;
     inset: 0 0 auto;
     height: env(safe-area-inset-top);
-    background: #17191f;
+    background: rgb(var(--color-bg));
     z-index: 30;
   }
 }
@@ -77,6 +78,10 @@
 }
 .on-felt { background: rgb(var(--color-surface) / 0.92); color: rgb(var(--color-text)); }
 .card-shadow { filter: drop-shadow(0 6px 10px rgb(0 0 0 / 0.45)); }
+/* The pinned example card: one zone lights up as the lesson moves on (200ms, off when motion is off). */
+.card-zone { transition: box-shadow var(--motion-duration) ease-out, background-color var(--motion-duration) ease-out; }
+.card-zone[data-lit="true"] { box-shadow: 0 0 0 3px rgb(var(--color-accent)), 0 0 18px rgb(var(--color-accent) / 0.55); }
+.unfold { transition: grid-template-rows 180ms ease-out; }
 @keyframes ms-pulse { 0% { box-shadow: 0 0 0 0 rgb(var(--color-accent) / 0.55); } 100% { box-shadow: 0 0 0 14px rgb(var(--color-accent) / 0); } }
 
 /* ---------- Lesson motion (gentle; disabled entirely by data-motion="off" above) ---------- */

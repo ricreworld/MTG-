@@ -19,7 +19,7 @@ export function OutlineList({ modules, position, onGo, progress }: Props) {
         <li key={m.id} className="grid gap-s2">
           <p className="font-bold">
             <span className="text-text-muted">Module {mi + 1}:</span> {m.title}
-            <span className="block text-sm font-normal text-text-muted">About {m.estimatedMinutes} min · {moduleStats(progress, m).done} of {m.steps.length} steps done</span>
+            <span className="block text-sm font-normal text-text-muted">About {m.estimatedMinutes} min, {moduleStats(progress, m).done} of {m.steps.length} steps done</span>
           </p>
           <ol className="grid gap-s1">
             {m.steps.map((s, si) => {
@@ -36,7 +36,7 @@ export function OutlineList({ modules, position, onGo, progress }: Props) {
                     }`}
                   >
                     {/* The arrow marks the current step, so it isn't shown by colour alone. */}
-                    <span aria-hidden="true" className="w-s4 shrink-0 font-mono">{current ? "▸" : ""}</span>
+                    <span aria-hidden="true" className="w-s4 shrink-0 font-mono">{current ? "•" : ""}</span>
                     <span>{s.title}</span>
                     {current && <span className="sr-only">(you are here)</span>}
                     {done && (

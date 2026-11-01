@@ -55,7 +55,7 @@ export function DeckGuideView({ deckId, name, commander, cards, onBack, onPlay }
             <ul className="grid gap-s1 pl-s5">{guide.weakSpots.map((w, i) => <li key={i} className="list-disc">{w}</li>)}</ul>
           </div>
         )}
-        <p className="text-sm text-text-muted">Shape: {guide.shape.lands} lands · {guide.shape.ramp} ramp · {guide.shape.draw} card draw · {guide.shape.interaction} answers ({guide.shape.wipes} wipes) · {guide.shape.creatures} creatures · average cost {guide.shape.avgMv}.</p>
+        <p className="text-sm text-text-muted">Shape: {guide.shape.lands} lands, {guide.shape.ramp} ramp, {guide.shape.draw} card draw, {guide.shape.interaction} answers ({guide.shape.wipes} wipes), {guide.shape.creatures} creatures, average cost {guide.shape.avgMv}.</p>
         <div className="grid gap-s1 rounded-md border border-border bg-surface-2 p-s3">
           <p className="font-bold">Deck goals <span className="text-sm font-normal text-text-muted">({done.length} of {goals.length} reached)</span></p>
           <ul className="grid gap-s1">{goals.map((g) => <li key={g.id} className="flex items-center gap-s2"><span className={done.includes(g.id) ? "text-success" : "text-text-muted"}><Icon name={done.includes(g.id) ? "check" : "info"} size={1} /></span>{g.label}</li>)}</ul>

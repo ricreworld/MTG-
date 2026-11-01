@@ -62,7 +62,7 @@ function CardRow({ card, open, onToggle }: { card: LibraryCard; open: boolean; o
         <span>
           <span className="font-bold">{card.name}</span>
           {playable && <span className="ml-s2 rounded-sm bg-success-soft px-1 text-xs font-bold text-success">On the table</span>}
-          <span className="block text-sm text-text-muted">{card.type}{card.pt ? ` · ${card.pt}` : ""}</span>
+          <span className="block text-sm text-text-muted">{card.type}{card.pt ? `, ${card.pt}` : ""}</span>
         </span>
         <span className="inline-flex items-center gap-[2px]">{card.cost && <ManaText text={card.cost} size={1.1} />}</span>
       </button>
@@ -80,7 +80,7 @@ function CardRow({ card, open, onToggle }: { card: LibraryCard; open: boolean; o
           )}
           {!imgFailed && <div><button type="button" onClick={() => setFull((v) => !v)} className="inline-flex min-h-tap items-center rounded-md border-2 border-border-strong px-s3 text-sm font-bold">{full ? "Show artwork only" : "Show the full card"}</button></div>}
           <p className="whitespace-pre-line leading-relaxed">{card.text ? <ManaText text={card.text} /> : <span className="text-text-muted">No rules text.</span>}</p>
-          <p className="text-sm text-text-muted">{RARITY[card.rarity] ?? "Card"}{card.set ? ` · ${card.set.toUpperCase()}` : " · Foundations"}{card.num ? ` #${card.num}` : ""}{card.artist ? ` · Art by ${card.artist}` : ""}</p>
+          <p className="text-sm text-text-muted">{RARITY[card.rarity] ?? "Card"}{card.set ? `, set ${card.set.toUpperCase()}` : ", Foundations"}{card.num ? ` #${card.num}` : ""}{card.artist ? `. Art by ${card.artist}` : ""}</p>
         </div>
       )}
     </li>

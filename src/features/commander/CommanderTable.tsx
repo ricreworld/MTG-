@@ -99,7 +99,7 @@ export const CommanderTable = forwardRef<HTMLHeadingElement, Props>(function Com
 
   const permBadge = (p: Perm): string | undefined => {
     const a = state.attackers[p.uid];
-    if (a && inCombat) { const bl = a.blockers.map((b) => def(state, find(state, b)?.card ?? "").name).filter(Boolean); return `Attacking ${a.defender === me ? "you" : nameOf(a.defender)}${bl.length ? ` · blocked by ${bl.join(", ")}` : ""}`; }
+    if (a && inCombat) { const bl = a.blockers.map((b) => def(state, find(state, b)?.card ?? "").name).filter(Boolean); return `Attacking ${a.defender === me ? "you" : nameOf(a.defender)}${bl.length ? `, blocked by ${bl.join(", ")}` : ""}`; }
     if (a) return `Attacking ${a.defender === me ? "you" : nameOf(a.defender)}`;
     const blocks = inCombat ? Object.entries(state.attackers).find(([, x]) => x.blockers.includes(p.uid)) : undefined;
     if (blocks) return `Blocks ${def(state, find(state, blocks[0])?.card ?? "").name}`;
@@ -111,7 +111,7 @@ export const CommanderTable = forwardRef<HTMLHeadingElement, Props>(function Com
     if (p.chosen) bits.push(`Chosen: ${p.chosen}`);
     if (p.summoningSick && isCreature(state, p) && !def(state, p.card).abilities.some((x) => x.kind === "keyword" && x.name === "Haste")) bits.push("Arrived this turn");
     if (p.bonus.pacified) bits.push("Can't attack or block");
-    return bits.length ? bits.join(" · ") : undefined;
+    return bits.length ? bits.join(". ") : undefined;
   };
 
   const permTap = (p: Perm): { label: string; onClick: () => void; prompt?: string } => {
@@ -218,14 +218,14 @@ export const CommanderTable = forwardRef<HTMLHeadingElement, Props>(function Com
     return (
       <div key={seat} className={`grid gap-s2 rounded-md border p-s2 ${pl.out ? "border-felt-ink/20 opacity-70" : state.turn === seat ? "border-accent" : "border-felt-ink/40"}`} aria-label={`${pl.name}'s seat`}>
         <p className="flex flex-wrap items-center gap-s2 font-bold">
-          <span className="on-felt rounded-sm px-s2">{pl.name}{state.turn === seat ? " · their turn" : ""}</span>
+          <span className="on-felt rounded-sm px-s2">{pl.name}{state.turn === seat ? ", their turn" : ""}</span>
           <span data-life={seat} className="on-felt inline-block rounded-sm px-s2 font-mono">Life {pl.life}</span>
-          {pl.out ? <span className="on-felt rounded-sm px-s2 text-sm font-normal">Out of the game</span> : <span className="on-felt rounded-sm px-s2 text-sm font-normal">{threatLabel(state, seat) || "In the game"} · Hand {pl.hand.length} · Library {pl.library.length}</span>}
+          {pl.out ? <span className="on-felt rounded-sm px-s2 text-sm font-normal">Out of the game</span> : <span className="on-felt rounded-sm px-s2 text-sm font-normal">{threatLabel(state, seat) || "In the game"}, hand {pl.hand.length}, library {pl.library.length}</span>}
         </p>
         {!pl.out && (
           <div className="flex flex-wrap items-start gap-s2">
             <div data-uid={`cz-${seat}`} data-card={cz.card} className="card-shadow">
-              <CommanderCard card={def(state, cz.card)} size="sm" badge={cz.inZone ? (cz.casts ? `In command zone · tax +${2 * cz.casts}` : "In command zone") : "On the battlefield"} />
+              <CommanderCard card={def(state, cz.card)} size="sm" badge={cz.inZone ? (cz.casts ? `In command zone, tax +${2 * cz.casts}` : "In command zone") : "On the battlefield"} />
             </div>
             <div className="grid gap-s1 text-sm">
               <span className="on-felt rounded-sm px-s2">Commander damage taken: {cmdDamageText(pl.commanderDamage)}</span>
@@ -267,7 +267,7 @@ export const CommanderTable = forwardRef<HTMLHeadingElement, Props>(function Com
             const current = ph.step === state.step || (state.step === "damage" && ph.step === "blockers");
             return <li key={ph.step} aria-current={current ? "step" : undefined} className={`rounded-sm px-s2 py-s1 text-sm ${current ? "bg-accent font-bold text-accent-ink" : "bg-surface-2 text-text-muted"}`}>{current ? "▸ " : ""}{ph.label}</li>;
           })}
-          <li className="ml-auto self-center text-sm text-text-muted">Turn {state.turnNumber} · {myTurn ? "Your turn" : `${nameOf(state.turn)}'s turn`}</li>
+          <li className="ml-auto self-center text-sm text-text-muted">Turn {state.turnNumber}, {myTurn ? "Your turn" : `${nameOf(state.turn)}'s turn`}</li>
         </ol>
       </div>
 
@@ -280,7 +280,7 @@ export const CommanderTable = forwardRef<HTMLHeadingElement, Props>(function Com
             <ol className="grid gap-s1">
               {[...state.stack].reverse().map((item, i) => {
                 const t: Target = { kind: "spell", uid: item.uid };
-                return <li key={item.uid} className="flex flex-wrap items-center gap-s2 text-sm">{i === 0 ? "▸ " : ""}{item.caster === me ? "Your" : `${nameOf(item.caster)}'s`} <strong>{def(state, item.card).name}</strong>{item.targets.length ? ` → ${targetText(item)}` : ""}{pend && isCandidate(t) && <button type="button" onClick={() => act({ type: "chooseTarget", target: t })} className={`${primary} min-h-[2.25rem]`}>Target this spell</button>}</li>;
+                return <li key={item.uid} className="flex flex-wrap items-center gap-s2 text-sm">{i === 0 ? "Next to happen: " : ""}{item.caster === me ? "Your" : `${nameOf(item.caster)}'s`} <strong>{def(state, item.card).name}</strong>{item.targets.length ? ` → ${targetText(item)}` : ""}{pend && isCandidate(t) && <button type="button" onClick={() => act({ type: "chooseTarget", target: t })} className={`${primary} min-h-[2.25rem]`}>Target this spell</button>}</li>;
               })}
             </ol>
           </div>
@@ -290,9 +290,9 @@ export const CommanderTable = forwardRef<HTMLHeadingElement, Props>(function Com
 
         <div className="grid gap-s2" aria-label="Your seat">
           <p className="flex flex-wrap items-center gap-s2 font-bold">
-            <span className="on-felt rounded-sm px-s2">You{myTurn ? " · your turn" : ""}</span>
+            <span className="on-felt rounded-sm px-s2">You{myTurn ? ", your turn" : ""}</span>
             <span data-life={me} className="on-felt inline-block rounded-sm px-s2 font-mono">Life {my.life}</span>
-            <span className="on-felt rounded-sm px-s2 text-sm font-normal">Library {my.library.length} · Graveyard {my.graveyard.length}</span>
+            <span className="on-felt rounded-sm px-s2 text-sm font-normal">Library {my.library.length}, graveyard {my.graveyard.length}</span>
             <span className="on-felt rounded-sm px-s2 text-sm font-normal">Commander damage taken: {cmdDamageText(my.commanderDamage)}</span>
             {state.monarch && <span className="on-felt rounded-sm px-s2 text-sm font-normal">Monarch: {state.monarch === me ? "you" : nameOf(state.monarch)}</span>}
             {myCandidate && <button type="button" onClick={() => act({ type: "chooseTarget", target: { kind: "player", seat: me } })} className={primary}>Target yourself</button>}
@@ -361,7 +361,7 @@ export const CommanderTable = forwardRef<HTMLHeadingElement, Props>(function Com
           const card = cardOf(handPick); const can = canCast.has(handPick) && !pend;
           return (
             <div className="on-felt grid gap-s2 rounded-md p-s2" role="group" aria-label={`Options for ${card.name}`}>
-              <span className="text-sm"><strong>{card.name}</strong> · {card.type}{card.text ? `: ${card.text.replace(/\n/g, " ")}` : ""}</span>
+              <span className="text-sm"><strong>{card.name}</strong>, {card.type}{card.text ? `: ${card.text.replace(/\n/g, " ")}` : ""}</span>
               {!can && <span className="text-sm text-text-muted">{card.kind === "land" ? (my.landsPlayed >= 1 && myTurn ? "You've already played a land this turn." : "Lands are played in your own main phase.") : card.kind === "instant" ? "You can't cast it right now: not enough mana, or nothing for it to target." : myTurn && isMain(state) ? `You need {${card.cost}}. Play more lands first.` : "Cast it in your own main phase, when nothing is on the stack."}</span>}
               <div className="flex flex-wrap gap-s2">
                 <button type="button" onClick={() => act(card.kind === "land" ? { type: "playLand", uid: handPick } : { type: "cast", uid: handPick })} className={can ? primary : secondary}>{card.kind === "land" ? "Play this land" : `Cast ${card.name}${card.cost ? ` ({${card.cost}})` : ""}`}</button>

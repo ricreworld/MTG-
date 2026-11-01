@@ -121,5 +121,5 @@ export function applySettings(s: Settings, root: HTMLElement = document.document
   for (const [name, value] of Object.entries(attrs)) root.setAttribute(name, value);
   for (const [name, value] of Object.entries(vars)) root.style.setProperty(name, value);
   // Phone browser bar / status bar colour follows the theme (Android Chrome; iOS Safari tab bar).
-  root.ownerDocument.querySelector('meta[name="theme-color"]')?.setAttribute("content", s.theme === "dark" ? "#17191F" : "#F4F2ED");
+  root.ownerDocument.querySelector('meta[name="theme-color"]')?.setAttribute("content", s.theme === "dark" ? "#15201B" : "#F3F0E6");
 }

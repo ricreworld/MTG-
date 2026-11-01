@@ -9,21 +9,24 @@
 
 :root {
   /* ---------- Color: dark theme is the default ---------- */
-  --color-bg: 23 25 31;            /* #17191F soft off-black, never #000 */
-  --color-surface: 32 35 43;       /* #20232B cards */
-  --color-surface-2: 42 46 56;     /* #2A2E38 inset areas, inactive chips */
-  --color-border: 58 63 76;        /* #3A3F4C decorative dividers only */
-  --color-border-strong: 104 110 128; /* #686E80 control outlines: 3.46:1 on bg */
-  --color-text: 232 228 220;       /* #E8E4DC off-white: 13.86:1 on bg */
-  --color-text-muted: 172 176 188; /* #ACB0BC: 8.11:1 on bg, 6.27:1 on surface-2 */
-  --color-accent: 143 180 230;     /* #8FB4E6 primary actions and links: 8.23:1 on bg */
-  --color-accent-ink: 18 22 30;    /* #12161E text on accent: 8.49:1 */
-  --color-accent-soft: 38 50 70;   /* #263246 tinted panels */
-  --color-focus: 242 193 78;       /* #F2C14E focus ring: 10.47:1 on bg */
-  --color-success: 120 196 150;    /* #78C496 always paired with a check icon: 8.48:1 */
-  --color-success-soft: 30 52 42;  /* #1E342A */
-  --color-hint: 157 183 217;       /* #9DB7D9 calm hints (never red): paired with an info icon */
-  --color-hint-soft: 34 44 60;     /* #222C3C */
+  /* The identity: a game table seen from above. Night felt, chalk text, brass counters. */
+  --color-bg: 21 32 27;            /* felt-night #15201B, never #000 */
+  --color-surface: 31 45 37;       /* mat #1F2D25 */
+  --color-surface-2: 42 60 50;     /* #2A3C32 inset areas, inactive chips */
+  --color-border: 58 78 66;        /* #3A4E42 decorative dividers only */
+  --color-border-strong: 118 138 124; /* #768A7C control outlines: 3.5:1 on bg */
+  --color-text: 242 239 230;       /* chalk #F2EFE6: 14.6:1 on bg */
+  --color-text-muted: 183 189 180; /* ash #B7BDB4: 8.6:1 on bg, 6.3:1 on surface-2 */
+  --color-accent: 224 180 87;      /* brass #E0B457 counters and primary actions: 9.0:1 on bg */
+  --color-accent-ink: 28 24 12;    /* #1C180C text on brass: 9.6:1 */
+  --color-accent-soft: 64 58 36;   /* #403A24 tinted panels */
+  --color-focus: 255 232 150;      /* #FFE896 focus ring: 13:1 on bg */
+  --color-success: 143 209 158;    /* moss #8FD19E always paired with a check icon: 10:1 */
+  --color-success-soft: 34 62 44;  /* #223E2C */
+  --color-hint: 190 212 226;       /* #BED4E2 calm hints: paired with an info icon */
+  --color-hint-soft: 40 58 62;     /* #283A3E */
+  --color-error: 242 165 143;      /* ember #F2A58F, a sunset orange, never red: 8.9:1 */
+  --color-error-soft: 74 44 34;    /* #4A2C22 */
 
   /* ---------- The five MTG colors (same in both themes) ----------
    * Based on the Okabe-Ito colorblind-safe palette. Each color always ships
@@ -50,20 +53,21 @@
   --font-lexend: "Lexend", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-opendyslexic: "OpenDyslexic", "Atkinson Hyperlegible", system-ui, sans-serif;
   --font-body: var(--font-atkinson);           /* swapped by Settings via [data-font] */
+  --font-display: var(--font-lexend);          /* headings */
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
   /* Root size steps (Settings: 4 steps). Everything else is in rem, so it all scales. */
   --root-size: 100%;               /* 16px */
 
   /* Type scale (rem, ratio ~1.2) */
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.2rem;
-  --text-xl: 1.44rem;
-  --text-2xl: 1.728rem;
+  --text-sm: 0.9375rem;            /* 15px, used for captions only */
+  --text-base: 1.0625rem;          /* 17px body */
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 1.8rem;
 
   /* Readability controls (Settings) */
-  --leading: 1.5;                  /* 1.5 minimum, adjustable to 2.0 */
+  --leading: 1.6;                  /* 1.5 minimum, adjustable to 2.0 */
   --tracking: 0em;                 /* letter spacing */
   --word-spacing: 0em;
   --measure: 65ch;                 /* max line length */
@@ -94,21 +98,23 @@
 
 /* ---------- Light theme (toggle in Settings) ---------- */
 :root[data-theme="light"] {
-  --color-bg: 244 242 237;          /* #F4F2ED soft off-white, never #FFF */
-  --color-surface: 252 251 248;     /* #FCFBF8 */
-  --color-surface-2: 233 230 223;   /* #E9E6DF */
-  --color-border: 214 210 201;      /* #D6D2C9 decorative */
-  --color-border-strong: 138 135 127; /* #8A877F: 3.21:1 on bg, 3.47:1 on surface */
-  --color-text: 33 35 41;           /* #212329: 14.04:1 on bg */
-  --color-text-muted: 84 88 99;     /* #545863: 6.36:1 on bg, 5.71:1 on surface-2 */
-  --color-accent: 44 90 160;        /* #2C5AA0: 6.10:1 on bg */
-  --color-accent-ink: 252 251 248;  /* 6.59:1 on accent */
-  --color-accent-soft: 220 229 242; /* #DCE5F2 */
-  --color-focus: 154 77 0;          /* #9A4D00: 5.46:1 on bg */
-  --color-success: 39 107 67;       /* #276B43: 5.74:1 on bg */
-  --color-success-soft: 221 238 227;/* #DDEEE3 */
-  --color-hint: 44 90 160;          /* #2C5AA0 */
-  --color-hint-soft: 226 233 243;   /* #E2E9F3 */
+  --color-bg: 243 240 230;          /* felt-day #F3F0E6, never #FFF */
+  --color-surface: 255 253 247;     /* #FFFDF7 */
+  --color-surface-2: 232 228 214;   /* #E8E4D6 */
+  --color-border: 210 206 192;      /* #D2CEC0 decorative */
+  --color-border-strong: 124 128 118; /* #7C8076: 3.5:1 on surface */
+  --color-text: 27 31 28;           /* ink #1B1F1C: 15:1 on bg */
+  --color-text-muted: 92 100 93;    /* #5C645D: 5.8:1 on bg, 4.6:1 on surface-2 */
+  --color-accent: 138 106 20;       /* brass-dark #8A6A14: 5.2:1 on bg */
+  --color-accent-ink: 255 253 247;  /* 5.4:1 on accent */
+  --color-accent-soft: 244 232 196; /* #F4E8C4 */
+  --color-focus: 124 60 0;          /* #7C3C00: 7.6:1 on bg */
+  --color-success: 44 122 63;       /* #2C7A3F: 5.2:1 on bg */
+  --color-success-soft: 220 238 224;/* #DCEEE0 */
+  --color-hint: 42 88 112;          /* #2A5870 */
+  --color-hint-soft: 222 234 240;   /* #DEEAF0 */
+  --color-error: 163 58 27;         /* #A33A1B: 6.1:1 on bg */
+  --color-error-soft: 250 228 220;  /* #FAE4DC */
   --felt: 52 120 92;
   --felt-light: 70 146 114;
   --felt-dark: 36 92 70;

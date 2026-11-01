@@ -93,7 +93,7 @@ export function DeckImport({ onBack, onPlay, prefill }: Props) {
           )}
           <details className="rounded-md border border-border p-s3">
             <summary className="min-h-tap cursor-pointer content-center font-bold">Every card ({result.cards.length} lines)</summary>
-            <ul className="mt-s2 grid gap-[2px] text-sm">{result.cards.map((c, i) => <li key={i} className={c.card ? "" : "text-text-muted"}>{c.line.qty > 1 ? `${c.line.qty} ` : ""}{c.card ? c.card.name : `${c.line.name} (can't run yet)`}{c.offIdentity ? " · outside the commander's colours" : ""}</li>)}</ul>
+            <ul className="mt-s2 grid gap-[2px] text-sm">{result.cards.map((c, i) => <li key={i} className={c.card ? "" : "text-text-muted"}>{c.line.qty > 1 ? `${c.line.qty} ` : ""}{c.card ? c.card.name : `${c.line.name} (can't run yet)`}{c.offIdentity ? ", outside the commander's colours" : ""}</li>)}</ul>
           </details>
         </div>
       )}

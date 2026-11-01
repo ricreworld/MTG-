@@ -14,7 +14,7 @@ export function ModuleChecklist({ module, ticked, onToggle }: Props) {
     <details data-focus-hide className="rounded-lg border border-border bg-surface">
       <summary className="flex min-h-tap cursor-pointer items-center gap-s2 px-s4 py-s2 font-bold">
         <span>Module checklist</span>
-        <span className="text-sm font-normal text-text-muted">· {count} of {module.checklist.length} ticked</span>
+        <span className="text-sm font-normal text-text-muted">{count} of {module.checklist.length} ticked</span>
       </summary>
       <fieldset className="grid gap-s2 px-s4 pb-s4">
         <legend className="sr-only">Checklist for {module.title}</legend>

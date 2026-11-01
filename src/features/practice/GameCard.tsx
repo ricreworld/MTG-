@@ -126,7 +126,7 @@ export function GameCard({ card, perm, action, selected, badge, onClick, size = 
         <span className="max-w-[7rem] rounded-sm bg-accent px-1 text-center text-[0.65rem] font-bold leading-tight text-accent-ink">{highlight}</span>
       )}
       {(badge || tapped) && (
-        <span className="max-w-[7rem] rounded-sm bg-surface-2 px-1 text-center text-[0.65rem] font-bold leading-tight text-text">{[tapped ? "Tapped" : null, badge].filter(Boolean).join(" · ")}</span>
+        <span className="max-w-[7rem] rounded-sm bg-surface-2 px-1 text-center text-[0.65rem] font-bold leading-tight text-text">{[tapped ? "Tapped" : null, badge].filter(Boolean).join(", ")}</span>
       )}
     </span>
   );

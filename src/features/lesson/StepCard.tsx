@@ -19,7 +19,7 @@ export const StepCard = forwardRef<HTMLHeadingElement, Props>(function StepCard(
     <article aria-labelledby={`step-${step.id}`} className="ms-enter grid gap-s5 rounded-lg border border-border bg-surface p-s4 sm:p-s6 [@media(max-height:500px)]:gap-s4 [@media(max-height:500px)]:p-s4">
       <header className="grid gap-s2">
         <p className="text-sm font-bold text-text-muted">
-          {module.title} · Step {stepIndex + 1} of {module.steps.length}
+          {module.title}, step {stepIndex + 1} of {module.steps.length}
         </p>
         <h2 id={`step-${step.id}`} ref={headingRef} tabIndex={-1} className="text-2xl font-bold">
           {step.title}

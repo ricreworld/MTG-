@@ -20,6 +20,7 @@ export default {
       focus: rgb("color-focus"),
       success: { DEFAULT: rgb("color-success"), soft: rgb("color-success-soft") },
       hint: { DEFAULT: rgb("color-hint"), soft: rgb("color-hint-soft") },
+      error: { DEFAULT: rgb("color-error"), soft: rgb("color-error-soft") },
       felt: rgb("felt"), "felt-ink": rgb("felt-ink"),
       mtg: {
         white: rgb("mtg-white"), "white-ink": rgb("mtg-white-ink"),
@@ -32,6 +33,7 @@ export default {
     },
     fontFamily: {
       body: "var(--font-body)",
+      display: "var(--font-display)",
       mono: "var(--font-mono)",
     },
     fontSize: {

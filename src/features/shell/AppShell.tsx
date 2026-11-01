@@ -26,14 +26,18 @@ import { ProgressBar } from "../progress/ProgressBar";
 import { WelcomeBack } from "../progress/WelcomeBack";
 import { courseStats, hasSavedProgress, positionOf, progressReducer, sanitizeProgress, stepKey } from "../progress/progress";
 import { BottomBar } from "./BottomBar";
+import { LearnScreen } from "../learn/LearnScreen";
+import { WaysScreen } from "../ways/WaysScreen";
+import { SetsScreen } from "../sets/SetsScreen";
+import { formatById } from "../../content/formats";
 import { OutlineList } from "./CourseOutline";
 import { SettingsPanel } from "./SettingsPanel";
 import { detectSwipe, type TouchPoint } from "./swipe";
 import { useShortcuts } from "./useShortcuts";
 
-type View = "lesson" | "outline" | "settings" | "paused" | "welcome" | "finished" | "practice" | "library" | "commander" | "guides";
+type View = "lesson" | "outline" | "settings" | "paused" | "welcome" | "finished" | "practice" | "library" | "commander" | "guides" | "learn" | "ways" | "sets";
 
-const topButton = "inline-flex min-h-tap flex-1 items-center justify-center gap-s2 rounded-md border-2 px-s2 font-bold sm:flex-none sm:px-s3";
+const topButton = "inline-flex min-h-tap items-center justify-center gap-s2 whitespace-nowrap rounded-md border-2 px-s1 text-sm font-bold sm:px-s3 sm:text-base";
 
 export function AppShell() {
   const { modules, glossary, errors } = content;
@@ -47,6 +51,16 @@ export function AppShell() {
   const [pickingDeck, setPickingDeck] = useState<null | "standard" | "commander">(null);
   const [cmdGame, setCmdGame] = useState<{ state: CState; deckId: string } | null>(null);
   const [prefill, setPrefill] = useState<{ decklist: string; name: string } | null>(null);
+  const [highlight, setHighlight] = useState<string | null>(null);
+  // "Leads to" targets from the Learn, Ways and Sets screens: a format id, "set:<kind>", "play:commander", or a screen name.
+  const jumpTo = (target: string) => {
+    setHighlight(null);
+    if (target === "play:commander") { setCmdGame(null); setView("commander"); return; }
+    if (target.startsWith("set:")) { setHighlight(target.slice(4)); setView("sets"); return; }
+    if (target === "sets" || target === "ways" || target === "learn") { setView(target); return; }
+    if (formatById(target)) { setHighlight(target); setView("ways"); return; }
+    setView("learn");
+  };
   const savedCmd = useMemo(() => (view === "commander" && !cmdGame ? loadGame() : null), [view, cmdGame]);
   const match = useMemo(() => (matchSetup ? makeMatch(matchSetup) : undefined), [matchSetup]);
   const scenario = match ?? (scenarioId ? scenarioById(scenarioId) : undefined);
@@ -102,6 +116,9 @@ export function AppShell() {
       library: "Card library",
       commander: cmdGame ? "Commander: four players" : "Commander setup",
       guides: "Deck guides",
+      learn: "Learn to play",
+      ways: "Ways to play",
+      sets: "Where cards come from",
     };
     setAnnouncement(text[view]);
     headingRef.current?.focus({ preventScroll: true });
@@ -139,19 +156,31 @@ export function AppShell() {
       </a>
 
       <header data-focus-hide className="border-b border-border pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex max-w-[64rem] flex-wrap items-center gap-s2 py-s2 [@media(max-height:500px)]:py-s1 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
-          <h1 className="basis-full text-lg font-bold sm:mr-auto sm:basis-auto">Mana Steps</h1>
+        <div className="mx-auto grid max-w-[64rem] grid-cols-3 items-center gap-s2 py-s2 [@media(max-height:500px)]:py-s1 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:flex sm:flex-wrap">
+          <h1 className="col-span-3 text-lg font-bold sm:mr-auto">Mana Steps</h1>
           <button type="button" onClick={() => toggleView("outline")} aria-pressed={view === "outline"}
             className={`${topButton} lg:hidden ${view === "outline" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
-            <Icon name="list" /> Outline
+            <span className="hidden sm:inline"><Icon name="list" /></span> Course
+          </button>
+          <button type="button" onClick={() => toggleView("learn")} aria-pressed={view === "learn"}
+            className={`${topButton} ${view === "learn" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
+            <span className="hidden sm:inline"><Icon name="book" /></span> Learn
+          </button>
+          <button type="button" onClick={() => { setHighlight(null); toggleView("ways"); }} aria-pressed={view === "ways"}
+            className={`${topButton} ${view === "ways" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
+            Ways to play
+          </button>
+          <button type="button" onClick={() => { setHighlight(null); toggleView("sets"); }} aria-pressed={view === "sets"}
+            className={`${topButton} ${view === "sets" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
+            Sets
           </button>
           <button type="button" onClick={() => { setScenarioId(null); setMatchSetup(null); setPickingDeck(null); toggleView("practice"); }} aria-pressed={view === "practice" || view === "commander" || view === "library" || view === "guides"}
             className={`${topButton} ${view === "practice" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
-            <Icon name="play" /> Practice
+            <span className="hidden sm:inline"><Icon name="play" /></span> Play
           </button>
           <button type="button" onClick={() => toggleView("settings")} aria-pressed={view === "settings"}
             className={`${topButton} ${view === "settings" ? "border-accent bg-accent-soft" : "border-border-strong bg-surface"}`}>
-            <Icon name="settings" /> Settings
+            <span className="hidden sm:inline"><Icon name="settings" /></span> Settings
           </button>
         </div>
       </header>
@@ -217,6 +246,9 @@ export function AppShell() {
             </section>
           )}
 
+          {view === "learn" && <LearnScreen ref={headingRef} onJump={jumpTo} />}
+          {view === "ways" && <WaysScreen ref={headingRef} onJump={jumpTo} initial={highlight} />}
+          {view === "sets" && <SetsScreen ref={headingRef} onJump={jumpTo} initial={highlight} />}
           {view === "settings" && <SettingsPanel ref={headingRef} onClose={() => setView("lesson")} />}
 
           {view === "practice" && !scenario && !pickingDeck && (
@@ -310,7 +342,7 @@ export function AppShell() {
         </p>
       </footer>
 
-      {view !== "practice" && view !== "library" && view !== "commander" && view !== "guides" && <BottomBar
+      {view !== "practice" && view !== "library" && view !== "commander" && view !== "guides" && view !== "learn" && view !== "ways" && view !== "sets" && <BottomBar
         canBack={view === "lesson" && !isFirst(position)}
         canNext={view === "lesson"}
         nextLabel={atEnd ? "Finish" : "Next"}

@@ -3,7 +3,7 @@ export function ProgressBar({ done, total, percent }: { done: number; total: num
   return (
     <div data-focus-hide className="grid gap-s1">
       <p className="text-sm text-text-muted">
-        <span className="font-bold text-text">Course progress: {percent}%</span> · {done} of {total} steps done
+        <span className="font-bold text-text">Course progress: {percent}%</span>, {done} of {total} steps done
       </p>
       <div
         role="progressbar"

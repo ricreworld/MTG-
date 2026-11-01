@@ -43,7 +43,7 @@ function DeckTile({ deck, selected, onPick }: { deck: CDeck; selected: boolean; 
       </span>
       <span className="text-sm">{deck.style}</span>
       <span className="text-sm"><strong>Commander:</strong> {commander.name}. {sum.creatures} creatures, {sum.other} other spells, {sum.lands} lands.</span>
-      <span className="text-sm"><strong>Shape:</strong> {r.shape.ramp} ramp · {r.shape.draw} card draw · {r.shape.interaction} answers ({r.shape.wipes} wipes) · {r.shape.finishers} finishers. Deck doctor: {stars(r.overall.stars)}, Bracket {r.bracket.actual}.</span>
+      <span className="text-sm"><strong>Shape:</strong> {r.shape.ramp} ramp, {r.shape.draw} card draw, {r.shape.interaction} answers ({r.shape.wipes} wipes), {r.shape.finishers} finishers. Deck doctor: {stars(r.overall.stars)}, Bracket {r.bracket.actual}.</span>
       <span className="text-sm"><strong>How it wins:</strong> {deck.primer.wins}</span>
       <span className="flex flex-wrap gap-s2" aria-hidden="true"><CommanderCard card={commander} size="sm" />{keyCards.map((c) => <CommanderCard key={c.id} card={c} size="sm" />)}</span>
       <span className="sr-only">Commander and key cards: {[commander, ...keyCards].map((c) => c.name).join(", ")}.</span>

@@ -317,7 +317,7 @@ export const DIAGRAMS: Record<string, Diagram> = {
   "beginning-phase": () => (
     <g>
       {phasesRow(0)}
-      <Label x={20} y={30} size={12} weight={700}>Untap · Upkeep · Draw</Label>
+      <Label x={20} y={30} size={12} weight={700}>Untap, Upkeep, Draw</Label>
       <Card x={30} y={118} w={36} h={50} color="G" tapped glyph={<Art color="G" kind="land" />} />
       <Arrow x1={76} y1={143} x2={96} y2={143} color={C.muted} width={2} />
       <Card x={102} y={118} w={36} h={50} color="G" glyph={<Art color="G" kind="land" />} />
