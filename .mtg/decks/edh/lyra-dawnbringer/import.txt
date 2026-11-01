@@ -1,0 +1,71 @@
+1 Lyra Dawnbringer
+
+1 Giada, Font of Hope #1) Angel Flock #A) Mana Advantage
+1 Youthful Valkyrie #1) Angel Flock
+1 Bishop of Wings #1) Angel Flock #2) Lifegain Triggers #D) Resilience
+1 Wojek Investigator #1) Angel Flock #B) Card Advantage
+1 Starnheim Aspirant #1) Angel Flock #A) Mana Advantage
+1 Righteous Valkyrie #2) Lifegain Triggers #4) Air Superiority
+1 Angel of Vitality #2) Lifegain Triggers #1) Angel Flock
+1 Resplendent Angel #3) Life Into Angels #1) Angel Flock
+1 Inspiring Overseer #1) Angel Flock #B) Card Advantage
+1 Dazzling Angel #2) Lifegain Triggers #1) Angel Flock
+1 Lyra, Archangel of Dawn #3) Life Into Angels #1) Angel Flock
+1 Exemplar of Light #3) Life Into Angels #B) Card Advantage
+1 Vanguard Seraph #3) Life Into Angels #1) Angel Flock
+1 Firemane Commando #1) Angel Flock #B) Card Advantage
+1 Angel of Finality #1) Angel Flock #C) Interaction
+1 Angelic Field Marshal #4) Air Superiority #1) Angel Flock
+1 Merchant of Truth #1) Angel Flock #B) Card Advantage
+1 Herald of War #1) Angel Flock #A) Mana Advantage
+1 Shattered Angel #2) Lifegain Triggers #1) Angel Flock
+1 Baneslayer Angel #1) Angel Flock #4) Air Superiority
+1 Angel of Sanctions #1) Angel Flock #C) Interaction
+1 Valkyrie Harbinger #3) Life Into Angels #1) Angel Flock
+1 Sunblast Angel #1) Angel Flock #C) Interaction
+1 Sephara, Sky's Blade #4) Air Superiority #D) Resilience
+1 Emeria Shepherd #1) Angel Flock #D) Resilience
+1 Serra's Emissary #4) Air Superiority #D) Resilience
+1 Herald of Eternal Dawn #1) Angel Flock #D) Resilience
+1 Angel of Serenity #1) Angel Flock #C) Interaction
+1 Sol Ring #A) Mana Advantage
+1 Arcane Signet #A) Mana Advantage
+1 Mind Stone #A) Mana Advantage #B) Card Advantage
+1 Marble Diamond #A) Mana Advantage
+1 Fellwar Stone #A) Mana Advantage
+1 Worn Powerstone #A) Mana Advantage
+1 Commander's Sphere #A) Mana Advantage #B) Card Advantage
+1 Wayfarer's Bauble #A) Mana Advantage
+1 Archaeomancer's Map #A) Mana Advantage
+1 Herald's Horn #1) Angel Flock #A) Mana Advantage #B) Card Advantage
+1 Patchwork Banner #4) Air Superiority #A) Mana Advantage
+1 Well of Lost Dreams #3) Life Into Angels #B) Card Advantage
+1 Dawn of Hope #3) Life Into Angels #B) Card Advantage
+1 Sigarda's Splendor #3) Life Into Angels #B) Card Advantage
+1 Court of Grace #3) Life Into Angels #B) Card Advantage
+1 Angelic Accord #3) Life Into Angels
+1 Divine Visitation #3) Life Into Angels
+1 Cradle of Vitality #3) Life Into Angels #4) Air Superiority
+1 Scroll of Avacyn #2) Lifegain Triggers #B) Card Advantage
+1 Swords to Plowshares #C) Interaction
+1 Path to Exile #C) Interaction
+1 Generous Gift #C) Interaction
+1 Oblivion Ring #C) Interaction
+1 Banishing Light #C) Interaction
+1 Stroke of Midnight #C) Interaction
+1 Valorous Stance #C) Interaction #D) Resilience
+1 Wrath of God #C) Interaction
+1 Fumigate #C) Interaction #2) Lifegain Triggers
+1 Austere Command #C) Interaction
+1 Unbreakable Formation #D) Resilience
+1 Make a Stand #D) Resilience
+1 Swiftfoot Boots #D) Resilience
+1 Kindred Boon #D) Resilience
+1 Seraph Sanctuary #2) Lifegain Triggers #E) Lands
+1 Path of Ancestry #E) Lands
+1 Temple of the False God #E) Lands
+1 Myriad Landscape #E) Lands
+1 Secluded Steppe #E) Lands
+1 Castle Ardenvale #E) Lands
+1 Rogue's Passage #E) Lands
+31 Plains #E) Lands
